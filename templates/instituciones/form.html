@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+{{ titulo }} | Aula Virtual
+{% endblock %}
+
+{% block page_title %}
+Instituciones
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'css/instituciones.css' %}"
+>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+        <h1>{{ titulo }}</h1>
+        <p>{{ subtitulo }}</p>
+    </div>
+
+</section>
+
+<section class="form-card">
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <div class="form-grid">
+
+            <div class="form-field form-field-full">
+                <label for="{{ form.nombre.id_for_label }}">
+                    Nombre
+                </label>
+
+                {{ form.nombre }}
+
+                {% for error in form.nombre.errors %}
+                    <div class="field-error">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="form-field">
+                <label for="{{ form.identificacion.id_for_label }}">
+                    Identificación
+                </label>
+
+                {{ form.identificacion }}
+
+                {% for error in form.identificacion.errors %}
+                    <div class="field-error">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="form-field">
+                <label for="{{ form.telefono.id_for_label }}">
+                    Teléfono
+                </label>
+
+                {{ form.telefono }}
+
+                {% for error in form.telefono.errors %}
+                    <div class="field-error">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="form-field form-field-full">
+                <label for="{{ form.email.id_for_label }}">
+                    Email
+                </label>
+
+                {{ form.email }}
+
+                {% for error in form.email.errors %}
+                    <div class="field-error">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="form-field form-field-full">
+
+                <div class="form-check form-switch">
+
+                    {{ form.activa }}
+
+                    <label
+                        class="form-check-label"
+                        for="{{ form.activa.id_for_label }}"
+                    >
+                        Institución activa
+                    </label>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="form-actions">
+
+            <a
+                href="{% url 'lista_instituciones' %}"
+                class="btn-secondary-custom"
+            >
+                Cancelar
+            </a>
+
+            <button
+                type="submit"
+                class="btn-primary-custom"
+            >
+                <i class="bi bi-check-lg"></i>
+                Guardar
+            </button>
+
+        </div>
+
+    </form>
+
+</section>
+
+{% endblock %}

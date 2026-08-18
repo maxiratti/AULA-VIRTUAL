@@ -59,9 +59,12 @@
 
                     {% if es_administrador or es_coordinador %}
 
-                        <a href="#" class="nav-link-custom">
+                        <a
+                            href="{% url 'lista_instituciones' %}"
+                            class="nav-link-custom">
+                            
                             <i class="bi bi-building"></i>
-                            <span>Institución</span>
+                            <span>Instituciones</span>
                         </a>
 
                         <a href="#" class="nav-link-custom">
