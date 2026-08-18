@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+{{ titulo }} | Aula Virtual
+{% endblock %}
+
+{% block page_title %}
+Usuarios
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'css/usuarios.css' %}"
+>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+        <h1>{{ titulo }}</h1>
+        <p>{{ subtitulo }}</p>
+    </div>
+
+</section>
+
+<section class="form-card">
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <div class="form-grid">
+
+            <div class="form-field">
+                <label for="{{ form.first_name.id_for_label }}">
+                    Nombre
+                </label>
+                {{ form.first_name }}
+                {{ form.first_name.errors }}
+            </div>
+
+            <div class="form-field">
+                <label for="{{ form.last_name.id_for_label }}">
+                    Apellido
+                </label>
+                {{ form.last_name }}
+                {{ form.last_name.errors }}
+            </div>
+
+            <div class="form-field">
+                <label for="{{ form.username.id_for_label }}">
+                    Usuario
+                </label>
+                {{ form.username }}
+                {{ form.username.errors }}
+            </div>
+
+            <div class="form-field">
+                <label for="{{ form.email.id_for_label }}">
+                    Email
+                </label>
+                {{ form.email }}
+                {{ form.email.errors }}
+            </div>
+
+            <div class="form-field">
+                <label for="{{ form.institucion.id_for_label }}">
+                    Institución
+                </label>
+                {{ form.institucion }}
+                {{ form.institucion.errors }}
+            </div>
+
+            <div class="form-field">
+                <label for="{{ form.rol.id_for_label }}">
+                    Rol
+                </label>
+                {{ form.rol }}
+                {{ form.rol.errors }}
+            </div>
+
+            <div class="form-field">
+                <label for="{{ form.password.id_for_label }}">
+                    Contraseña
+                </label>
+                {{ form.password }}
+                {{ form.password.errors }}
+            </div>
+
+            <div class="form-field">
+                <label for="{{ form.confirmar_password.id_for_label }}">
+                    Confirmar contraseña
+                </label>
+                {{ form.confirmar_password }}
+                {{ form.confirmar_password.errors }}
+            </div>
+
+            <div class="form-field form-field-full">
+
+                <div class="form-check form-switch">
+
+                    {{ form.is_active }}
+
+                    <label
+                        class="form-check-label"
+                        for="{{ form.is_active.id_for_label }}"
+                    >
+                        Usuario activo
+                    </label>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="form-actions">
+
+            <a
+                href="{% url 'lista_usuarios' %}"
+                class="btn-secondary-custom"
+            >
+                Cancelar
+            </a>
+
+            <button
+                type="submit"
+                class="btn-primary-custom"
+            >
+                <i class="bi bi-check-lg"></i>
+                Guardar
+            </button>
+
+        </div>
+
+    </form>
+
+</section>
+
+{% endblock %}
