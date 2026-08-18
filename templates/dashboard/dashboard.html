@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Inicio | Aula Virtual
+{% endblock %}
+
+{% block page_title %}
+Inicio
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'css/dashboard.css' %}"
+>
+{% endblock %}
+
+{% block content %}
+
+<section class="dashboard-welcome">
+
+    <div>
+        <span class="welcome-label">
+            Aula Virtual
+        </span>
+
+        <h1>
+            Hola,
+            {{ request.user.first_name|default:request.user.username }}
+        </h1>
+
+        <p>
+            Desde acá vas a poder acceder a tus cursos,
+            actividades y progreso académico.
+        </p>
+    </div>
+
+</section>
+
+<section class="dashboard-grid">
+
+    <article class="dashboard-card">
+
+        <div class="dashboard-card-icon">
+            <i class="bi bi-journal-bookmark"></i>
+        </div>
+
+        <div>
+            <span class="dashboard-card-label">
+                Cursos
+            </span>
+
+            <strong class="dashboard-card-value">
+                0
+            </strong>
+
+            <span class="dashboard-card-detail">
+                Cursos activos
+            </span>
+        </div>
+
+    </article>
+
+    <article class="dashboard-card">
+
+        <div class="dashboard-card-icon">
+            <i class="bi bi-check2-square"></i>
+        </div>
+
+        <div>
+            <span class="dashboard-card-label">
+                Actividades
+            </span>
+
+            <strong class="dashboard-card-value">
+                0
+            </strong>
+
+            <span class="dashboard-card-detail">
+                Pendientes
+            </span>
+        </div>
+
+    </article>
+
+    <article class="dashboard-card">
+
+        <div class="dashboard-card-icon">
+            <i class="bi bi-graph-up-arrow"></i>
+        </div>
+
+        <div>
+            <span class="dashboard-card-label">
+                Progreso
+            </span>
+
+            <strong class="dashboard-card-value">
+                0%
+            </strong>
+
+            <span class="dashboard-card-detail">
+                Promedio general
+            </span>
+        </div>
+
+    </article>
+
+</section>
+
+<section class="dashboard-section">
+
+    <div class="section-heading">
+
+        <div>
+            <h2>Mis cursos</h2>
+
+            <p>
+                Tus cursos aparecerán aquí cuando estés inscripto.
+            </p>
+        </div>
+
+    </div>
+
+    <div class="empty-state">
+
+        <div class="empty-state-icon">
+            <i class="bi bi-book"></i>
+        </div>
+
+        <h3>Todavía no tenés cursos</h3>
+
+        <p>
+            Cuando seas inscripto en un curso,
+            vas a poder acceder desde esta sección.
+        </p>
+
+    </div>
+
+</section>
+
+{% endblock %}
