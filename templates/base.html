@@ -49,37 +49,75 @@
 
             <nav class="sidebar-nav">
 
-                <a
-                    href="{% url 'dashboard' %}"
-                    class="nav-link-custom"
-                >
-                    <i class="bi bi-grid"></i>
-                    <span>Inicio</span>
-                </a>
+                    <a
+                        href="{% url 'dashboard' %}"
+                        class="nav-link-custom"
+                    >
+                        <i class="bi bi-grid"></i>
+                        <span>Inicio</span>
+                    </a>
 
-                <a
-                    href="#"
-                    class="nav-link-custom"
-                >
-                    <i class="bi bi-journal-bookmark"></i>
-                    <span>Mis cursos</span>
-                </a>
+                    {% if es_administrador or es_coordinador %}
 
-                <a
-                    href="#"
-                    class="nav-link-custom"
-                >
-                    <i class="bi bi-calendar3"></i>
-                    <span>Calendario</span>
-                </a>
+                        <a href="#" class="nav-link-custom">
+                            <i class="bi bi-building"></i>
+                            <span>Institución</span>
+                        </a>
 
-                <a
-                    href="#"
-                    class="nav-link-custom"
-                >
-                    <i class="bi bi-award"></i>
-                    <span>Calificaciones</span>
-                </a>
+                        <a href="#" class="nav-link-custom">
+                            <i class="bi bi-people"></i>
+                            <span>Usuarios</span>
+                        </a>
+
+                        <a href="#" class="nav-link-custom">
+                            <i class="bi bi-journal-bookmark"></i>
+                            <span>Cursos</span>
+                        </a>
+
+                    {% endif %}
+
+                    {% if es_docente %}
+
+                        <a href="#" class="nav-link-custom">
+                            <i class="bi bi-journal-bookmark"></i>
+                            <span>Mis cursos</span>
+                        </a>
+
+                        <a href="#" class="nav-link-custom">
+                            <i class="bi bi-check2-square"></i>
+                            <span>Actividades</span>
+                        </a>
+
+                        <a href="#" class="nav-link-custom">
+                            <i class="bi bi-bar-chart"></i>
+                            <span>Calificaciones</span>
+                        </a>
+
+                    {% endif %}
+
+                    {% if es_alumno %}
+
+                        <a href="#" class="nav-link-custom">
+                            <i class="bi bi-journal-bookmark"></i>
+                            <span>Mis cursos</span>
+                        </a>
+
+                        <a href="#" class="nav-link-custom">
+                            <i class="bi bi-check2-square"></i>
+                            <span>Actividades</span>
+                        </a>
+
+                        <a href="#" class="nav-link-custom">
+                            <i class="bi bi-calendar3"></i>
+                            <span>Calendario</span>
+                        </a>
+
+                        <a href="#" class="nav-link-custom">
+                            <i class="bi bi-award"></i>
+                            <span>Calificaciones</span>
+                        </a>
+
+                    {% endif %}
 
             </nav>
 
@@ -97,8 +135,20 @@
                         </strong>
 
                         <span>
-                            {{ request.user.institucion|default:"Aula Virtual" }}
+                            {% if request.user.is_superuser %}
+                                Superadministrador
+                            {% elif es_administrador %}
+                                Administrador
+                            {% elif es_coordinador %}
+                                Coordinador
+                            {% elif es_docente %}
+                                Docente
+                            {% elif es_alumno %}
+                                Alumno
+                            {% endif %}
                         </span>
+
+
                     </div>
 
                 </div>

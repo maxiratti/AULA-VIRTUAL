@@ -8,3 +8,4 @@ def dashboard(request):
         request,
         "dashboard/dashboard.html",
     )
+
