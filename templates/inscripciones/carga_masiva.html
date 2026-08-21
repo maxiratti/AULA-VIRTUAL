@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Carga masiva | Aula Virtual
+{% endblock %}
+
+{% block page_title %}
+Inscripciones
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'css/inscripciones.css' %}"
+>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+
+        <a
+            href="{% url 'lista_inscripciones' curso.pk %}"
+            class="back-link"
+        >
+            <i class="bi bi-arrow-left"></i>
+            Volver a inscripciones
+        </a>
+
+        <h1>
+            Carga masiva de alumnos
+        </h1>
+
+        <p>
+            {{ curso.nombre }}
+            ·
+            {{ curso.institucion.nombre }}
+        </p>
+
+    </div>
+
+</section>
+
+<section class="form-card">
+
+    <div class="import-guide">
+
+        <h2>
+            Importar desde Excel
+        </h2>
+
+        <p>
+            Descargá la plantilla, completá los datos
+            de los alumnos y luego subí el archivo.
+        </p>
+
+        <a
+            href="{% url 'descargar_plantilla_alumnos' curso.pk %}"
+            class="btn-secondary-custom"
+        >
+            <i class="bi bi-file-earmark-excel"></i>
+            Descargar plantilla
+        </a>
+
+    </div>
+
+    <form
+        method="post"
+        enctype="multipart/form-data"
+    >
+
+        {% csrf_token %}
+
+        <div class="form-field import-file">
+
+            <label for="{{ form.archivo.id_for_label }}">
+                Archivo Excel
+            </label>
+
+            {{ form.archivo }}
+            {{ form.archivo.errors }}
+
+        </div>
+
+        <div class="form-actions">
+
+            <a
+                href="{% url 'lista_inscripciones' curso.pk %}"
+                class="btn-secondary-custom"
+            >
+                Cancelar
+            </a>
+
+            <button
+                type="submit"
+                class="btn-primary-custom"
+            >
+                <i class="bi bi-upload"></i>
+                Procesar archivo
+            </button>
+
+        </div>
+
+    </form>
+
+</section>
+
+{% if resultado %}
+
+<section class="import-result">
+
+    <h2>
+        Resultado de la importación
+    </h2>
+
+    <div class="result-grid">
+
+        <div>
+            <strong>
+                {{ resultado.creados }}
+            </strong>
+
+            <span>
+                Usuarios creados
+            </span>
+        </div>
+
+        <div>
+            <strong>
+                {{ resultado.existentes }}
+            </strong>
+
+            <span>
+                Usuarios existentes
+            </span>
+        </div>
+
+        <div>
+            <strong>
+                {{ resultado.inscriptos }}
+            </strong>
+
+            <span>
+                Nuevas inscripciones
+            </span>
+        </div>
+
+    </div>
+
+    {% if resultado.errores %}
+
+        <div class="import-errors">
+
+            <strong>
+                Filas con errores
+            </strong>
+
+            <ul>
+
+                {% for error in resultado.errores %}
+
+                    <li>
+                        {{ error }}
+                    </li>
+
+                {% endfor %}
+
+            </ul>
+
+        </div>
+
+    {% endif %}
+
+</section>
+
+{% endif %}
+
+{% endblock %}

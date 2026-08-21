@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+{{ titulo }} | Aula Virtual
+{% endblock %}
+
+{% block page_title %}
+Cursos
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'css/cursos.css' %}"
+>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+        <h1>{{ titulo }}</h1>
+        <p>{{ subtitulo }}</p>
+    </div>
+
+</section>
+
+<section class="form-card">
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <div class="form-grid">
+
+            <div class="form-field">
+
+                <label for="{{ form.institucion.id_for_label }}">
+                    Institución
+                </label>
+
+                {{ form.institucion }}
+
+                {{ form.institucion.errors }}
+
+            </div>
+
+            <div class="form-field">
+
+                <label for="{{ form.estado.id_for_label }}">
+                    Estado
+                </label>
+
+                {{ form.estado }}
+
+                {{ form.estado.errors }}
+
+            </div>
+
+            <div class="form-field form-field-full">
+
+                <label for="{{ form.nombre.id_for_label }}">
+                    Nombre
+                </label>
+
+                {{ form.nombre }}
+
+                {{ form.nombre.errors }}
+
+            </div>
+
+            <div class="form-field form-field-full">
+
+                <label for="{{ form.descripcion.id_for_label }}">
+                    Descripción
+                </label>
+
+                {{ form.descripcion }}
+
+                {{ form.descripcion.errors }}
+
+            </div>
+
+            <div class="form-field form-field-full">
+
+                <label>
+                    Docentes
+                </label>
+
+                {% if form.docentes.field.queryset %}
+
+                    <div class="teachers-selector">
+                        {{ form.docentes }}
+                    </div>
+
+                    <small class="field-help">
+                        La asignación es opcional.
+                        Podés crear el curso y asignar
+                        docentes más adelante.
+                    </small>
+
+                {% else %}
+
+                    <div class="teachers-empty">
+
+                        <i class="bi bi-person-plus"></i>
+
+                        <div>
+
+                            <strong>
+                                Sin docentes disponibles
+                            </strong>
+
+                            <span>
+                                Podés guardar el curso
+                                y asignar un docente
+                                posteriormente.
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                {% endif %}
+
+                {{ form.docentes.errors }}
+
+            </div>
+
+            <div class="form-field">
+
+                <label for="{{ form.fecha_inicio.id_for_label }}">
+                    Fecha de inicio
+                </label>
+
+                {{ form.fecha_inicio }}
+
+                {{ form.fecha_inicio.errors }}
+
+            </div>
+
+            <div class="form-field">
+
+                <label for="{{ form.fecha_fin.id_for_label }}">
+                    Fecha de finalización
+                </label>
+
+                {{ form.fecha_fin }}
+
+                {{ form.fecha_fin.errors }}
+
+            </div>
+
+            <div class="form-field">
+
+                <label for="{{ form.carga_horaria.id_for_label }}">
+                    Carga horaria
+                </label>
+
+                {{ form.carga_horaria }}
+
+                {{ form.carga_horaria.errors }}
+
+            </div>
+
+            <div class="form-field">
+
+                <label for="{{ form.cupo.id_for_label }}">
+                    Cupo
+                </label>
+
+                {{ form.cupo }}
+
+                {{ form.cupo.errors }}
+
+            </div>
+
+        </div>
+
+        <div class="form-actions">
+
+            <a
+                href="{% url 'lista_cursos' %}"
+                class="btn-secondary-custom"
+            >
+                Cancelar
+            </a>
+
+            <button
+                type="submit"
+                class="btn-primary-custom"
+            >
+                <i class="bi bi-check-lg"></i>
+                Guardar
+            </button>
+
+        </div>
+
+    </form>
+
+</section>
+
+{% endblock %}

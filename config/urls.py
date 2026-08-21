@@ -35,4 +35,14 @@ urlpatterns = [
         "",
         include("apps.instituciones.urls"),
     ),
+
+    path(
+        "",
+        include("apps.cursos.urls"),
+    ),
+
+    path(
+        "",
+        include("apps.inscripciones.urls"),
+    ),
 ]

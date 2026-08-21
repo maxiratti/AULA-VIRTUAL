@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Cursos | Aula Virtual
+{% endblock %}
+
+{% block page_title %}
+Cursos
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'css/cursos.css' %}"
+>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+        <h1>Cursos</h1>
+
+        <p>
+            Administrá los cursos disponibles en la plataforma.
+        </p>
+    </div>
+
+    <a
+        href="{% url 'nuevo_curso' %}"
+        class="btn-primary-custom"
+    >
+        <i class="bi bi-plus-lg"></i>
+        Nuevo curso
+    </a>
+
+</section>
+
+<section class="content-card">
+
+    {% if cursos %}
+
+        <div class="table-responsive">
+
+            <table class="table-custom">
+
+                <thead>
+                    <tr>
+                        <th>Curso</th>
+                        <th>Institución</th>
+                        <th>Docentes</th>
+                        <th>Fechas</th>
+                        <th>Estado</th>
+                        <th class="text-end">
+                            Acciones
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for curso in cursos %}
+
+                        <tr>
+
+                            <td>
+
+                                <div class="course-name">
+
+                                    <div class="course-icon">
+                                        <i class="bi bi-journal-bookmark"></i>
+                                    </div>
+
+                                    <div>
+
+                                        <strong>
+                                            {{ curso.nombre }}
+                                        </strong>
+
+                                        <span>
+                                            {% if curso.carga_horaria %}
+                                                {{ curso.carga_horaria }} h
+                                            {% else %}
+                                                Sin carga horaria
+                                            {% endif %}
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            </td>
+
+                            <td>
+                                {{ curso.institucion.nombre }}
+                            </td>
+
+                            <td>
+
+                                {% for docente in curso.docentes.all %}
+
+                                    <span class="teacher-badge">
+                                        {{ docente.get_full_name|default:docente.username }}
+                                    </span>
+
+                                {% empty %}
+
+                                    <span>—</span>
+
+                                {% endfor %}
+
+                            </td>
+
+                            <td>
+
+                                <div class="date-data">
+
+                                    <span>
+                                        {{ curso.fecha_inicio|date:"d/m/Y"|default:"—" }}
+                                    </span>
+
+                                    <small>
+                                        {{ curso.fecha_fin|date:"d/m/Y"|default:"—" }}
+                                    </small>
+
+                                </div>
+
+                            </td>
+
+                            <td>
+
+                                <span
+                                    class="status-badge status-{{ curso.estado|lower }}"
+                                >
+                                    {{ curso.get_estado_display }}
+                                </span>
+
+                            </td>
+
+                            <td class="text-end">
+
+                                <div class="course-actions">
+
+                                    <a
+                                        href="{% url 'lista_inscripciones' curso.pk %}"
+                                        class="action-button"
+                                        title="Inscripciones"
+                                        aria-label="Inscripciones"
+                                    >
+                                        <i class="bi bi-people"></i>
+                                    </a>
+
+                                    <a
+                                        href="{% url 'editar_curso' curso.pk %}"
+                                        class="action-button"
+                                        title="Editar curso"
+                                        aria-label="Editar curso"
+                                    >
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    {% else %}
+
+        <div class="empty-state">
+
+            <div class="empty-state-icon">
+                <i class="bi bi-journal-bookmark"></i>
+            </div>
+
+            <h2>
+                No hay cursos registrados
+            </h2>
+
+            <p>
+                Creá el primer curso para comenzar.
+            </p>
+
+            <a
+                href="{% url 'nuevo_curso' %}"
+                class="btn-primary-custom"
+            >
+                <i class="bi bi-plus-lg"></i>
+                Nuevo curso
+            </a>
+
+        </div>
+
+    {% endif %}
+
+</section>
+
+{% endblock %}

@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     "apps.instituciones",
     "apps.roles",
     "apps.dashboard",
+    "apps.cursos",
+    "apps.inscripciones",
 ]
 
 MIDDLEWARE = [
@@ -50,6 +52,9 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+
+     "apps.usuarios.middleware.CambioPasswordObligatorioMiddleware",
+
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]

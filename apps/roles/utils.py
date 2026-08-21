@@ -2,8 +2,26 @@ def tiene_rol(usuario, nombre_rol):
     if not usuario.is_authenticated:
         return False
 
-    return usuario.groups.filter(
-        name=nombre_rol
+    return usuario.membresias.filter(
+        activa=True,
+        institucion__activa=True,
+        roles__name=nombre_rol,
+    ).exists()
+
+
+def tiene_rol_en_institucion(
+    usuario,
+    nombre_rol,
+    institucion,
+):
+    if not usuario.is_authenticated:
+        return False
+
+    return usuario.membresias.filter(
+        institucion=institucion,
+        institucion__activa=True,
+        activa=True,
+        roles__name=nombre_rol,
     ).exists()
 
 

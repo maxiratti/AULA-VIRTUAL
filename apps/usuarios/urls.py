@@ -42,4 +42,22 @@ urlpatterns = [
         views.cambiar_estado_usuario,
         name="cambiar_estado_usuario",
     ),
+
+    path(
+        "usuarios/<int:usuario_id>/membresias/nueva/",
+        views.nueva_membresia,
+        name="nueva_membresia",
+    ),
+
+    path(
+        "membresias/<int:pk>/editar/",
+        views.editar_membresia,
+        name="editar_membresia",
+    ),
+
+    path(
+        "cambiar-password/",
+        views.cambiar_password_obligatorio,
+        name="cambiar_password_obligatorio",
+    ),
 ]

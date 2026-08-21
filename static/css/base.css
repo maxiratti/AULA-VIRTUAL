@@ -369,3 +369,18 @@ a {
         font-size: 16px;
     }
 }
+
+.nav-section-title {
+    margin: 22px 14px 8px;
+
+    color: #9ca3af;
+
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.sidebar-nav .nav-section-title:first-child {
+    margin-top: 0;
+}

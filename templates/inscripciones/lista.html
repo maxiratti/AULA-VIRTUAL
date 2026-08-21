@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Inscripciones | Aula Virtual
+{% endblock %}
+
+{% block page_title %}
+Inscripciones
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'css/inscripciones.css' %}"
+>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+
+        <a
+            href="{% url 'lista_cursos' %}"
+            class="back-link"
+        >
+            <i class="bi bi-arrow-left"></i>
+            Volver a cursos
+        </a>
+
+        <h1>
+            {{ curso.nombre }}
+        </h1>
+
+        <p>
+            {{ curso.institucion.nombre }}
+        </p>
+
+    </div>
+
+    <div class="header-actions">
+
+        <a
+            href="{% url 'carga_masiva_alumnos' curso.pk %}"
+            class="btn-secondary-custom"
+        >
+            <i class="bi bi-file-earmark-arrow-up"></i>
+            Carga masiva
+        </a>
+
+        <a
+            href="{% url 'nueva_inscripcion' curso.pk %}"
+            class="btn-primary-custom"
+        >
+            <i class="bi bi-person-plus"></i>
+            Inscribir alumno
+        </a>
+
+    </div>
+
+</section>
+
+<section class="content-card">
+
+    {% if inscripciones %}
+
+        <div class="table-responsive">
+
+            <table class="table-custom">
+
+                <thead>
+
+                    <tr>
+                        <th>Alumno</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th class="text-end">
+                            Acciones
+                        </th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for inscripcion in inscripciones %}
+
+                        <tr>
+
+                            <td>
+
+                                <div class="student-row">
+
+                                    <div class="student-avatar">
+
+                                        {{ inscripcion.alumno.first_name|default:inscripcion.alumno.username|slice:":1"|upper }}
+
+                                    </div>
+
+                                    <div>
+
+                                        <strong>
+                                            {{ inscripcion.alumno.get_full_name|default:inscripcion.alumno.username }}
+                                        </strong>
+
+                                        <span>
+                                            {{ inscripcion.alumno.username }}
+                                        </span>
+
+                                        {% if inscripcion.alumno.email %}
+                                            <small>
+                                                {{ inscripcion.alumno.email }}
+                                            </small>
+                                        {% endif %}
+
+                                    </div>
+
+                                </div>
+
+                            </td>
+
+                            <td>
+                                {{ inscripcion.fecha_inscripcion|date:"d/m/Y" }}
+                            </td>
+
+                            <td>
+
+                                <span class="status-badge">
+                                    {{ inscripcion.get_estado_display }}
+                                </span>
+
+                            </td>
+
+                            <td class="text-end">
+
+                                <a
+                                    href="{% url 'editar_inscripcion' inscripcion.pk %}"
+                                    class="action-button"
+                                    title="Editar inscripción"
+                                    aria-label="Editar inscripción"
+                                >
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    {% else %}
+
+        <div class="empty-state">
+
+            <div class="empty-state-icon">
+                <i class="bi bi-people"></i>
+            </div>
+
+            <h2>
+                No hay alumnos inscriptos
+            </h2>
+
+            <p>
+                Podés inscribir alumnos individualmente
+                o realizar una carga masiva desde Excel.
+            </p>
+
+            <div class="empty-actions">
+
+                <a
+                    href="{% url 'carga_masiva_alumnos' curso.pk %}"
+                    class="btn-secondary-custom"
+                >
+                    <i class="bi bi-file-earmark-arrow-up"></i>
+                    Carga masiva
+                </a>
+
+                <a
+                    href="{% url 'nueva_inscripcion' curso.pk %}"
+                    class="btn-primary-custom"
+                >
+                    <i class="bi bi-person-plus"></i>
+                    Inscribir alumno
+                </a>
+
+            </div>
+
+        </div>
+
+    {% endif %}
+
+</section>
+
+{% endblock %}

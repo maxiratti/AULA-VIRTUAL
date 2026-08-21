@@ -24,8 +24,8 @@ Usuarios
         <h1>Usuarios</h1>
 
         <p>
-            Administrá los usuarios registrados
-            en la plataforma.
+            Administrá las cuentas, instituciones
+            y roles de los usuarios.
         </p>
     </div>
 
@@ -50,10 +50,11 @@ Usuarios
                 <thead>
                     <tr>
                         <th>Usuario</th>
-                        <th>Institución</th>
-                        <th>Rol</th>
+                        <th>Instituciones y roles</th>
                         <th>Estado</th>
-                        <th class="text-end">Acciones</th>
+                        <th class="text-end">
+                            Acciones
+                        </th>
                     </tr>
                 </thead>
 
@@ -64,6 +65,7 @@ Usuarios
                         <tr>
 
                             <td>
+
                                 <div class="user-row">
 
                                     <div class="user-row-avatar">
@@ -71,6 +73,7 @@ Usuarios
                                     </div>
 
                                     <div>
+
                                         <strong>
                                             {{ usuario.get_full_name|default:usuario.username }}
                                         </strong>
@@ -84,28 +87,55 @@ Usuarios
                                                 {{ usuario.email }}
                                             </small>
                                         {% endif %}
+
                                     </div>
 
                                 </div>
+
                             </td>
 
                             <td>
-                                {{ usuario.institucion|default:"Sin institución" }}
-                            </td>
 
-                            <td>
-                                {% with grupo=usuario.groups.first %}
-                                    {% if grupo %}
-                                        <span class="role-badge">
-                                            {{ grupo.name }}
+                                <div class="user-memberships">
+
+                                    {% for membresia in usuario.membresias.all %}
+
+                                        <div class="user-membership">
+
+                                            <strong>
+                                                {{ membresia.institucion.nombre }}
+                                            </strong>
+
+                                            <div class="mini-roles">
+
+                                                {% for rol in membresia.roles.all %}
+                                                    <span>
+                                                        {{ rol.name }}
+                                                    </span>
+                                                {% empty %}
+                                                    <small>
+                                                        Sin rol
+                                                    </small>
+                                                {% endfor %}
+
+                                            </div>
+
+                                        </div>
+
+                                    {% empty %}
+
+                                        <span class="no-membership">
+                                            Sin institución asignada
                                         </span>
-                                    {% else %}
-                                        —
-                                    {% endif %}
-                                {% endwith %}
+
+                                    {% endfor %}
+
+                                </div>
+
                             </td>
 
                             <td>
+
                                 {% if usuario.is_active %}
                                     <span class="status-badge status-active">
                                         Activo
@@ -115,6 +145,7 @@ Usuarios
                                         Inactivo
                                     </span>
                                 {% endif %}
+
                             </td>
 
                             <td class="text-end">
@@ -174,8 +205,7 @@ Usuarios
             <h2>No hay usuarios registrados</h2>
 
             <p>
-                Creá el primer usuario para comenzar
-                a utilizar la plataforma.
+                Creá el primer usuario para comenzar.
             </p>
 
             <a

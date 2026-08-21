@@ -30,10 +30,20 @@ Inicio
             {{ request.user.first_name|default:request.user.username }}
         </h1>
 
-        <p>
-            Desde acá vas a poder acceder a tus cursos,
-            actividades y progreso académico.
-        </p>
+        {% if es_docente %}
+            <p>
+                Accedé a tus cursos, contenidos y actividades
+                desde este espacio.
+            </p>
+        {% elif es_alumno %}
+            <p>
+                Accedé a tus cursos, actividades y progreso académico.
+            </p>
+        {% else %}
+            <p>
+                Gestioná la plataforma desde este panel.
+            </p>
+        {% endif %}
     </div>
 
 </section>
@@ -52,7 +62,7 @@ Inicio
             </span>
 
             <strong class="dashboard-card-value">
-                0
+                {{ cantidad_cursos }}
             </strong>
 
             <span class="dashboard-card-detail">
@@ -115,27 +125,98 @@ Inicio
         <div>
             <h2>Mis cursos</h2>
 
-            <p>
-                Tus cursos aparecerán aquí cuando estés inscripto.
-            </p>
+            {% if es_docente %}
+                <p>
+                    Cursos que tenés asignados como docente.
+                </p>
+            {% elif es_alumno %}
+                <p>
+                    Cursos en los que estás inscripto.
+                </p>
+            {% endif %}
         </div>
 
     </div>
 
-    <div class="empty-state">
+    {% if cursos %}
 
-        <div class="empty-state-icon">
-            <i class="bi bi-book"></i>
+        <div class="courses-grid">
+
+            {% for curso in cursos %}
+
+                <article class="course-card">
+
+                    <div class="course-card-icon">
+                        <i class="bi bi-journal-bookmark"></i>
+                    </div>
+
+                    <div class="course-card-content">
+
+                        <span class="course-institution">
+                            {{ curso.institucion.nombre }}
+                        </span>
+
+                        <h3>
+                            {{ curso.nombre }}
+                        </h3>
+
+                        {% if curso.descripcion %}
+                            <p>
+                                {{ curso.descripcion|truncatechars:120 }}
+                            </p>
+                        {% endif %}
+
+                        <div class="course-card-footer">
+
+                            <span>
+                                <i class="bi bi-calendar3"></i>
+
+                                {% if curso.fecha_inicio %}
+                                    {{ curso.fecha_inicio|date:"d/m/Y" }}
+                                {% else %}
+                                    Sin fecha
+                                {% endif %}
+                            </span>
+
+                            <span class="course-status">
+                                {{ curso.get_estado_display }}
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </article>
+
+            {% endfor %}
+
         </div>
 
-        <h3>Todavía no tenés cursos</h3>
+    {% else %}
 
-        <p>
-            Cuando seas inscripto en un curso,
-            vas a poder acceder desde esta sección.
-        </p>
+        <div class="empty-state">
 
-    </div>
+            <div class="empty-state-icon">
+                <i class="bi bi-book"></i>
+            </div>
+
+            <h3>Todavía no tenés cursos</h3>
+
+            {% if es_docente %}
+                <p>
+                    Cuando te asignen como docente de un curso,
+                    aparecerá en esta sección.
+                </p>
+            {% elif es_alumno %}
+                <p>
+                    Cuando seas inscripto en un curso,
+                    vas a poder acceder desde esta sección.
+                </p>
+            {% endif %}
+
+        </div>
+
+    {% endif %}
 
 </section>
 

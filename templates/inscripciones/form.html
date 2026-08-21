@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+{{ titulo }} | Aula Virtual
+{% endblock %}
+
+{% block page_title %}
+Inscripciones
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'css/inscripciones.css' %}"
+>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+
+        <a
+            href="{% url 'lista_inscripciones' curso.pk %}"
+            class="back-link"
+        >
+            <i class="bi bi-arrow-left"></i>
+            Volver
+        </a>
+
+        <h1>
+            {{ titulo }}
+        </h1>
+
+        <p>
+            {{ curso.nombre }}
+            ·
+            {{ curso.institucion.nombre }}
+        </p>
+
+    </div>
+
+</section>
+
+<section class="form-card">
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <div class="form-grid">
+
+            <div class="form-field">
+
+                <label for="{{ form.alumno.id_for_label }}">
+                    Alumno
+                </label>
+
+                {{ form.alumno }}
+                {{ form.alumno.errors }}
+
+            </div>
+
+            <div class="form-field">
+
+                <label for="{{ form.estado.id_for_label }}">
+                    Estado
+                </label>
+
+                {{ form.estado }}
+                {{ form.estado.errors }}
+
+            </div>
+
+        </div>
+
+        <div class="form-actions">
+
+            <a
+                href="{% url 'lista_inscripciones' curso.pk %}"
+                class="btn-secondary-custom"
+            >
+                Cancelar
+            </a>
+
+            <button
+                type="submit"
+                class="btn-primary-custom"
+            >
+                <i class="bi bi-check-lg"></i>
+                Guardar
+            </button>
+
+        </div>
+
+    </form>
+
+</section>
+
+{% endblock %}

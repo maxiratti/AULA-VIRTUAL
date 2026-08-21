@@ -8,7 +8,7 @@
 }
 
 .page-header h1 {
-    margin: 0 0 5px;
+    margin: 5px 0;
 
     font-size: 28px;
     font-weight: 750;
@@ -23,6 +23,23 @@
     font-size: 14px;
 }
 
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    margin-bottom: 6px;
+
+    color: #6b7280;
+
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.back-link:hover {
+    color: #2563eb;
+}
+
 .btn-primary-custom,
 .btn-secondary-custom {
     display: inline-flex;
@@ -33,7 +50,6 @@
     min-height: 42px;
     padding: 0 16px;
 
-    border: 0;
     border-radius: 9px;
 
     font-size: 14px;
@@ -41,6 +57,8 @@
 }
 
 .btn-primary-custom {
+    border: 0;
+
     background: #2563eb;
     color: #ffffff;
 }
@@ -57,8 +75,14 @@
     color: #374151;
 }
 
+.btn-secondary-custom:hover {
+    background: #f9fafb;
+    color: #111827;
+}
+
 .content-card,
-.form-card {
+.form-card,
+.memberships-section {
     border: 1px solid #e5e7eb;
     border-radius: 14px;
 
@@ -93,8 +117,18 @@
 
     border-bottom: 1px solid #f0f1f3;
 
+    color: #374151;
+
     font-size: 14px;
     vertical-align: middle;
+}
+
+.table-custom tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.table-custom tbody tr:hover {
+    background: #fafcff;
 }
 
 .user-row {
@@ -126,19 +160,68 @@
     display: block;
 }
 
+.user-row strong {
+    color: #111827;
+}
+
 .user-row span {
+    margin-top: 1px;
+
     color: #6b7280;
 
     font-size: 12px;
 }
 
 .user-row small {
+    margin-top: 1px;
+
     color: #9ca3af;
 
     font-size: 11px;
 }
 
-.role-badge,
+.user-memberships {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.user-membership strong {
+    display: block;
+
+    margin-bottom: 4px;
+
+    color: #374151;
+
+    font-size: 12px;
+}
+
+.mini-roles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.mini-roles span {
+    display: inline-flex;
+
+    padding: 3px 7px;
+
+    border-radius: 20px;
+
+    background: #eff6ff;
+    color: #1d4ed8;
+
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.no-membership {
+    color: #9ca3af;
+
+    font-size: 12px;
+}
+
 .status-badge {
     display: inline-flex;
 
@@ -148,11 +231,6 @@
 
     font-size: 11px;
     font-weight: 650;
-}
-
-.role-badge {
-    background: #eff6ff;
-    color: #1d4ed8;
 }
 
 .status-active {
@@ -216,6 +294,8 @@
 
     margin-bottom: 7px;
 
+    color: #374151;
+
     font-size: 13px;
     font-weight: 600;
 }
@@ -235,6 +315,21 @@
     border-color: #2563eb;
 
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.field-help,
+.field-description {
+    display: block;
+
+    margin-top: 6px;
+
+    color: #9ca3af;
+
+    font-size: 11px;
+}
+
+.field-description {
+    margin: -2px 0 10px;
 }
 
 .errorlist {
@@ -257,6 +352,249 @@
     padding-top: 20px;
 
     border-top: 1px solid #e5e7eb;
+}
+
+.memberships-section {
+    max-width: 900px;
+
+    margin-top: 24px;
+    padding: 26px;
+}
+
+.memberships-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+
+    margin-bottom: 22px;
+}
+
+.memberships-header h2 {
+    margin: 0 0 5px;
+
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.memberships-header p {
+    margin: 0;
+
+    color: #6b7280;
+
+    font-size: 13px;
+}
+
+.memberships-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.membership-card {
+    padding: 18px;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+
+    background: #ffffff;
+}
+
+.membership-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.membership-icon {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+
+    width: 42px;
+    height: 42px;
+
+    border-radius: 11px;
+
+    background: #eff6ff;
+    color: #2563eb;
+
+    font-weight: 700;
+}
+
+.membership-title {
+    flex: 1;
+}
+
+.membership-title strong {
+    display: block;
+
+    margin-bottom: 4px;
+
+    color: #111827;
+
+    font-size: 14px;
+}
+
+.membership-roles {
+    margin-top: 18px;
+}
+
+.membership-label {
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: #9ca3af;
+
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.roles-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.role-badge {
+    display: inline-flex;
+
+    padding: 5px 8px;
+
+    border-radius: 20px;
+
+    background: #eff6ff;
+    color: #1d4ed8;
+
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.no-roles {
+    color: #9ca3af;
+
+    font-size: 12px;
+}
+
+.membership-footer {
+    display: flex;
+    justify-content: flex-end;
+
+    margin-top: 18px;
+    padding-top: 14px;
+
+    border-top: 1px solid #f0f1f3;
+}
+
+.btn-edit-membership {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    color: #2563eb;
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.btn-edit-membership:hover {
+    color: #1d4ed8;
+}
+
+.membership-empty {
+    padding: 42px 20px;
+
+    border: 1px dashed #d1d5db;
+    border-radius: 12px;
+
+    background: #fafafa;
+
+    text-align: center;
+}
+
+.membership-empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 54px;
+    height: 54px;
+
+    margin: 0 auto 14px;
+
+    border-radius: 14px;
+
+    background: #eff6ff;
+    color: #2563eb;
+
+    font-size: 23px;
+}
+
+.membership-empty h3 {
+    margin-bottom: 6px;
+
+    font-size: 16px;
+}
+
+.membership-empty p {
+    margin-bottom: 18px;
+
+    color: #6b7280;
+
+    font-size: 13px;
+}
+
+.membership-form-card {
+    max-width: 700px;
+}
+
+.membership-role-field {
+    margin-top: 22px;
+}
+
+.roles-selector {
+    padding: 14px;
+
+    border: 1px solid #d1d5db;
+    border-radius: 9px;
+
+    background: #ffffff;
+}
+
+.roles-selector ul {
+    margin: 0;
+    padding: 0;
+
+    list-style: none;
+}
+
+.roles-selector li {
+    margin-bottom: 9px;
+}
+
+.roles-selector li:last-child {
+    margin-bottom: 0;
+}
+
+.roles-selector label {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    margin: 0;
+
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.roles-selector input {
+    width: 17px;
+    height: 17px;
+
+    accent-color: #2563eb;
 }
 
 .empty-state {
@@ -284,16 +622,19 @@
 }
 
 @media (max-width: 767.98px) {
-    .page-header {
+    .page-header,
+    .memberships-header {
         align-items: stretch;
         flex-direction: column;
     }
 
-    .page-header .btn-primary-custom {
+    .page-header .btn-primary-custom,
+    .memberships-header .btn-primary-custom {
         width: 100%;
     }
 
-    .form-grid {
+    .form-grid,
+    .memberships-grid {
         grid-template-columns: 1fr;
     }
 
@@ -301,7 +642,8 @@
         grid-column: auto;
     }
 
-    .form-card {
+    .form-card,
+    .memberships-section {
         padding: 20px;
     }
 }

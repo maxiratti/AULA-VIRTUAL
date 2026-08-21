@@ -45,6 +45,7 @@ Usuarios
                 <label for="{{ form.first_name.id_for_label }}">
                     Nombre
                 </label>
+
                 {{ form.first_name }}
                 {{ form.first_name.errors }}
             </div>
@@ -53,6 +54,7 @@ Usuarios
                 <label for="{{ form.last_name.id_for_label }}">
                     Apellido
                 </label>
+
                 {{ form.last_name }}
                 {{ form.last_name.errors }}
             </div>
@@ -61,6 +63,7 @@ Usuarios
                 <label for="{{ form.username.id_for_label }}">
                     Usuario
                 </label>
+
                 {{ form.username }}
                 {{ form.username.errors }}
             </div>
@@ -69,38 +72,31 @@ Usuarios
                 <label for="{{ form.email.id_for_label }}">
                     Email
                 </label>
+
                 {{ form.email }}
                 {{ form.email.errors }}
-            </div>
-
-            <div class="form-field">
-                <label for="{{ form.institucion.id_for_label }}">
-                    Institución
-                </label>
-                {{ form.institucion }}
-                {{ form.institucion.errors }}
-            </div>
-
-            <div class="form-field">
-                <label for="{{ form.rol.id_for_label }}">
-                    Rol
-                </label>
-                {{ form.rol }}
-                {{ form.rol.errors }}
             </div>
 
             <div class="form-field">
                 <label for="{{ form.password.id_for_label }}">
                     Contraseña
                 </label>
+
                 {{ form.password }}
                 {{ form.password.errors }}
+
+                {% if usuario_editado %}
+                    <small class="field-help">
+                        Dejá en blanco para mantener la contraseña actual.
+                    </small>
+                {% endif %}
             </div>
 
             <div class="form-field">
                 <label for="{{ form.confirmar_password.id_for_label }}">
                     Confirmar contraseña
                 </label>
+
                 {{ form.confirmar_password }}
                 {{ form.confirmar_password.errors }}
             </div>
@@ -147,4 +143,178 @@ Usuarios
 
 </section>
 
+{% if usuario_editado %}
+
+<section class="memberships-section">
+
+    <div class="memberships-header">
+
+        <div>
+            <h2>Instituciones y roles</h2>
+
+            <p>
+                Administrá en qué instituciones participa
+                este usuario y qué funciones cumple en cada una.
+            </p>
+        </div>
+
+        <a
+            href="{% url 'nueva_membresia' usuario_editado.pk %}"
+            class="btn-primary-custom"
+        >
+            <i class="bi bi-plus-lg"></i>
+            Agregar institución
+        </a>
+
+    </div>
+
+    {% if membresias %}
+
+        <div class="memberships-grid">
+
+            {% for membresia in membresias %}
+
+                <article class="membership-card">
+
+                    <div class="membership-card-header">
+
+                        <div class="membership-icon">
+                            {{ membresia.institucion.nombre|slice:":1"|upper }}
+                        </div>
+
+                        <div class="membership-title">
+
+                            <strong>
+                                {{ membresia.institucion.nombre }}
+                            </strong>
+
+                            {% if membresia.activa %}
+                                <span class="status-badge status-active">
+                                    Activa
+                                </span>
+                            {% else %}
+                                <span class="status-badge status-inactive">
+                                    Inactiva
+                                </span>
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                    <div class="membership-roles">
+
+                        <span class="membership-label">
+                            Roles
+                        </span>
+
+                        <div class="roles-list">
+
+                            {% for rol in membresia.roles.all %}
+                                <span class="role-badge">
+                                    {{ rol.name }}
+                                </span>
+                            {% empty %}
+                                <span class="no-roles">
+                                    Sin roles asignados
+                                </span>
+                            {% endfor %}
+
+                        </div>
+
+                    </div>
+
+                    <div class="membership-footer">
+
+                        <a
+                            href="{% url 'editar_membresia' membresia.pk %}"
+                            class="btn-edit-membership"
+                        >
+                            <i class="bi bi-pencil"></i>
+                            Editar
+                        </a>
+
+                    </div>
+
+                </article>
+
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+
+        <div class="membership-empty">
+
+            <div class="membership-empty-icon">
+                <i class="bi bi-building-add"></i>
+            </div>
+
+            <h3>
+                Todavía no pertenece a ninguna institución
+            </h3>
+
+            <p>
+                Agregá una institución y asignale uno
+                o varios roles.
+            </p>
+
+            <a
+                href="{% url 'nueva_membresia' usuario_editado.pk %}"
+                class="btn-primary-custom"
+            >
+                <i class="bi bi-plus-lg"></i>
+                Agregar institución
+            </a>
+
+        </div>
+
+    {% endif %}
+
+</section>
+
+{% endif %}
+
 {% endblock %}
+
+class CambioPasswordObligatorioForm(forms.Form):
+    password_nueva = forms.CharField(
+        label="Nueva contraseña",
+        widget=forms.PasswordInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Ingresá una nueva contraseña",
+            }
+        ),
+    )
+
+    confirmar_password = forms.CharField(
+        label="Confirmar contraseña",
+        widget=forms.PasswordInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Repetí la nueva contraseña",
+            }
+        ),
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        password_nueva = cleaned_data.get(
+            "password_nueva"
+        )
+        confirmar_password = cleaned_data.get(
+            "confirmar_password"
+        )
+
+        if (
+            password_nueva
+            and confirmar_password
+            and password_nueva != confirmar_password
+        ):
+            raise forms.ValidationError(
+                "Las contraseñas no coinciden."
+            )
+
+        return cleaned_data
