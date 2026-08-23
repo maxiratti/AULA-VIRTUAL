@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+{{ clase.titulo }} | Aula Virtual
+{% endblock %}
+
+{% block page_title %}
+Contenido de la clase
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'css/contenidos.css' %}"
+>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+
+        <a
+            href="{% url 'lista_clases' modulo.pk %}"
+            class="back-link"
+        >
+            <i class="bi bi-arrow-left"></i>
+            Volver a clases
+        </a>
+
+        <h1>
+            {{ clase.titulo }}
+        </h1>
+
+        <p>
+            {{ curso.nombre }}
+            ·
+            {{ modulo.titulo }}
+        </p>
+
+    </div>
+
+    <a
+        href="{% url 'nuevo_contenido' clase.pk %}"
+        class="btn-primary-custom"
+    >
+        <i class="bi bi-plus-lg"></i>
+        Agregar contenido
+    </a>
+
+</section>
+
+
+{% if contenidos %}
+
+    <section class="lesson-content-list">
+
+        {% for contenido in contenidos %}
+
+            <article class="lesson-content-card">
+
+                <div class="content-type-icon">
+
+                    {% if contenido.tipo == "TEXTO" %}
+
+                        <i class="bi bi-text-paragraph"></i>
+
+                    {% elif contenido.tipo == "ARCHIVO" %}
+
+                        <i class="bi bi-file-earmark"></i>
+
+                    {% elif contenido.tipo == "ENLACE" %}
+
+                        <i class="bi bi-link-45deg"></i>
+
+                    {% elif contenido.tipo == "VIDEO" %}
+
+                        <i class="bi bi-play-btn"></i>
+
+                    {% elif contenido.tipo == "EMBEBIDO" %}
+
+                        <i class="bi bi-code-square"></i>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="lesson-content-main">
+
+                    <div class="lesson-content-header">
+
+                        <div>
+
+                            <span class="content-type-label">
+                                {{ contenido.get_tipo_display }}
+                                · Orden {{ contenido.orden }}
+                            </span>
+
+                            {% if contenido.titulo %}
+
+                                <h2>
+                                    {{ contenido.titulo }}
+                                </h2>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        {% if contenido.visible %}
+
+                            <span class="visibility-badge visible">
+                                <i class="bi bi-eye"></i>
+                                Visible
+                            </span>
+
+                        {% else %}
+
+                            <span class="visibility-badge hidden">
+                                <i class="bi bi-eye-slash"></i>
+                                Oculto
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    {% if contenido.tipo == "TEXTO" %}
+
+                        <div class="text-content">
+                            {{ contenido.texto|linebreaks }}
+                        </div>
+
+
+                    {% elif contenido.tipo == "ARCHIVO" %}
+
+                        {% if contenido.archivo %}
+
+                            <a
+                                href="{{ contenido.archivo.url }}"
+                                class="resource-link"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <i class="bi bi-file-earmark-arrow-down"></i>
+                                Abrir archivo
+                            </a>
+
+                        {% endif %}
+
+
+                    {% elif contenido.tipo == "ENLACE" %}
+
+                        <a
+                            href="{{ contenido.url }}"
+                            class="resource-link"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <i class="bi bi-box-arrow-up-right"></i>
+                            Abrir enlace
+                        </a>
+
+
+                    {% elif contenido.tipo == "VIDEO" %}
+
+                        {% if contenido.youtube_embed_url %}
+
+                            <div class="video-wrapper">
+
+                                <div class="video-responsive">
+
+                                    <iframe
+                                        src="{{ contenido.youtube_embed_url }}"
+                                        title="{{ contenido.titulo|default:'Video de la clase' }}"
+                                        loading="lazy"
+                                        referrerpolicy="strict-origin-when-cross-origin"
+                                        allow="
+                                            accelerometer;
+                                            autoplay;
+                                            clipboard-write;
+                                            encrypted-media;
+                                            gyroscope;
+                                            picture-in-picture;
+                                            web-share
+                                        "
+                                        allowfullscreen
+                                    ></iframe>
+
+                                </div>
+
+                                <div class="embed-footer">
+
+                                    <span>
+                                        <i class="bi bi-youtube"></i>
+                                        Video
+                                    </span>
+
+                                    <a
+                                        href="{{ contenido.url }}"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        Abrir en YouTube
+                                        <i class="bi bi-box-arrow-up-right"></i>
+                                    </a>
+
+                                </div>
+
+                            </div>
+
+                        {% else %}
+
+                            <a
+                                href="{{ contenido.url }}"
+                                class="resource-link"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <i class="bi bi-play-circle"></i>
+                                Ver video
+                            </a>
+
+                        {% endif %}
+
+
+                    {% elif contenido.tipo == "EMBEBIDO" %}
+
+                        <div class="genially-wrapper">
+
+                            <div class="genially-responsive">
+
+                                <iframe
+                                    title="{{ contenido.titulo|default:'Recurso interactivo' }}"
+                                    src="{{ contenido.url }}"
+                                    frameborder="0"
+                                    allowfullscreen="true"
+                                    scrolling="yes"
+                                    loading="lazy"
+                                    referrerpolicy="strict-origin-when-cross-origin"
+                                ></iframe>
+
+                            </div>
+
+                            <div class="embed-footer">
+
+                                <span>
+                                    <i class="bi bi-stars"></i>
+                                    Recurso interactivo
+                                </span>
+
+                                <a
+                                    href="{{ contenido.url }}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Abrir en una nueva pestaña
+                                    <i class="bi bi-box-arrow-up-right"></i>
+                                </a>
+
+                            </div>
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="lesson-content-actions">
+
+                    <a
+                        href="{% url 'editar_contenido' contenido.pk %}"
+                        class="action-button"
+                        title="Editar contenido"
+                        aria-label="Editar contenido"
+                    >
+                        <i class="bi bi-pencil"></i>
+                    </a>
+
+                </div>
+
+            </article>
+
+        {% endfor %}
+
+    </section>
+
+
+{% else %}
+
+    <section class="content-card">
+
+        <div class="empty-state">
+
+            <div class="empty-state-icon">
+                <i class="bi bi-box-seam"></i>
+            </div>
+
+            <h2>
+                Esta clase todavía no tiene contenido
+            </h2>
+
+            <p>
+                Agregá texto, archivos, enlaces,
+                videos o recursos interactivos.
+            </p>
+
+            <a
+                href="{% url 'nuevo_contenido' clase.pk %}"
+                class="btn-primary-custom"
+            >
+                <i class="bi bi-plus-lg"></i>
+                Agregar primer contenido
+            </a>
+
+        </div>
+
+    </section>
+
+{% endif %}
+
+{% endblock %}

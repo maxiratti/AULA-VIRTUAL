@@ -45,4 +45,9 @@ urlpatterns = [
         "",
         include("apps.inscripciones.urls"),
     ),
+
+    path(
+        "",
+        include("apps.contenidos.urls"),
+    ),
 ]

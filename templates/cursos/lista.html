@@ -144,6 +144,15 @@ Cursos
                                 <div class="course-actions">
 
                                     <a
+                                        href="{% url 'lista_modulos' curso.pk %}"
+                                        class="action-button"
+                                        title="Contenido del curso"
+                                        aria-label="Contenido del curso"
+                                    >
+                                        <i class="bi bi-collection"></i>
+                                    </a>
+
+                                    <a
                                         href="{% url 'lista_inscripciones' curso.pk %}"
                                         class="action-button"
                                         title="Inscripciones"

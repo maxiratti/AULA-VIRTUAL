@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "apps.dashboard",
     "apps.cursos",
     "apps.inscripciones",
+    "apps.contenidos",
 ]
 
 MIDDLEWARE = [

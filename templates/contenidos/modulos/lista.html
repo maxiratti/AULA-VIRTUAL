@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Contenido | {{ curso.nombre }}
+{% endblock %}
+
+{% block page_title %}
+Contenido del curso
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'css/contenidos.css' %}"
+>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+
+        <a
+            href="{% url 'lista_cursos' %}"
+            class="back-link"
+        >
+            <i class="bi bi-arrow-left"></i>
+            Volver a cursos
+        </a>
+
+        <h1>
+            {{ curso.nombre }}
+        </h1>
+
+        <p>
+            {{ curso.institucion.nombre }}
+        </p>
+
+    </div>
+
+    <a
+        href="{% url 'nuevo_modulo' curso.pk %}"
+        class="btn-primary-custom"
+    >
+        <i class="bi bi-plus-lg"></i>
+        Nuevo módulo
+    </a>
+
+</section>
+
+{% if modulos %}
+
+    <section class="module-list">
+
+        {% for modulo in modulos %}
+
+            <article class="module-card">
+
+                <div class="module-order">
+                    {{ modulo.orden }}
+                </div>
+
+                <div class="module-content">
+
+                    <div class="module-heading">
+
+                        <div>
+
+                            <span class="module-label">
+                                Módulo {{ modulo.orden }}
+                            </span>
+
+                            <h2>
+                                {{ modulo.titulo }}
+                            </h2>
+
+                        </div>
+
+                        {% if modulo.visible %}
+
+                            <span class="visibility-badge visible">
+                                <i class="bi bi-eye"></i>
+                                Visible
+                            </span>
+
+                        {% else %}
+
+                            <span class="visibility-badge hidden">
+                                <i class="bi bi-eye-slash"></i>
+                                Oculto
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                    {% if modulo.descripcion %}
+
+                        <p class="module-description">
+                            {{ modulo.descripcion }}
+                        </p>
+
+                    {% else %}
+
+                        <p class="module-description empty">
+                            Sin descripción.
+                        </p>
+
+                    {% endif %}
+
+                    <div class="module-meta">
+
+                        <i class="bi bi-file-earmark-text"></i>
+
+                        {{ modulo.clases.count }}
+
+                        {% if modulo.clases.count == 1 %}
+                            clase
+                        {% else %}
+                            clases
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+                <div class="module-actions">
+
+                    <a
+                        href="{% url 'lista_clases' modulo.pk %}"
+                        class="action-button"
+                        title="Ver clases"
+                        aria-label="Ver clases"
+                    >
+                        <i class="bi bi-file-earmark-text"></i>
+                    </a>
+
+                    <a
+                        href="{% url 'editar_modulo' modulo.pk %}"
+                        class="action-button"
+                        title="Editar módulo"
+                        aria-label="Editar módulo"
+                    >
+                        <i class="bi bi-pencil"></i>
+                    </a>
+
+                </div>
+
+            </article>
+
+        {% endfor %}
+
+    </section>
+
+{% else %}
+
+    <section class="content-card">
+
+        <div class="empty-state">
+
+            <div class="empty-state-icon">
+                <i class="bi bi-collection"></i>
+            </div>
+
+            <h2>
+                Este curso todavía no tiene módulos
+            </h2>
+
+            <p>
+                Organizá el contenido del curso
+                creando el primer módulo.
+            </p>
+
+            <a
+                href="{% url 'nuevo_modulo' curso.pk %}"
+                class="btn-primary-custom"
+            >
+                <i class="bi bi-plus-lg"></i>
+                Crear primer módulo
+            </a>
+
+        </div>
+
+    </section>
+
+{% endif %}
+
+{% endblock %}

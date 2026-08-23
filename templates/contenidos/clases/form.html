@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+{{ titulo }} | Aula Virtual
+{% endblock %}
+
+{% block page_title %}
+Clases
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'css/contenidos.css' %}"
+>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+
+        <a
+            href="{% url 'lista_clases' modulo.pk %}"
+            class="back-link"
+        >
+            <i class="bi bi-arrow-left"></i>
+            Volver a clases
+        </a>
+
+        <h1>
+            {{ titulo }}
+        </h1>
+
+        <p>
+            {{ curso.nombre }}
+            ·
+            {{ modulo.titulo }}
+        </p>
+
+    </div>
+
+</section>
+
+<section class="form-card">
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+
+        {% endif %}
+
+        <div class="form-field">
+
+            <label for="{{ form.titulo.id_for_label }}">
+                Título
+            </label>
+
+            {{ form.titulo }}
+            {{ form.titulo.errors }}
+
+        </div>
+
+        <div class="form-field">
+
+            <label for="{{ form.descripcion.id_for_label }}">
+                Descripción
+            </label>
+
+            {{ form.descripcion }}
+            {{ form.descripcion.errors }}
+
+        </div>
+
+        <div class="form-row">
+
+            <div class="form-field">
+
+                <label for="{{ form.orden.id_for_label }}">
+                    Orden
+                </label>
+
+                {{ form.orden }}
+                {{ form.orden.errors }}
+
+            </div>
+
+            <div class="form-field">
+
+                <label for="{{ form.fecha_publicacion.id_for_label }}">
+                    Fecha de publicación
+                </label>
+
+                {{ form.fecha_publicacion }}
+                {{ form.fecha_publicacion.errors }}
+
+                <small class="field-help">
+                    Opcional. Dejá vacío para publicar sin fecha programada.
+                </small>
+
+            </div>
+
+        </div>
+
+        <div class="form-field">
+
+            <div class="form-check">
+
+                {{ form.visible }}
+
+                <label
+                    class="form-check-label"
+                    for="{{ form.visible.id_for_label }}"
+                >
+                    Visible para los alumnos
+                </label>
+
+            </div>
+
+            {{ form.visible.errors }}
+
+        </div>
+
+        <div class="form-actions">
+
+            <a
+                href="{% url 'lista_clases' modulo.pk %}"
+                class="btn-secondary-custom"
+            >
+                Cancelar
+            </a>
+
+            <button
+                type="submit"
+                class="btn-primary-custom"
+            >
+                <i class="bi bi-check-lg"></i>
+                Guardar clase
+            </button>
+
+        </div>
+
+    </form>
+
+</section>
+
+{% endblock %}

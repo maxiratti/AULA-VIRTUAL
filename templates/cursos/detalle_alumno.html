@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+{{ curso.nombre }} | Aula Virtual
+{% endblock %}
+
+{% block page_title %}
+{{ curso.nombre }}
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'css/contenidos.css' %}"
+>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+
+        <a
+            href="{% url 'mis_cursos' %}"
+            class="back-link"
+        >
+            <i class="bi bi-arrow-left"></i>
+            Volver a mis cursos
+        </a>
+
+        <h1>
+            {{ curso.nombre }}
+        </h1>
+
+        <p>
+            {{ curso.institucion.nombre }}
+        </p>
+
+    </div>
+
+</section>
+
+
+{% if curso.descripcion %}
+
+    <section class="content-card mb-4">
+
+        <div class="p-4">
+
+            <h2 class="h5">
+                Sobre el curso
+            </h2>
+
+            <p class="mb-0 text-muted">
+                {{ curso.descripcion }}
+            </p>
+
+        </div>
+
+    </section>
+
+{% endif %}
+
+
+{% if modulos %}
+
+    <section class="module-list">
+
+        {% for modulo in modulos %}
+
+            <article class="module-card">
+
+                <div class="module-order">
+                    {{ modulo.orden }}
+                </div>
+
+                <div class="module-content">
+
+                    <div class="module-heading">
+
+                        <div>
+
+                            <span class="module-label">
+                                Módulo {{ modulo.orden }}
+                            </span>
+
+                            <h2>
+                                {{ modulo.titulo }}
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+                    {% if modulo.descripcion %}
+
+                        <p class="module-description">
+                            {{ modulo.descripcion }}
+                        </p>
+
+                    {% endif %}
+
+
+                    <div class="student-class-list">
+
+                        {% for clase in modulo.clases_publicadas %}
+
+                            <a
+                                href="{% url 'detalle_clase_alumno' clase.pk %}"
+                                class="student-class-item"
+                            >
+
+                                <div class="student-class-icon">
+                                    <i class="bi bi-file-earmark-text"></i>
+                                </div>
+
+                                <div>
+
+                                    <span>
+                                        Clase {{ clase.orden }}
+                                    </span>
+
+                                    <strong>
+                                        {{ clase.titulo }}
+                                    </strong>
+
+                                </div>
+
+                                <i class="bi bi-chevron-right"></i>
+
+                            </a>
+
+                        {% empty %}
+
+                            <div class="student-no-classes">
+                                Todavía no hay clases publicadas.
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+
+            </article>
+
+        {% endfor %}
+
+    </section>
+
+
+{% else %}
+
+    <section class="content-card">
+
+        <div class="empty-state">
+
+            <div class="empty-state-icon">
+                <i class="bi bi-collection"></i>
+            </div>
+
+            <h2>
+                Todavía no hay contenido disponible
+            </h2>
+
+            <p>
+                Los módulos aparecerán aquí cuando
+                el docente los publique.
+            </p>
+
+        </div>
+
+    </section>
+
+{% endif %}
+
+{% endblock %}

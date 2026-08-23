@@ -1,8 +1,12 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.db.models import Prefetch, Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
+from apps.contenidos.models import Clase, Modulo
+from apps.inscripciones.models import Inscripcion
 from apps.roles.utils import tiene_rol_en_institucion
 
 from .forms import CursoForm
@@ -49,7 +53,10 @@ def lista_cursos(request):
         cursos
         .select_related("institucion")
         .prefetch_related("docentes")
-        .order_by("institucion__nombre", "nombre")
+        .order_by(
+            "institucion__nombre",
+            "nombre",
+        )
     )
 
     return render(
@@ -249,5 +256,113 @@ def editar_curso(request, pk):
             "subtitulo": (
                 "Actualizá los datos del curso."
             ),
+        },
+    )
+
+
+@login_required
+def mis_cursos(request):
+    inscripciones = (
+        request.user.inscripciones
+        .select_related(
+            "curso",
+            "curso__institucion",
+        )
+        .filter(
+            estado__in=[
+                Inscripcion.ESTADO_INSCRIPTO,
+                Inscripcion.ESTADO_CURSANDO,
+            ]
+        )
+        .order_by(
+            "curso__institucion__nombre",
+            "curso__nombre",
+        )
+    )
+
+    return render(
+        request,
+        "cursos/mis_cursos.html",
+        {
+            "inscripciones": inscripciones,
+        },
+    )
+
+
+@login_required
+def detalle_curso_alumno(request, pk):
+    curso = get_object_or_404(
+        Curso.objects.select_related(
+            "institucion"
+        ),
+        pk=pk,
+    )
+
+    inscripcion = (
+        Inscripcion.objects
+        .filter(
+            curso=curso,
+            alumno=request.user,
+            estado__in=[
+                Inscripcion.ESTADO_INSCRIPTO,
+                Inscripcion.ESTADO_CURSANDO,
+            ],
+        )
+        .first()
+    )
+
+    if not inscripcion:
+        raise PermissionDenied
+
+    if not tiene_rol_en_institucion(
+        request.user,
+        "Alumno",
+        curso.institucion,
+    ):
+        raise PermissionDenied
+
+    clases_visibles = (
+        Clase.objects
+        .filter(
+            visible=True,
+        )
+        .filter(
+            Q(fecha_publicacion__isnull=True)
+            | Q(
+                fecha_publicacion__lte=timezone.now()
+            )
+        )
+        .order_by(
+            "orden",
+            "id",
+        )
+    )
+
+    modulos = (
+        Modulo.objects
+        .filter(
+            curso=curso,
+            visible=True,
+        )
+        .prefetch_related(
+            Prefetch(
+                "clases",
+                queryset=clases_visibles,
+                to_attr="clases_publicadas",
+            )
+        )
+        .order_by(
+            "orden",
+            "id",
+        )
+    )
+
+    return render(
+        request,
+        "cursos/detalle_alumno.html",
+        {
+            "curso": curso,
+            "inscripcion": inscripcion,
+            "modulos": modulos,
         },
     )
