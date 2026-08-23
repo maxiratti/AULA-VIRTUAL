@@ -22,6 +22,16 @@ from .forms import (
 
 from .models import Actividad, Entrega
 
+from django.urls import reverse
+
+from apps.notificaciones.models import Notificacion
+
+from apps.notificaciones.services import (
+    notificar_actividad_publicada,
+    notificar_entrega_corregida,
+    notificar_nueva_entrega,
+)
+
 
 def puede_gestionar_actividad(usuario, clase):
     curso = clase.modulo.curso
@@ -121,6 +131,10 @@ def nueva_actividad(request, clase_id):
             actividad.clase = clase
             actividad.save()
 
+            notificar_actividad_publicada(
+                actividad
+            )
+
             messages.success(
                 request,
                 "Actividad creada correctamente.",
@@ -167,6 +181,8 @@ def editar_actividad(request, pk):
     ):
         raise PermissionDenied
 
+    era_visible = actividad.visible
+
     if request.method == "POST":
         form = ActividadForm(
             request.POST,
@@ -175,7 +191,15 @@ def editar_actividad(request, pk):
         )
 
         if form.is_valid():
-            form.save()
+            actividad_editada = form.save()
+
+            if (
+                not era_visible
+                and actividad_editada.visible
+            ):
+                notificar_actividad_publicada(
+                    actividad_editada
+                )
 
             messages.success(
                 request,
@@ -369,6 +393,41 @@ def entregar_actividad(request, pk):
             entrega.alumno = request.user
             entrega.save()
 
+            notificar_nueva_entrega(
+                entrega
+            )
+
+            curso = actividad.clase.modulo.curso
+
+            nombre_alumno = (
+                request.user.get_full_name()
+                or request.user.username
+            )
+
+            url_entrega = reverse(
+                "corregir_entrega",
+                kwargs={
+                    "pk": entrega.pk,
+                },
+            )
+
+            for docente in curso.docentes.all():
+
+                Notificacion.objects.get_or_create(
+                    usuario=docente,
+                    clave=f"entrega_nueva:{entrega.pk}",
+                    defaults={
+                        "tipo": Notificacion.TIPO_ENTREGA,
+                        "titulo": "Nueva entrega recibida",
+                        "mensaje": (
+                            f"{nombre_alumno} entregó "
+                            f"“{actividad.titulo}” "
+                            f"en {curso.nombre}."
+                        ),
+                        "url": url_entrega,
+                    },
+                )
+
             messages.success(
                 request,
                 "Tu actividad fue entregada correctamente.",
@@ -515,6 +574,36 @@ def corregir_entrega(request, pk):
             entrega.corregido_por = request.user
 
             entrega.save()
+
+            notificar_entrega_corregida(
+                entrega
+            )
+
+            curso = actividad.clase.modulo.curso
+
+            url_actividad = reverse(
+                "detalle_actividad_alumno",
+                kwargs={
+                    "pk": actividad.pk,
+                },
+            )
+
+            Notificacion.objects.update_or_create(
+                usuario=entrega.alumno,
+                clave=f"entrega_corregida:{entrega.pk}",
+                defaults={
+                    "tipo": Notificacion.TIPO_CORRECCION,
+                    "titulo": "Actividad corregida",
+                    "mensaje": (
+                        f"Tu entrega de "
+                        f"“{actividad.titulo}” "
+                        f"en {curso.nombre} fue corregida."
+                    ),
+                    "url": url_actividad,
+                    "leida": False,
+                    "fecha_lectura": None,
+                },
+            )
 
             messages.success(
                 request,

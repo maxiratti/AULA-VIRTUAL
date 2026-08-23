@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Notificaciones | Aula Virtual
+{% endblock %}
+
+{% block page_title %}
+Notificaciones
+{% endblock %}
+
+{% block content %}
+
+<section class="notifications-page-header">
+
+    <div>
+
+        <h1>
+            Notificaciones
+        </h1>
+
+        <p>
+            Consultá las novedades de tu Aula Virtual.
+        </p>
+
+    </div>
+
+
+    {% if notificaciones_no_leidas > 0 %}
+
+        <form
+            method="post"
+            action="{% url 'marcar_todas_leidas' %}"
+        >
+
+            {% csrf_token %}
+
+            <button
+                type="submit"
+                class="btn-secondary-custom"
+            >
+                <i class="bi bi-check2-all"></i>
+                Marcar todas como leídas
+            </button>
+
+        </form>
+
+    {% endif %}
+
+</section>
+
+
+{% if notificaciones %}
+
+    <section class="notifications-list">
+
+        {% for notificacion in notificaciones %}
+
+            <a
+                href="{% url 'abrir_notificacion' notificacion.pk %}"
+                class="
+                    notification-card
+                    {% if not notificacion.leida %}
+                        notification-unread
+                    {% endif %}
+                "
+            >
+
+                <div class="notification-card-icon">
+
+                    {% if notificacion.tipo == "ENTREGA" %}
+
+                        <i class="bi bi-inbox"></i>
+
+                    {% elif notificacion.tipo == "CORRECCION" %}
+
+                        <i class="bi bi-patch-check"></i>
+
+                    {% elif notificacion.tipo == "ACTIVIDAD" %}
+
+                        <i class="bi bi-check2-square"></i>
+
+                    {% elif notificacion.tipo == "VENCIMIENTO" %}
+
+                        <i class="bi bi-clock"></i>
+
+                    {% else %}
+
+                        <i class="bi bi-bell"></i>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="notification-card-content">
+
+                    <div class="notification-card-heading">
+
+                        <strong>
+                            {{ notificacion.titulo }}
+                        </strong>
+
+                        {% if not notificacion.leida %}
+
+                            <span class="notification-new-label">
+                                Nueva
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    {% if notificacion.mensaje %}
+
+                        <p>
+                            {{ notificacion.mensaje }}
+                        </p>
+
+                    {% endif %}
+
+
+                    <span class="notification-date">
+                        <i class="bi bi-clock"></i>
+
+                        {{ notificacion.fecha_creacion|date:"d/m/Y H:i" }}
+                    </span>
+
+                </div>
+
+
+                <i class="bi bi-chevron-right"></i>
+
+            </a>
+
+        {% endfor %}
+
+    </section>
+
+
+{% else %}
+
+    <section class="content-card">
+
+        <div class="empty-state">
+
+            <div class="empty-state-icon">
+                <i class="bi bi-bell"></i>
+            </div>
+
+            <h2>
+                No tenés notificaciones
+            </h2>
+
+            <p>
+                Las novedades de cursos y actividades
+                aparecerán en esta sección.
+            </p>
+
+        </div>
+
+    </section>
+
+{% endif %}
+
+{% endblock %}

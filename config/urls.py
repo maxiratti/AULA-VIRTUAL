@@ -55,4 +55,9 @@ urlpatterns = [
         "",
         include("apps.actividades.urls"),
     ),
+
+    path(
+        "",
+        include("apps.notificaciones.urls"),
+    ),
 ]

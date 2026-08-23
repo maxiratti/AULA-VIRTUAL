@@ -293,13 +293,174 @@
 
                 <div class="topbar-actions">
 
-                    <button
-                        type="button"
-                        class="topbar-icon-button"
-                        aria-label="Notificaciones"
-                    >
-                        <i class="bi bi-bell"></i>
-                    </button>
+                    <div class="dropdown">
+
+                        <button
+                            type="button"
+                            class="topbar-icon-button notification-button"
+                            data-bs-toggle="dropdown"
+                            data-bs-auto-close="outside"
+                            aria-expanded="false"
+                            aria-label="Notificaciones"
+                        >
+                            <i class="bi bi-bell"></i>
+
+                            {% if notificaciones_no_leidas > 0 %}
+
+                                <span class="notification-badge">
+
+                                    {% if notificaciones_no_leidas > 99 %}
+                                        99+
+                                    {% else %}
+                                        {{ notificaciones_no_leidas }}
+                                    {% endif %}
+
+                                </span>
+
+                            {% endif %}
+
+                        </button>
+
+
+                        <div
+                            class="dropdown-menu dropdown-menu-end notification-dropdown"
+                        >
+
+                            <div class="notification-dropdown-header">
+
+                                <div>
+
+                                    <strong>
+                                        Notificaciones
+                                    </strong>
+
+                                    {% if notificaciones_no_leidas > 0 %}
+
+                                        <span>
+                                            {{ notificaciones_no_leidas }}
+                                            sin leer
+                                        </span>
+
+                                    {% endif %}
+
+                                </div>
+
+
+                                {% if notificaciones_no_leidas > 0 %}
+
+                                    <form
+                                        method="post"
+                                        action="{% url 'marcar_todas_leidas' %}"
+                                    >
+                                        {% csrf_token %}
+
+                                        <button
+                                            type="submit"
+                                            class="notification-read-all"
+                                        >
+                                            Marcar leídas
+                                        </button>
+
+                                    </form>
+
+                                {% endif %}
+
+                            </div>
+
+
+                            <div class="notification-dropdown-list">
+
+                                {% for notificacion in notificaciones_recientes %}
+
+                                    <a
+                                        href="{% url 'abrir_notificacion' notificacion.pk %}"
+                                        class="notification-dropdown-item"
+                                    >
+
+                                        <div class="notification-icon">
+
+                                            {% if notificacion.tipo == "ENTREGA" %}
+
+                                                <i class="bi bi-inbox"></i>
+
+                                            {% elif notificacion.tipo == "CORRECCION" %}
+
+                                                <i class="bi bi-patch-check"></i>
+
+                                            {% elif notificacion.tipo == "ACTIVIDAD" %}
+
+                                                <i class="bi bi-check2-square"></i>
+
+                                            {% elif notificacion.tipo == "VENCIMIENTO" %}
+
+                                                <i class="bi bi-clock"></i>
+
+                                            {% else %}
+
+                                                <i class="bi bi-bell"></i>
+
+                                            {% endif %}
+
+                                        </div>
+
+
+                                        <div class="notification-content">
+
+                                            <strong>
+                                                {{ notificacion.titulo }}
+                                            </strong>
+
+                                            {% if notificacion.mensaje %}
+
+                                                <p>
+                                                    {{ notificacion.mensaje|truncatechars:100 }}
+                                                </p>
+
+                                            {% endif %}
+
+                                            <span>
+                                                {{ notificacion.fecha_creacion|timesince }}
+                                            </span>
+
+                                        </div>
+
+                                    </a>
+
+
+                                {% empty %}
+
+                                    <div class="notification-empty">
+
+                                        <i class="bi bi-bell-slash"></i>
+
+                                        <strong>
+                                            Sin notificaciones nuevas
+                                        </strong>
+
+                                        <span>
+                                            Cuando haya novedades,
+                                            aparecerán aquí.
+                                        </span>
+
+                                    </div>
+
+                                {% endfor %}
+
+                            </div>
+
+
+                            <div class="notification-dropdown-footer">
+
+                                <a href="{% url 'lista_notificaciones' %}">
+                                    Ver todas las notificaciones
+                                    <i class="bi bi-arrow-right"></i>
+                                </a>
+
+                            </div>
+
+                        </div>
+
+                    </div>
 
                 </div>
 

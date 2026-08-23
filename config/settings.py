@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "apps.inscripciones",
     "apps.contenidos",
     "apps.actividades",
+    "apps.notificaciones",
 ]
 
 MIDDLEWARE = [
@@ -74,6 +75,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 "apps.roles.context_processors.roles_usuario",
+                "apps.notificaciones.context_processors.notificaciones",
             ],
         },
     },
