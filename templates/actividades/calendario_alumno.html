@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Calendario | Aula Virtual
+{% endblock %}
+
+{% block page_title %}
+Calendario
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'css/actividades.css' %}"
+>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+
+        <h1>
+            Mi calendario
+        </h1>
+
+        <p>
+            Consultá las fechas de apertura y entrega
+            de tus actividades.
+        </p>
+
+    </div>
+
+</section>
+
+
+{% if actividades %}
+
+    <section class="student-calendar-list">
+
+        {% for actividad in actividades %}
+
+            <a
+                href="{% url 'detalle_actividad_alumno' actividad.pk %}"
+                class="student-calendar-card"
+            >
+
+                <div class="student-calendar-date">
+
+                    {% if actividad.fecha_limite %}
+
+                        <span class="calendar-day">
+                            {{ actividad.fecha_limite|date:"d" }}
+                        </span>
+
+                        <span class="calendar-month">
+                            {{ actividad.fecha_limite|date:"M" }}
+                        </span>
+
+                    {% else %}
+
+                        <i class="bi bi-infinity"></i>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="student-calendar-main">
+
+                    <span class="student-calendar-course">
+
+                        {{ actividad.clase.modulo.curso.nombre }}
+                        ·
+                        {{ actividad.clase.titulo }}
+
+                    </span>
+
+                    <h2>
+                        {{ actividad.titulo }}
+                    </h2>
+
+
+                    <div class="student-calendar-meta">
+
+                        {% if actividad.fecha_apertura %}
+
+                            <span>
+                                <i class="bi bi-calendar-check"></i>
+
+                                Desde
+                                {{ actividad.fecha_apertura|date:"d/m/Y H:i" }}
+                            </span>
+
+                        {% endif %}
+
+
+                        {% if actividad.fecha_limite %}
+
+                            <span>
+                                <i class="bi bi-clock"></i>
+
+                                Hasta
+                                {{ actividad.fecha_limite|date:"d/m/Y H:i" }}
+                            </span>
+
+                        {% else %}
+
+                            <span>
+                                <i class="bi bi-infinity"></i>
+                                Sin fecha límite
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <div class="student-calendar-status">
+
+                    {% if actividad.estado_alumno == "CORREGIDA" %}
+
+                        <span class="delivery-status corrected">
+                            <i class="bi bi-patch-check-fill"></i>
+                            Corregida
+                        </span>
+
+                    {% elif actividad.estado_alumno == "ENTREGADA" %}
+
+                        <span class="delivery-status delivered">
+                            <i class="bi bi-check-circle-fill"></i>
+                            Entregada
+                        </span>
+
+                    {% elif actividad.estado_alumno == "VENCIDA" %}
+
+                        <span class="delivery-status expired">
+                            <i class="bi bi-exclamation-circle"></i>
+                            Vencida
+                        </span>
+
+                    {% elif actividad.estado_alumno == "PROXIMAMENTE" %}
+
+                        <span class="delivery-status upcoming">
+                            <i class="bi bi-clock"></i>
+                            Próximamente
+                        </span>
+
+                    {% else %}
+
+                        <span class="delivery-status pending">
+                            <i class="bi bi-hourglass-split"></i>
+                            Pendiente
+                        </span>
+
+                    {% endif %}
+
+                </div>
+
+            </a>
+
+        {% endfor %}
+
+    </section>
+
+
+{% else %}
+
+    <section class="content-card">
+
+        <div class="empty-state">
+
+            <div class="empty-state-icon">
+                <i class="bi bi-calendar3"></i>
+            </div>
+
+            <h2>
+                No tenés actividades programadas
+            </h2>
+
+            <p>
+                Las fechas de tus actividades aparecerán
+                aquí cuando estén disponibles.
+            </p>
+
+        </div>
+
+    </section>
+
+{% endif %}
+
+{% endblock %}

@@ -1889,3 +1889,141 @@ textarea.form-control {
         grid-column: 2;
     }
 }
+
+.student-calendar-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.student-calendar-card {
+    display: grid;
+    grid-template-columns:
+        72px
+        minmax(0, 1fr)
+        auto;
+
+    align-items: center;
+    gap: 16px;
+
+    padding: 16px;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+
+    background: #ffffff;
+    color: #111827;
+
+    text-decoration: none;
+
+    transition:
+        transform 0.18s ease,
+        border-color 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+.student-calendar-card:hover {
+    transform: translateY(-2px);
+
+    border-color: #bfdbfe;
+
+    box-shadow:
+        0 8px 20px
+        rgba(15, 23, 42, 0.06);
+
+    color: #111827;
+}
+
+.student-calendar-date {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+
+    width: 64px;
+    height: 64px;
+
+    border-radius: 12px;
+
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.calendar-day {
+    font-size: 23px;
+    font-weight: 750;
+    line-height: 1;
+}
+
+.calendar-month {
+    margin-top: 4px;
+
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.student-calendar-main {
+    min-width: 0;
+}
+
+.student-calendar-course {
+    display: block;
+
+    color: #6b7280;
+
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.student-calendar-main h2 {
+    margin: 4px 0 0;
+
+    color: #111827;
+
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.student-calendar-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+
+    margin-top: 8px;
+
+    color: #6b7280;
+
+    font-size: 11px;
+}
+
+.student-calendar-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.student-calendar-status {
+    display: flex;
+    justify-content: flex-end;
+}
+
+@media (max-width: 767.98px) {
+    .student-calendar-card {
+        grid-template-columns:
+            60px
+            minmax(0, 1fr);
+    }
+
+    .student-calendar-date {
+        width: 54px;
+        height: 54px;
+    }
+
+    .student-calendar-status {
+        grid-column: 2;
+
+        justify-content: flex-start;
+    }
+}

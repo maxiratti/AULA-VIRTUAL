@@ -65,4 +65,10 @@ urlpatterns = [
         views.actividades_docente,
         name="actividades_docente",
     ),
+
+    path(
+        "mi-calendario/",
+        views.calendario_alumno,
+        name="calendario_alumno",
+    ),
 ]

@@ -963,3 +963,99 @@ def actividades_docente(request):
             "actividades_data": actividades_data,
         },
     )
+
+@login_required
+def calendario_alumno(request):
+    usuario = request.user
+
+    inscripciones = (
+        Inscripcion.objects
+        .filter(
+            alumno=usuario,
+            estado__in=[
+                Inscripcion.ESTADO_INSCRIPTO,
+                Inscripcion.ESTADO_CURSANDO,
+            ],
+        )
+        .select_related(
+            "curso",
+            "curso__institucion",
+        )
+    )
+
+    cursos_ids = inscripciones.values_list(
+        "curso_id",
+        flat=True,
+    )
+
+    actividades = list(
+        Actividad.objects
+        .filter(
+            clase__modulo__curso_id__in=cursos_ids,
+            visible=True,
+            clase__visible=True,
+            clase__modulo__visible=True,
+        )
+        .select_related(
+            "clase",
+            "clase__modulo",
+            "clase__modulo__curso",
+            "clase__modulo__curso__institucion",
+        )
+        .order_by(
+            "fecha_limite",
+            "id",
+        )
+        .distinct()
+    )
+
+    entregas = (
+        Entrega.objects
+        .filter(
+            alumno=usuario,
+            actividad__in=actividades,
+        )
+    )
+
+    entregas_por_actividad = {
+        entrega.actividad_id: entrega
+        for entrega in entregas
+    }
+
+    ahora = timezone.now()
+
+    for actividad in actividades:
+        entrega = entregas_por_actividad.get(
+            actividad.pk
+        )
+
+        actividad.entrega_alumno = entrega
+
+        if entrega:
+            if entrega.estado == Entrega.ESTADO_CORREGIDA:
+                actividad.estado_alumno = "CORREGIDA"
+            else:
+                actividad.estado_alumno = "ENTREGADA"
+
+        elif (
+            actividad.fecha_apertura
+            and actividad.fecha_apertura > ahora
+        ):
+            actividad.estado_alumno = "PROXIMAMENTE"
+
+        elif (
+            actividad.fecha_limite
+            and actividad.fecha_limite < ahora
+        ):
+            actividad.estado_alumno = "VENCIDA"
+
+        else:
+            actividad.estado_alumno = "PENDIENTE"
+
+    return render(
+        request,
+        "actividades/calendario_alumno.html",
+        {
+            "actividades": actividades,
+        },
+    )
