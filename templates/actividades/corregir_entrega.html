@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Corregir entrega | Aula Virtual
+{% endblock %}
+
+{% block page_title %}
+Corrección
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'css/actividades.css' %}"
+>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+
+        <a
+            href="{% url 'lista_entregas' actividad.pk %}"
+            class="back-link"
+        >
+            <i class="bi bi-arrow-left"></i>
+            Volver a entregas
+        </a>
+
+        <h1>
+            Corregir entrega
+        </h1>
+
+        <p>
+            {{ actividad.titulo }}
+        </p>
+
+    </div>
+
+</section>
+
+
+<section class="correction-layout">
+
+    <section class="submission-card">
+
+        <div class="submission-student">
+
+            <div class="delivery-avatar large">
+
+                {{ entrega.alumno.first_name|default:entrega.alumno.username|slice:":1"|upper }}
+
+            </div>
+
+            <div>
+
+                <span class="activity-label">
+                    Alumno
+                </span>
+
+                <h2>
+                    {{ entrega.alumno.get_full_name|default:entrega.alumno.username }}
+                </h2>
+
+                <small>
+                    Entregado el
+                    {{ entrega.fecha_entrega|date:"d/m/Y H:i" }}
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <div class="submission-consigna">
+
+            <h3>
+                Consigna
+            </h3>
+
+            {{ actividad.consigna|linebreaks }}
+
+        </div>
+
+
+        {% if entrega.texto %}
+
+            <div class="submission-answer">
+
+                <h3>
+                    Respuesta del alumno
+                </h3>
+
+                {{ entrega.texto|linebreaks }}
+
+            </div>
+
+        {% endif %}
+
+
+        {% if entrega.archivo %}
+
+            <div class="submission-file">
+
+                <a
+                    href="{{ entrega.archivo.url }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="resource-link"
+                >
+                    <i class="bi bi-file-earmark-arrow-down"></i>
+                    Abrir archivo entregado
+                </a>
+
+            </div>
+
+        {% endif %}
+
+    </section>
+
+
+    <section class="form-card correction-form">
+
+        <form method="post">
+
+            {% csrf_token %}
+
+
+            {% if form.non_field_errors %}
+
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+
+            {% endif %}
+
+
+            <div class="form-field">
+
+                <label for="{{ form.calificacion.id_for_label }}">
+                    Calificación
+                </label>
+
+                <div class="grade-field">
+
+                    {{ form.calificacion }}
+
+                    <span>
+                        / {{ actividad.puntaje_maximo }}
+                    </span>
+
+                </div>
+
+                {{ form.calificacion.errors }}
+
+            </div>
+
+
+            <div class="form-field">
+
+                <label for="{{ form.devolucion.id_for_label }}">
+                    Devolución
+                </label>
+
+                {{ form.devolucion }}
+                {{ form.devolucion.errors }}
+
+            </div>
+
+
+            <div class="form-actions">
+
+                <a
+                    href="{% url 'lista_entregas' actividad.pk %}"
+                    class="btn-secondary-custom"
+                >
+                    Cancelar
+                </a>
+
+                <button
+                    type="submit"
+                    class="btn-primary-custom"
+                >
+                    <i class="bi bi-check-lg"></i>
+                    Guardar corrección
+                </button>
+
+            </div>
+
+        </form>
+
+    </section>
+
+</section>
+
+{% endblock %}

@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Mis calificaciones | Aula Virtual
+{% endblock %}
+
+{% block page_title %}
+Calificaciones
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'css/actividades.css' %}"
+>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+
+        <h1>
+            Mis calificaciones
+        </h1>
+
+        <p>
+            Consultá el estado y las calificaciones
+            de tus actividades.
+        </p>
+
+    </div>
+
+</section>
+
+
+{% if actividades %}
+
+    <section class="grades-summary">
+
+        <article class="grade-summary-card">
+
+            <span>
+                Actividades corregidas
+            </span>
+
+            <strong>
+                {{ cantidad_corregidas }}
+            </strong>
+
+        </article>
+
+
+        <article class="grade-summary-card">
+
+            <span>
+                Rendimiento
+            </span>
+
+            <strong>
+                {% if cantidad_corregidas %}
+                    {{ promedio }}%
+                {% else %}
+                    —
+                {% endif %}
+            </strong>
+
+        </article>
+
+    </section>
+
+
+    <section class="grades-list">
+
+        {% for actividad in actividades %}
+
+            <article class="grade-card">
+
+                <div class="grade-card-icon">
+
+                    {% if actividad.estado_alumno == "CORREGIDA" %}
+
+                        <i class="bi bi-patch-check-fill"></i>
+
+                    {% elif actividad.estado_alumno == "ENTREGADA" %}
+
+                        <i class="bi bi-check-circle"></i>
+
+                    {% elif actividad.estado_alumno == "VENCIDA" %}
+
+                        <i class="bi bi-exclamation-circle"></i>
+
+                    {% elif actividad.estado_alumno == "PROXIMAMENTE" %}
+
+                        <i class="bi bi-clock"></i>
+
+                    {% else %}
+
+                        <i class="bi bi-hourglass-split"></i>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="grade-card-main">
+
+                    <span class="grade-course">
+
+                        {{ actividad.clase.modulo.curso.nombre }}
+                        ·
+                        {{ actividad.clase.titulo }}
+
+                    </span>
+
+                    <h2>
+                        {{ actividad.titulo }}
+                    </h2>
+
+
+                    <div class="grade-status-row">
+
+                        {% if actividad.estado_alumno == "CORREGIDA" %}
+
+                            <span class="delivery-status corrected">
+                                <i class="bi bi-patch-check-fill"></i>
+                                Corregida
+                            </span>
+
+                        {% elif actividad.estado_alumno == "ENTREGADA" %}
+
+                            <span class="delivery-status delivered">
+                                <i class="bi bi-check-circle-fill"></i>
+                                Entregada
+                            </span>
+
+                        {% elif actividad.estado_alumno == "VENCIDA" %}
+
+                            <span class="delivery-status expired">
+                                <i class="bi bi-exclamation-circle"></i>
+                                Vencida
+                            </span>
+
+                        {% elif actividad.estado_alumno == "PROXIMAMENTE" %}
+
+                            <span class="delivery-status upcoming">
+                                <i class="bi bi-clock"></i>
+                                Próximamente
+                            </span>
+
+                        {% else %}
+
+                            <span class="delivery-status pending">
+                                <i class="bi bi-hourglass-split"></i>
+                                Pendiente
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    {% if actividad.estado_alumno == "CORREGIDA" and actividad.entrega_alumno.devolucion %}
+
+                        <div class="grade-feedback">
+
+                            <strong>
+                                Devolución del docente
+                            </strong>
+
+                            <p>
+                                {{ actividad.entrega_alumno.devolucion }}
+                            </p>
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="grade-result">
+
+                    {% if actividad.estado_alumno == "CORREGIDA" and actividad.entrega_alumno.calificacion != None %}
+
+                        <strong>
+                            {{ actividad.entrega_alumno.calificacion }}
+                        </strong>
+
+                        <span>
+                            / {{ actividad.puntaje_maximo }}
+                        </span>
+
+                    {% else %}
+
+                        <strong class="grade-empty">
+                            —
+                        </strong>
+
+                    {% endif %}
+
+                </div>
+
+
+                <a
+                    href="{% url 'detalle_actividad_alumno' actividad.pk %}"
+                    class="grade-open"
+                    title="Ver actividad"
+                    aria-label="Ver actividad"
+                >
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+
+            </article>
+
+        {% endfor %}
+
+    </section>
+
+
+{% else %}
+
+    <section class="content-card">
+
+        <div class="empty-state">
+
+            <div class="empty-state-icon">
+                <i class="bi bi-bar-chart"></i>
+            </div>
+
+            <h2>
+                Todavía no hay actividades
+            </h2>
+
+            <p>
+                Tus actividades y calificaciones
+                aparecerán en esta sección.
+            </p>
+
+        </div>
+
+    </section>
+
+{% endif %}
+
+{% endblock %}

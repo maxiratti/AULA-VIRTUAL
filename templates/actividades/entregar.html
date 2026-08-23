@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Entregar actividad | Aula Virtual
+{% endblock %}
+
+{% block page_title %}
+Entrega
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'css/actividades.css' %}"
+>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+
+        <a
+            href="{% url 'detalle_actividad_alumno' actividad.pk %}"
+            class="back-link"
+        >
+            <i class="bi bi-arrow-left"></i>
+            Volver a la actividad
+        </a>
+
+        <h1>
+            Entregar actividad
+        </h1>
+
+        <p>
+            {{ actividad.titulo }}
+        </p>
+
+    </div>
+
+</section>
+
+
+<section class="delivery-layout">
+
+    <!-- CONSIGNA -->
+    <aside class="delivery-instructions-card">
+
+        <div class="delivery-instructions-header">
+
+            <div class="activity-detail-icon">
+                <i class="bi bi-check2-square"></i>
+            </div>
+
+            <div>
+
+                <span class="activity-label">
+                    Actividad
+                </span>
+
+                <h2>
+                    {{ actividad.titulo }}
+                </h2>
+
+            </div>
+
+        </div>
+
+
+        <div class="delivery-meta">
+
+            <span>
+                <i class="bi bi-star"></i>
+                {{ actividad.puntaje_maximo }}
+                puntos
+            </span>
+
+            {% if actividad.fecha_limite %}
+
+                <span>
+                    <i class="bi bi-clock"></i>
+                    Hasta
+                    {{ actividad.fecha_limite|date:"d/m/Y H:i" }}
+                </span>
+
+            {% else %}
+
+                <span>
+                    <i class="bi bi-infinity"></i>
+                    Sin fecha límite
+                </span>
+
+            {% endif %}
+
+        </div>
+
+
+        <div class="delivery-consigna">
+
+            <h3>
+                Consigna
+            </h3>
+
+            <div>
+                {{ actividad.consigna|linebreaks }}
+            </div>
+
+        </div>
+
+
+        {% if actividad.archivo_adjunto %}
+
+            <div class="delivery-resource">
+
+                <a
+                    href="{{ actividad.archivo_adjunto.url }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="resource-link"
+                >
+                    <i class="bi bi-paperclip"></i>
+                    Abrir archivo de la actividad
+                </a>
+
+            </div>
+
+        {% endif %}
+
+    </aside>
+
+
+    <!-- ENTREGA -->
+    <section class="form-card delivery-form-card">
+
+        <form
+            method="post"
+            enctype="multipart/form-data"
+        >
+
+            {% csrf_token %}
+
+
+            {% if form.non_field_errors %}
+
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+
+            {% endif %}
+
+
+            {% if form.texto %}
+
+                <div class="form-field">
+
+                    <label for="{{ form.texto.id_for_label }}">
+                        Tu respuesta
+                    </label>
+
+                    {{ form.texto }}
+                    {{ form.texto.errors }}
+
+                </div>
+
+            {% endif %}
+
+
+            {% if form.archivo %}
+
+                <div class="form-field">
+
+                    <label for="{{ form.archivo.id_for_label }}">
+                        Archivo
+                    </label>
+
+                    {{ form.archivo }}
+                    {{ form.archivo.errors }}
+
+                    <small class="field-help">
+                        Adjuntá el archivo solicitado por el docente.
+                    </small>
+
+                </div>
+
+            {% endif %}
+
+
+            <div class="form-actions">
+
+                <a
+                    href="{% url 'detalle_actividad_alumno' actividad.pk %}"
+                    class="btn-secondary-custom"
+                >
+                    Cancelar
+                </a>
+
+                <button
+                    type="submit"
+                    class="btn-primary-custom"
+                >
+                    <i class="bi bi-send"></i>
+                    Entregar actividad
+                </button>
+
+            </div>
+
+        </form>
+
+    </section>
+
+</section>
+
+{% endblock %}

@@ -5,6 +5,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from apps.inscripciones.models import Inscripcion
+from apps.actividades.models import Entrega
 from django.shortcuts import (
     get_object_or_404,
     redirect,
@@ -565,6 +566,60 @@ def detalle_clase_alumno(request, pk):
         )
     )
 
+    actividades = list(
+        clase.actividades
+        .filter(
+            visible=True,
+        )
+        .order_by(
+            "fecha_limite",
+            "id",
+        )
+    )
+
+    entregas = (
+        Entrega.objects
+        .filter(
+            actividad__in=actividades,
+            alumno=request.user,
+        )
+    )
+
+    entregas_por_actividad = {
+        entrega.actividad_id: entrega
+        for entrega in entregas
+    }
+
+    ahora = timezone.now()
+
+    for actividad in actividades:
+        entrega = entregas_por_actividad.get(
+            actividad.pk
+        )
+
+        actividad.entrega_alumno = entrega
+
+        if entrega:
+            if entrega.estado == "CORREGIDA":
+                actividad.estado_alumno = "CORREGIDA"
+            else:
+                actividad.estado_alumno = "ENTREGADA"
+
+        elif (
+            actividad.fecha_apertura
+            and actividad.fecha_apertura > ahora
+        ):
+            actividad.estado_alumno = "PROXIMAMENTE"
+
+        elif (
+            actividad.fecha_limite
+            and actividad.fecha_limite < ahora
+        ):
+            actividad.estado_alumno = "VENCIDA"
+
+        else:
+            actividad.estado_alumno = "PENDIENTE"
+
     return render(
         request,
         "contenidos/clases/detalle_alumno.html",
@@ -573,5 +628,6 @@ def detalle_clase_alumno(request, pk):
             "modulo": clase.modulo,
             "clase": clase,
             "contenidos": contenidos,
+            "actividades": actividades,
         },
     )

@@ -14,6 +14,11 @@
     rel="stylesheet"
     href="{% static 'css/contenidos.css' %}"
 >
+
+<link
+    rel="stylesheet"
+    href="{% static 'css/actividades.css' %}"
+>
 {% endblock %}
 
 {% block content %}
@@ -63,18 +68,23 @@
                 <div class="content-type-icon">
 
                     {% if contenido.tipo == "TEXTO" %}
+
                         <i class="bi bi-text-paragraph"></i>
 
                     {% elif contenido.tipo == "ARCHIVO" %}
+
                         <i class="bi bi-file-earmark"></i>
 
                     {% elif contenido.tipo == "ENLACE" %}
+
                         <i class="bi bi-link-45deg"></i>
 
                     {% elif contenido.tipo == "VIDEO" %}
+
                         <i class="bi bi-play-btn"></i>
 
                     {% elif contenido.tipo == "EMBEBIDO" %}
+
                         <i class="bi bi-code-square"></i>
 
                     {% endif %}
@@ -206,6 +216,202 @@
             <h2>
                 Esta clase todavía no tiene contenido
             </h2>
+
+        </div>
+
+    </section>
+
+{% endif %}
+
+
+{% if actividades %}
+
+    <section class="student-activities">
+
+        <div class="student-section-header">
+
+            <div>
+
+                <span class="section-eyebrow">
+                    Actividades
+                </span>
+
+                <h2>
+                    Actividades de la clase
+                </h2>
+
+            </div>
+
+        </div>
+
+
+        <div class="student-activity-list">
+
+            {% for actividad in actividades %}
+
+                <a
+                    href="{% url 'detalle_actividad_alumno' actividad.pk %}"
+                    class="student-activity-card"
+                >
+
+                    <div class="student-activity-icon">
+
+                        {% if actividad.estado_alumno == "CORREGIDA" %}
+
+                            <i class="bi bi-patch-check-fill"></i>
+
+                        {% elif actividad.estado_alumno == "ENTREGADA" %}
+
+                            <i class="bi bi-check-circle-fill"></i>
+
+                        {% elif actividad.estado_alumno == "VENCIDA" %}
+
+                            <i class="bi bi-exclamation-circle"></i>
+
+                        {% elif actividad.estado_alumno == "PROXIMAMENTE" %}
+
+                            <i class="bi bi-clock"></i>
+
+                        {% else %}
+
+                            <i class="bi bi-check2-square"></i>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <div class="student-activity-main">
+
+                        <strong>
+                            {{ actividad.titulo }}
+                        </strong>
+
+
+                        <div class="student-activity-status-line">
+
+                            {% if actividad.estado_alumno == "CORREGIDA" %}
+
+                                <span
+                                    class="activity-status activity-status-corrected"
+                                >
+                                    <i class="bi bi-patch-check-fill"></i>
+                                    Corregida
+                                </span>
+
+                                {% if actividad.entrega_alumno.calificacion != None %}
+
+                                    <span class="activity-grade">
+
+                                        {{ actividad.entrega_alumno.calificacion }}
+                                        /
+                                        {{ actividad.puntaje_maximo }}
+                                        pts.
+
+                                    </span>
+
+                                {% endif %}
+
+
+                            {% elif actividad.estado_alumno == "ENTREGADA" %}
+
+                                <span
+                                    class="activity-status activity-status-delivered"
+                                >
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    Entregada
+                                </span>
+
+                                <span class="activity-status-date">
+
+                                    {{ actividad.entrega_alumno.fecha_entrega|date:"d/m/Y H:i" }}
+
+                                </span>
+
+
+                            {% elif actividad.estado_alumno == "VENCIDA" %}
+
+                                <span
+                                    class="activity-status activity-status-expired"
+                                >
+                                    <i class="bi bi-exclamation-circle"></i>
+                                    Vencida
+                                </span>
+
+                                <span class="activity-status-date">
+                                    Sin entregar
+                                </span>
+
+
+                            {% elif actividad.estado_alumno == "PROXIMAMENTE" %}
+
+                                <span
+                                    class="activity-status activity-status-upcoming"
+                                >
+                                    <i class="bi bi-clock"></i>
+                                    Próximamente
+                                </span>
+
+                                <span class="activity-status-date">
+
+                                    Disponible desde
+                                    {{ actividad.fecha_apertura|date:"d/m/Y H:i" }}
+
+                                </span>
+
+
+                            {% else %}
+
+                                <span
+                                    class="activity-status activity-status-pending"
+                                >
+                                    <i class="bi bi-hourglass-split"></i>
+                                    Pendiente
+                                </span>
+
+                                <span class="activity-status-date">
+
+                                    {% if actividad.fecha_limite %}
+
+                                        Entrega hasta
+                                        {{ actividad.fecha_limite|date:"d/m/Y H:i" }}
+
+                                    {% else %}
+
+                                        Sin fecha límite
+
+                                    {% endif %}
+
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="student-activity-points">
+
+                        {% if actividad.estado_alumno == "CORREGIDA" and actividad.entrega_alumno.calificacion != None %}
+
+                            {{ actividad.entrega_alumno.calificacion }}
+                            /
+                            {{ actividad.puntaje_maximo }}
+                            pts.
+
+                        {% else %}
+
+                            {{ actividad.puntaje_maximo }}
+                            pts.
+
+                        {% endif %}
+
+                    </div>
+
+                </a>
+
+            {% endfor %}
 
         </div>
 

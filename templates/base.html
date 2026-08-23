@@ -18,19 +18,16 @@
         {% endblock %}
     </title>
 
-    <!-- Bootstrap -->
     <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
         rel="stylesheet"
     >
 
-    <!-- Bootstrap Icons -->
     <link
         rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css"
     >
 
-    <!-- Estilos generales -->
     <link
         rel="stylesheet"
         href="{% static 'css/base.css' %}"
@@ -45,10 +42,8 @@
 
     <div class="app-layout">
 
-        <!-- SIDEBAR -->
         <aside class="sidebar">
 
-            <!-- Marca -->
             <div class="sidebar-brand">
 
                 <div class="brand-icon">
@@ -70,10 +65,8 @@
             </div>
 
 
-            <!-- MENÚ -->
             <nav class="sidebar-nav">
 
-                <!-- Inicio -->
                 <a
                     href="{% url 'dashboard' %}"
                     class="nav-link-custom"
@@ -83,7 +76,6 @@
                 </a>
 
 
-                <!-- SUPERADMINISTRADOR -->
                 {% if request.user.is_superuser %}
 
                     <div class="nav-section-title">
@@ -118,7 +110,6 @@
                 {% else %}
 
 
-                    <!-- DOCENTE -->
                     {% if es_docente %}
 
                         <div class="nav-section-title">
@@ -152,7 +143,6 @@
                     {% endif %}
 
 
-                    <!-- COORDINADOR -->
                     {% if es_coordinador %}
 
                         <div class="nav-section-title">
@@ -170,7 +160,6 @@
                     {% endif %}
 
 
-                    <!-- ADMINISTRADOR INSTITUCIONAL -->
                     {% if es_administrador %}
 
                         <div class="nav-section-title">
@@ -196,7 +185,6 @@
                     {% endif %}
 
 
-                    <!-- ALUMNO -->
                     {% if es_alumno %}
 
                         <div class="nav-section-title">
@@ -215,6 +203,16 @@
 
                         {% endif %}
 
+
+                        <a
+                            href="{% url 'mis_calificaciones' %}"
+                            class="nav-link-custom"
+                        >
+                            <i class="bi bi-bar-chart"></i>
+                            <span>Calificaciones</span>
+                        </a>
+
+
                         <a
                             href="#"
                             class="nav-link-custom"
@@ -230,7 +228,6 @@
             </nav>
 
 
-            <!-- USUARIO -->
             <div class="sidebar-user">
 
                 <div class="user-profile">
@@ -282,10 +279,8 @@
         </aside>
 
 
-        <!-- CONTENIDO -->
         <main class="main-wrapper">
 
-            <!-- HEADER -->
             <header class="topbar">
 
                 <div class="topbar-title">
@@ -311,7 +306,6 @@
             </header>
 
 
-            <!-- CONTENIDO PRINCIPAL -->
             <div class="main-content">
 
                 {% if messages %}
@@ -353,7 +347,6 @@
     </div>
 
 
-    <!-- Bootstrap JS -->
     <script
         src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
     ></script>

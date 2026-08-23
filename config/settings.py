@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "apps.cursos",
     "apps.inscripciones",
     "apps.contenidos",
+    "apps.actividades",
 ]
 
 MIDDLEWARE = [
@@ -116,7 +117,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "America/Argentina/Tucuman"
 
 USE_I18N = True
 

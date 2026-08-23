@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Actividades | {{ clase.titulo }}
+{% endblock %}
+
+{% block page_title %}
+Actividades
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'css/actividades.css' %}"
+>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+
+        <a
+            href="{% url 'detalle_clase' clase.pk %}"
+            class="back-link"
+        >
+            <i class="bi bi-arrow-left"></i>
+            Volver a la clase
+        </a>
+
+        <h1>
+            Actividades
+        </h1>
+
+        <p>
+            {{ clase.titulo }}
+            ·
+            {{ modulo.titulo }}
+        </p>
+
+    </div>
+
+    <a
+        href="{% url 'nueva_actividad' clase.pk %}"
+        class="btn-primary-custom"
+    >
+        <i class="bi bi-plus-lg"></i>
+        Nueva actividad
+    </a>
+
+</section>
+
+
+{% if actividades %}
+
+    <section class="activity-list">
+
+        {% for actividad in actividades %}
+
+            <article class="activity-card">
+
+                <div class="activity-icon">
+                    <i class="bi bi-check2-square"></i>
+                </div>
+
+                <div class="activity-main">
+
+                    <div class="activity-header">
+
+                        <div>
+
+                            <span class="activity-label">
+                                Actividad
+                            </span>
+
+                            <h2>
+                                {{ actividad.titulo }}
+                            </h2>
+
+                        </div>
+
+                        {% if actividad.visible %}
+
+                            <span class="status-badge status-visible">
+                                Visible
+                            </span>
+
+                        {% else %}
+
+                            <span class="status-badge status-hidden">
+                                Oculta
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                    <p class="activity-description">
+                        {{ actividad.consigna|truncatechars:180 }}
+                    </p>
+
+                    <div class="activity-meta">
+
+                        <span>
+                            <i class="bi bi-star"></i>
+                            {{ actividad.puntaje_maximo }} puntos
+                        </span>
+
+                        {% if actividad.fecha_limite %}
+
+                            <span>
+                                <i class="bi bi-calendar-event"></i>
+                                Hasta
+                                {{ actividad.fecha_limite|date:"d/m/Y H:i" }}
+                            </span>
+
+                        {% else %}
+
+                            <span>
+                                <i class="bi bi-infinity"></i>
+                                Sin fecha límite
+                            </span>
+
+                        {% endif %}
+
+                        <span>
+                            <i class="bi bi-send-check"></i>
+
+                            {{ actividad.entregas.count }}
+
+                            {% if actividad.entregas.count == 1 %}
+                                entrega
+                            {% else %}
+                                entregas
+                            {% endif %}
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div class="activity-actions">
+
+                    <a
+                        href="{% url 'lista_entregas' actividad.pk %}"
+                        class="action-button"
+                        title="Ver entregas"
+                        aria-label="Ver entregas"
+                    >
+                        <i class="bi bi-inbox"></i>
+                    </a>
+
+                    <a
+                        href="{% url 'editar_actividad' actividad.pk %}"
+                        class="action-button"
+                        title="Editar actividad"
+                    >
+                        <i class="bi bi-pencil"></i>
+                    </a>
+
+                </div>
+
+            </article>
+
+        {% endfor %}
+
+    </section>
+
+
+{% else %}
+
+    <section class="content-card">
+
+        <div class="empty-state">
+
+            <div class="empty-state-icon">
+                <i class="bi bi-check2-square"></i>
+            </div>
+
+            <h2>
+                Esta clase todavía no tiene actividades
+            </h2>
+
+            <p>
+                Creá una actividad para que los alumnos
+                puedan realizar una entrega.
+            </p>
+
+            <a
+                href="{% url 'nueva_actividad' clase.pk %}"
+                class="btn-primary-custom"
+            >
+                <i class="bi bi-plus-lg"></i>
+                Crear primera actividad
+            </a>
+
+        </div>
+
+    </section>
+
+{% endif %}
+
+{% endblock %}

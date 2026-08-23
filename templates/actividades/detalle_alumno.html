@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+{{ actividad.titulo }} | Aula Virtual
+{% endblock %}
+
+{% block page_title %}
+Actividad
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'css/actividades.css' %}"
+>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+
+        <a
+            href="{% url 'detalle_clase_alumno' clase.pk %}"
+            class="back-link"
+        >
+            <i class="bi bi-arrow-left"></i>
+            Volver a la clase
+        </a>
+
+        <h1>
+            {{ actividad.titulo }}
+        </h1>
+
+        <p>
+            {{ curso.nombre }}
+            ·
+            {{ clase.titulo }}
+        </p>
+
+    </div>
+
+</section>
+
+
+<section class="student-activity-detail">
+
+    <div class="activity-detail-header">
+
+        <div class="activity-detail-icon">
+            <i class="bi bi-check2-square"></i>
+        </div>
+
+        <div>
+
+            <span class="activity-label">
+                Actividad
+            </span>
+
+            <h2>
+                {{ actividad.titulo }}
+            </h2>
+
+        </div>
+
+    </div>
+
+
+    <div class="activity-detail-meta">
+
+        <span>
+            <i class="bi bi-star"></i>
+            {{ actividad.puntaje_maximo }}
+            puntos
+        </span>
+
+        {% if actividad.fecha_apertura %}
+
+            <span>
+                <i class="bi bi-calendar-check"></i>
+                Disponible desde
+                {{ actividad.fecha_apertura|date:"d/m/Y H:i" }}
+            </span>
+
+        {% endif %}
+
+        {% if actividad.fecha_limite %}
+
+            <span>
+                <i class="bi bi-clock"></i>
+                Entrega hasta
+                {{ actividad.fecha_limite|date:"d/m/Y H:i" }}
+            </span>
+
+        {% else %}
+
+            <span>
+                <i class="bi bi-infinity"></i>
+                Sin fecha límite
+            </span>
+
+        {% endif %}
+
+    </div>
+
+
+    <div class="activity-instructions">
+
+        <h3>Consigna</h3>
+
+        {{ actividad.consigna|linebreaks }}
+
+    </div>
+
+
+    {% if actividad.archivo_adjunto %}
+
+        <div class="activity-resource">
+
+            <a
+                href="{{ actividad.archivo_adjunto.url }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="resource-link"
+            >
+                <i class="bi bi-paperclip"></i>
+                Abrir archivo de la actividad
+            </a>
+
+        </div>
+
+    {% endif %}
+
+
+    <div class="student-delivery-area">
+
+        {% if entrega %}
+
+            <div class="delivery-success">
+
+                <div class="delivery-success-icon">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+
+                <div>
+
+                    <strong>
+                        Actividad entregada
+                    </strong>
+
+                    <span>
+                        Entregaste el
+                        {{ entrega.fecha_entrega|date:"d/m/Y H:i" }}
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            {% if entrega.texto %}
+
+                <div class="submitted-answer">
+
+                    <h3>
+                        Tu respuesta
+                    </h3>
+
+                    {{ entrega.texto|linebreaks }}
+
+                </div>
+
+            {% endif %}
+
+
+            {% if entrega.archivo %}
+
+                <a
+                    href="{{ entrega.archivo.url }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="resource-link"
+                >
+                    <i class="bi bi-file-earmark"></i>
+                    Ver archivo entregado
+                </a>
+
+            {% endif %}
+
+
+            {% if entrega.estado == "CORREGIDA" %}
+
+                <div class="student-feedback">
+
+                    <h3>
+                        Corrección
+                    </h3>
+
+                    {% if entrega.calificacion != None %}
+
+                        <div class="student-grade">
+                            {{ entrega.calificacion }}
+                            /
+                            {{ actividad.puntaje_maximo }}
+                        </div>
+
+                    {% endif %}
+
+                    {% if entrega.devolucion %}
+
+                        <div>
+                            {{ entrega.devolucion|linebreaks }}
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            {% endif %}
+
+
+        {% elif disponible %}
+
+            <a
+                href="{% url 'entregar_actividad' actividad.pk %}"
+                class="btn-primary-custom"
+            >
+                <i class="bi bi-send"></i>
+                Realizar entrega
+            </a>
+
+
+        {% else %}
+
+            <div class="activity-unavailable">
+
+                <i class="bi bi-lock"></i>
+
+                <span>
+                    {{ mensaje_bloqueo }}
+                </span>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</section>
+
+{% endblock %}

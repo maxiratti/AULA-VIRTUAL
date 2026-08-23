@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Entregas | {{ actividad.titulo }}
+{% endblock %}
+
+{% block page_title %}
+Entregas
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'css/actividades.css' %}"
+>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+
+        <a
+            href="{% url 'lista_actividades' clase.pk %}"
+            class="back-link"
+        >
+            <i class="bi bi-arrow-left"></i>
+            Volver a actividades
+        </a>
+
+        <h1>
+            Entregas
+        </h1>
+
+        <p>
+            {{ actividad.titulo }}
+            ·
+            {{ curso.nombre }}
+        </p>
+
+    </div>
+
+</section>
+
+
+<section class="content-card">
+
+    {% if alumnos %}
+
+        <div class="table-responsive">
+
+            <table class="deliveries-table">
+
+                <thead>
+
+                    <tr>
+                        <th>Alumno</th>
+                        <th>Estado</th>
+                        <th>Fecha de entrega</th>
+                        <th>Calificación</th>
+                        <th class="text-end">
+                            Acción
+                        </th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for item in alumnos %}
+
+                        <tr>
+
+                            <td>
+
+                                <div class="delivery-student">
+
+                                    <div class="delivery-avatar">
+
+                                        {{ item.alumno.first_name|default:item.alumno.username|slice:":1"|upper }}
+
+                                    </div>
+
+                                    <div>
+
+                                        <strong>
+                                            {{ item.alumno.get_full_name|default:item.alumno.username }}
+                                        </strong>
+
+                                        <span>
+                                            {{ item.alumno.username }}
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            </td>
+
+
+                            <td>
+
+                                {% if item.entrega %}
+
+                                    {% if item.entrega.estado == "CORREGIDA" %}
+
+                                        <span class="delivery-status corrected">
+                                            <i class="bi bi-patch-check-fill"></i>
+                                            Corregida
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="delivery-status delivered">
+                                            <i class="bi bi-check-circle-fill"></i>
+                                            Entregada
+                                        </span>
+
+                                    {% endif %}
+
+                                {% else %}
+
+                                    <span class="delivery-status pending">
+                                        <i class="bi bi-hourglass"></i>
+                                        Pendiente
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+
+                                {% if item.entrega %}
+
+                                    {{ item.entrega.fecha_entrega|date:"d/m/Y H:i" }}
+
+                                {% else %}
+
+                                    —
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+
+                                {% if item.entrega.calificacion != None %}
+
+                                    <strong>
+                                        {{ item.entrega.calificacion }}
+                                        /
+                                        {{ actividad.puntaje_maximo }}
+                                    </strong>
+
+                                {% else %}
+
+                                    —
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td class="text-end">
+
+                                {% if item.entrega %}
+
+                                    <a
+                                        href="{% url 'corregir_entrega' item.entrega.pk %}"
+                                        class="btn-small-custom"
+                                    >
+
+                                        {% if item.entrega.estado == "CORREGIDA" %}
+
+                                            <i class="bi bi-pencil"></i>
+                                            Revisar
+
+                                        {% else %}
+
+                                            <i class="bi bi-check2"></i>
+                                            Corregir
+
+                                        {% endif %}
+
+                                    </a>
+
+                                {% else %}
+
+                                    <span class="text-muted">
+                                        Sin entrega
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    {% else %}
+
+        <div class="empty-state">
+
+            <div class="empty-state-icon">
+                <i class="bi bi-people"></i>
+            </div>
+
+            <h2>
+                No hay alumnos inscriptos
+            </h2>
+
+        </div>
+
+    {% endif %}
+
+</section>
+
+{% endblock %}

@@ -42,13 +42,25 @@ Contenido de la clase
 
     </div>
 
-    <a
-        href="{% url 'nuevo_contenido' clase.pk %}"
-        class="btn-primary-custom"
-    >
-        <i class="bi bi-plus-lg"></i>
-        Agregar contenido
-    </a>
+    <div class="header-actions">
+
+        <a
+            href="{% url 'lista_actividades' clase.pk %}"
+            class="btn-secondary-custom"
+        >
+            <i class="bi bi-check2-square"></i>
+            Actividades
+        </a>
+
+        <a
+            href="{% url 'nuevo_contenido' clase.pk %}"
+            class="btn-primary-custom"
+        >
+            <i class="bi bi-plus-lg"></i>
+            Agregar contenido
+        </a>
+
+    </div>
 
 </section>
 

@@ -50,4 +50,9 @@ urlpatterns = [
         "",
         include("apps.contenidos.urls"),
     ),
+
+    path(
+        "",
+        include("apps.actividades.urls"),
+    ),
 ]

@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+{{ titulo }} | Aula Virtual
+{% endblock %}
+
+{% block page_title %}
+Actividades
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'css/actividades.css' %}"
+>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+
+        <a
+            href="{% url 'lista_actividades' clase.pk %}"
+            class="back-link"
+        >
+            <i class="bi bi-arrow-left"></i>
+            Volver a actividades
+        </a>
+
+        <h1>
+            {{ titulo }}
+        </h1>
+
+        <p>
+            {{ clase.titulo }}
+        </p>
+
+    </div>
+
+</section>
+
+
+<section class="form-card">
+
+    <form
+        method="post"
+        enctype="multipart/form-data"
+    >
+
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+
+        {% endif %}
+
+
+        <div class="form-field">
+
+            <label for="{{ form.titulo.id_for_label }}">
+                Título
+            </label>
+
+            {{ form.titulo }}
+            {{ form.titulo.errors }}
+
+        </div>
+
+
+        <div class="form-field">
+
+            <label for="{{ form.consigna.id_for_label }}">
+                Consigna
+            </label>
+
+            {{ form.consigna }}
+            {{ form.consigna.errors }}
+
+        </div>
+
+
+        <div class="form-field">
+
+            <label for="{{ form.archivo_adjunto.id_for_label }}">
+                Archivo adjunto
+            </label>
+
+            {{ form.archivo_adjunto }}
+            {{ form.archivo_adjunto.errors }}
+
+            <small class="field-help">
+                Opcional. Podés adjuntar una guía,
+                consigna o material complementario.
+            </small>
+
+        </div>
+
+
+        <div class="form-grid">
+
+            <div class="form-field">
+
+                <label for="{{ form.fecha_apertura.id_for_label }}">
+                    Fecha de apertura
+                </label>
+
+                {{ form.fecha_apertura }}
+                {{ form.fecha_apertura.errors }}
+
+            </div>
+
+            <div class="form-field">
+
+                <label for="{{ form.fecha_limite.id_for_label }}">
+                    Fecha límite
+                </label>
+
+                {{ form.fecha_limite }}
+                {{ form.fecha_limite.errors }}
+
+            </div>
+
+            <div class="form-field">
+
+                <label for="{{ form.puntaje_maximo.id_for_label }}">
+                    Puntaje máximo
+                </label>
+
+                {{ form.puntaje_maximo }}
+                {{ form.puntaje_maximo.errors }}
+
+            </div>
+
+        </div>
+
+
+        <div class="activity-options">
+
+            <div class="form-check">
+
+                {{ form.permite_texto }}
+
+                <label
+                    class="form-check-label"
+                    for="{{ form.permite_texto.id_for_label }}"
+                >
+                    Permitir respuesta de texto
+                </label>
+
+            </div>
+
+            <div class="form-check">
+
+                {{ form.permite_archivo }}
+
+                <label
+                    class="form-check-label"
+                    for="{{ form.permite_archivo.id_for_label }}"
+                >
+                    Permitir archivo adjunto
+                </label>
+
+            </div>
+
+            <div class="form-check">
+
+                {{ form.visible }}
+
+                <label
+                    class="form-check-label"
+                    for="{{ form.visible.id_for_label }}"
+                >
+                    Visible para los alumnos
+                </label>
+
+            </div>
+
+        </div>
+
+
+        <div class="form-actions">
+
+            <a
+                href="{% url 'lista_actividades' clase.pk %}"
+                class="btn-secondary-custom"
+            >
+                Cancelar
+            </a>
+
+            <button
+                type="submit"
+                class="btn-primary-custom"
+            >
+                <i class="bi bi-check-lg"></i>
+                Guardar actividad
+            </button>
+
+        </div>
+
+    </form>
+
+</section>
+
+{% endblock %}

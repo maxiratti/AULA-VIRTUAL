@@ -864,3 +864,16 @@ textarea.form-control {
 
     font-size: 12px;
 }
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+@media (max-width: 767.98px) {
+    .header-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+}
