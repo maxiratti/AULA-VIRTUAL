@@ -1,0 +1,383 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Calificaciones | {{ curso.nombre }}
+{% endblock %}
+
+{% block page_title %}
+Calificaciones
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'css/actividades.css' %}"
+>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+
+        <a
+            href="{% url 'calificaciones_docente' %}"
+            class="back-link"
+        >
+            <i class="bi bi-arrow-left"></i>
+            Volver a calificaciones
+        </a>
+
+        <h1>
+            Libro de calificaciones
+        </h1>
+
+        <p>
+            {{ curso.nombre }}
+            ·
+            {{ curso.institucion.nombre }}
+        </p>
+
+    </div>
+
+</section>
+
+
+<section class="content-card gradebook-card">
+
+    {% if actividades and filas %}
+
+        <div class="gradebook-toolbar">
+
+            <div class="gradebook-info">
+
+                <div class="gradebook-info-item">
+
+                    <i class="bi bi-people"></i>
+
+                    <span>
+                        <strong>{{ filas|length }}</strong>
+                        alumnos
+                    </span>
+
+                </div>
+
+                <div class="gradebook-info-item">
+
+                    <i class="bi bi-check2-square"></i>
+
+                    <span>
+                        <strong>{{ actividades|length }}</strong>
+                        actividades
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            {% if actividades|length > 3 %}
+
+                <div class="gradebook-scroll-hint">
+
+                    <i class="bi bi-arrow-left-right"></i>
+
+                    <span>
+                        Desplazá horizontalmente para ver
+                        todas las actividades
+                    </span>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+
+        <div class="gradebook-wrapper">
+
+            <table class="gradebook-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th class="gradebook-student-column">
+
+                            <div class="gradebook-main-heading">
+                                <i class="bi bi-person"></i>
+                                Alumno
+                            </div>
+
+                        </th>
+
+
+                        {% for actividad in actividades %}
+
+                            <th class="gradebook-activity-column">
+
+                                <div class="gradebook-activity-header">
+
+                                    <span
+                                        class="gradebook-activity-context"
+                                        title="{{ actividad.clase.modulo.titulo }} · {{ actividad.clase.titulo }}"
+                                    >
+                                        {{ actividad.clase.modulo.titulo }}
+                                        ·
+                                        {{ actividad.clase.titulo }}
+                                    </span>
+
+                                    <strong
+                                        title="{{ actividad.titulo }}"
+                                    >
+                                        {{ actividad.titulo }}
+                                    </strong>
+
+                                    <small>
+                                        Máx.
+                                        {{ actividad.puntaje_maximo }}
+                                        pts.
+                                    </small>
+
+                                </div>
+
+                            </th>
+
+                        {% endfor %}
+
+
+                        <th class="gradebook-average-column">
+
+                            <div class="gradebook-main-heading gradebook-main-heading-center">
+                                <i class="bi bi-bar-chart"></i>
+                                Promedio
+                            </div>
+
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for fila in filas %}
+
+                        <tr>
+
+                            <!-- ALUMNO -->
+
+                            <td class="gradebook-student-cell">
+
+                                <div class="gradebook-student">
+
+                                    <div class="delivery-avatar">
+
+                                        {{ fila.alumno.first_name|default:fila.alumno.username|slice:":1"|upper }}
+
+                                    </div>
+
+
+                                    <div class="gradebook-student-data">
+
+                                        <strong>
+                                            {{ fila.alumno.get_full_name|default:fila.alumno.username }}
+                                        </strong>
+
+                                        <span>
+                                            {{ fila.alumno.username }}
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            </td>
+
+
+                            <!-- ACTIVIDADES -->
+
+                            {% for celda in fila.celdas %}
+
+                                <td class="gradebook-grade-cell">
+
+                                    {% if celda.estado == "CORREGIDA" %}
+
+                                        <a
+                                            href="{% url 'corregir_entrega' celda.entrega.pk %}"
+                                            class="gradebook-grade-link corrected"
+                                            title="Revisar corrección"
+                                        >
+
+                                            <strong>
+                                                {{ celda.entrega.calificacion|default:"—" }}
+                                            </strong>
+
+                                            <span>
+                                                /
+                                                {{ celda.actividad.puntaje_maximo }}
+                                            </span>
+
+                                        </a>
+
+
+                                    {% elif celda.estado == "ENTREGADA" %}
+
+                                        <a
+                                            href="{% url 'corregir_entrega' celda.entrega.pk %}"
+                                            class="gradebook-state-link delivered"
+                                            title="Corregir entrega"
+                                        >
+
+                                            <i class="bi bi-check-circle-fill"></i>
+
+                                            <span>
+                                                Entregada
+                                            </span>
+
+                                        </a>
+
+
+                                    {% else %}
+
+                                        <span
+                                            class="gradebook-state pending"
+                                            title="El alumno todavía no realizó la entrega"
+                                        >
+
+                                            <i class="bi bi-hourglass-split"></i>
+
+                                            <span>
+                                                Pendiente
+                                            </span>
+
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+                            {% endfor %}
+
+
+                            <!-- PROMEDIO -->
+
+                            <td class="gradebook-average-cell">
+
+                                {% if fila.promedio != None %}
+
+                                    <div class="gradebook-average-value">
+
+                                        <strong>
+                                            {{ fila.promedio }}%
+                                        </strong>
+
+                                        <span>
+                                            Promedio
+                                        </span>
+
+                                    </div>
+
+                                {% else %}
+
+                                    <span class="gradebook-no-average">
+                                        —
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <div class="gradebook-legend">
+
+            <div class="gradebook-legend-item">
+
+                <span class="gradebook-legend-dot corrected"></span>
+
+                <span>
+                    Corregida
+                </span>
+
+            </div>
+
+            <div class="gradebook-legend-item">
+
+                <span class="gradebook-legend-dot delivered"></span>
+
+                <span>
+                    Entregada
+                </span>
+
+            </div>
+
+            <div class="gradebook-legend-item">
+
+                <span class="gradebook-legend-dot pending"></span>
+
+                <span>
+                    Pendiente
+                </span>
+
+            </div>
+
+        </div>
+
+
+    {% elif not actividades %}
+
+        <div class="empty-state">
+
+            <div class="empty-state-icon">
+                <i class="bi bi-bar-chart"></i>
+            </div>
+
+            <h2>
+                Este curso todavía no tiene actividades
+            </h2>
+
+            <p>
+                Cuando se creen actividades,
+                sus calificaciones aparecerán aquí.
+            </p>
+
+        </div>
+
+
+    {% else %}
+
+        <div class="empty-state">
+
+            <div class="empty-state-icon">
+                <i class="bi bi-people"></i>
+            </div>
+
+            <h2>
+                No hay alumnos inscriptos
+            </h2>
+
+            <p>
+                El libro de calificaciones se completará
+                cuando haya alumnos en el curso.
+            </p>
+
+        </div>
+
+    {% endif %}
+
+</section>
+
+{% endblock %}

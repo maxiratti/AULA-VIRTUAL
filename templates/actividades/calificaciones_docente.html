@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Calificaciones | Aula Virtual
+{% endblock %}
+
+{% block page_title %}
+Calificaciones
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'css/actividades.css' %}"
+>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+
+        <h1>
+            Calificaciones
+        </h1>
+
+        <p>
+            Seleccioná un curso para consultar
+            su libro de calificaciones.
+        </p>
+
+    </div>
+
+</section>
+
+
+{% if cursos %}
+
+    <section class="teacher-grade-courses">
+
+        {% for curso in cursos %}
+
+            <a
+                href="{% url 'libro_calificaciones' curso.pk %}"
+                class="teacher-grade-course-card"
+            >
+
+                <div class="teacher-grade-course-icon">
+                    <i class="bi bi-bar-chart"></i>
+                </div>
+
+                <div class="teacher-grade-course-main">
+
+                    <span>
+                        {{ curso.institucion.nombre }}
+                    </span>
+
+                    <h2>
+                        {{ curso.nombre }}
+                    </h2>
+
+                    <small>
+                        Abrir libro de calificaciones
+                    </small>
+
+                </div>
+
+                <i class="bi bi-arrow-right"></i>
+
+            </a>
+
+        {% endfor %}
+
+    </section>
+
+
+{% else %}
+
+    <section class="content-card">
+
+        <div class="empty-state">
+
+            <div class="empty-state-icon">
+                <i class="bi bi-bar-chart"></i>
+            </div>
+
+            <h2>
+                No tenés cursos asignados
+            </h2>
+
+            <p>
+                Cuando seas asignado como docente
+                de un curso, aparecerá aquí.
+            </p>
+
+        </div>
+
+    </section>
+
+{% endif %}
+
+{% endblock %}

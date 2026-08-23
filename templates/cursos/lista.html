@@ -162,6 +162,15 @@ Cursos
                                     </a>
 
                                     <a
+                                        href="{% url 'libro_calificaciones' curso.pk %}"
+                                        class="action-button"
+                                        title="Calificaciones"
+                                        aria-label="Calificaciones"
+                                    >
+                                        <i class="bi bi-bar-chart"></i>
+                                    </a>
+
+                                    <a
                                         href="{% url 'editar_curso' curso.pk %}"
                                         class="action-button"
                                         title="Editar curso"

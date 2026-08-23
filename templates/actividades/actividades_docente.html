@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Actividades | Aula Virtual
+{% endblock %}
+
+{% block page_title %}
+Actividades
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'css/actividades.css' %}"
+>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+
+        <h1>
+            Actividades
+        </h1>
+
+        <p>
+            Consultá las actividades de tus cursos
+            y las entregas pendientes de corrección.
+        </p>
+
+    </div>
+
+</section>
+
+
+{% if actividades_data %}
+
+    <section class="teacher-activities-list">
+
+        {% for item in actividades_data %}
+
+            <article class="teacher-activity-card">
+
+                <div class="teacher-activity-icon">
+                    <i class="bi bi-check2-square"></i>
+                </div>
+
+
+                <div class="teacher-activity-main">
+
+                    <span class="teacher-activity-course">
+
+                        {{ item.actividad.clase.modulo.curso.nombre }}
+
+                        ·
+
+                        {{ item.actividad.clase.modulo.titulo }}
+
+                        ·
+
+                        {{ item.actividad.clase.titulo }}
+
+                    </span>
+
+                    <h2>
+                        {{ item.actividad.titulo }}
+                    </h2>
+
+
+                    <div class="teacher-activity-meta">
+
+                        <span>
+                            <i class="bi bi-inbox"></i>
+
+                            {{ item.cantidad_entregas }}
+
+                            {% if item.cantidad_entregas == 1 %}
+                                entrega
+                            {% else %}
+                                entregas
+                            {% endif %}
+                        </span>
+
+
+                        {% if item.pendientes_correccion > 0 %}
+
+                            <span class="teacher-pending-corrections">
+
+                                <i class="bi bi-exclamation-circle"></i>
+
+                                {{ item.pendientes_correccion }}
+                                por corregir
+
+                            </span>
+
+                        {% else %}
+
+                            <span class="teacher-all-corrected">
+
+                                <i class="bi bi-check-circle"></i>
+                                Sin correcciones pendientes
+
+                            </span>
+
+                        {% endif %}
+
+
+                        <span>
+
+                            <i class="bi bi-patch-check"></i>
+
+                            {{ item.corregidas }}
+                            corregidas
+
+                        </span>
+
+                    </div>
+
+
+                    {% if item.actividad.fecha_limite %}
+
+                        <div class="teacher-activity-deadline">
+
+                            <i class="bi bi-calendar-event"></i>
+
+                            Fecha límite:
+                            {{ item.actividad.fecha_limite|date:"d/m/Y H:i" }}
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="teacher-activity-actions">
+
+                    <a
+                        href="{% url 'lista_entregas' item.actividad.pk %}"
+                        class="btn-small-custom"
+                    >
+                        <i class="bi bi-inbox"></i>
+                        Entregas
+                    </a>
+
+                    <a
+                        href="{% url 'editar_actividad' item.actividad.pk %}"
+                        class="action-button"
+                        title="Editar actividad"
+                        aria-label="Editar actividad"
+                    >
+                        <i class="bi bi-pencil"></i>
+                    </a>
+
+                </div>
+
+            </article>
+
+        {% endfor %}
+
+    </section>
+
+
+{% else %}
+
+    <section class="content-card">
+
+        <div class="empty-state">
+
+            <div class="empty-state-icon">
+                <i class="bi bi-check2-square"></i>
+            </div>
+
+            <h2>
+                Todavía no tenés actividades
+            </h2>
+
+            <p>
+                Las actividades que crees en tus cursos
+                aparecerán en esta sección.
+            </p>
+
+        </div>
+
+    </section>
+
+{% endif %}
+
+{% endblock %}

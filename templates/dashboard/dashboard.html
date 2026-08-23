@@ -34,8 +34,8 @@ Inicio
         {% if es_docente %}
 
             <p>
-                Accedé a tus cursos, contenidos y actividades
-                desde este espacio.
+                Accedé a tus cursos, actividades y entregas
+                pendientes de corrección.
             </p>
 
         {% elif es_alumno %}
@@ -58,6 +58,8 @@ Inicio
 
 
 <section class="dashboard-grid">
+
+    <!-- CURSOS -->
 
     <article class="dashboard-card">
 
@@ -90,6 +92,8 @@ Inicio
     </article>
 
 
+    <!-- ACTIVIDADES -->
+
     <article class="dashboard-card">
 
         <div class="dashboard-card-icon">
@@ -98,23 +102,31 @@ Inicio
 
         <div>
 
-            <span class="dashboard-card-label">
-                Actividades
-            </span>
+            {% if es_docente %}
 
-            <strong class="dashboard-card-value">
+                <span class="dashboard-card-label">
+                    Actividades
+                </span>
 
-                {% if es_alumno %}
+                <strong class="dashboard-card-value">
+                    {{ cantidad_actividades_docente }}
+                </strong>
+
+                <span class="dashboard-card-detail">
+                    Actividades creadas
+                </span>
+
+            {% elif es_alumno %}
+
+                <span class="dashboard-card-label">
+                    Actividades
+                </span>
+
+                <strong class="dashboard-card-value">
                     {{ actividades_pendientes }}
-                {% else %}
-                    0
-                {% endif %}
+                </strong>
 
-            </strong>
-
-            <span class="dashboard-card-detail">
-
-                {% if es_alumno %}
+                <span class="dashboard-card-detail">
 
                     {% if actividades_pendientes == 1 %}
                         Pendiente
@@ -122,50 +134,94 @@ Inicio
                         Pendientes
                     {% endif %}
 
-                {% else %}
+                </span>
 
-                    Pendientes
+            {% else %}
 
-                {% endif %}
+                <span class="dashboard-card-label">
+                    Actividades
+                </span>
 
-            </span>
+                <strong class="dashboard-card-value">
+                    0
+                </strong>
+
+                <span class="dashboard-card-detail">
+                    Actividades
+                </span>
+
+            {% endif %}
 
         </div>
 
     </article>
 
 
+    <!-- POR CORREGIR / PROGRESO -->
+
     <article class="dashboard-card">
 
         <div class="dashboard-card-icon">
-            <i class="bi bi-graph-up-arrow"></i>
+
+            {% if es_docente %}
+                <i class="bi bi-inbox"></i>
+            {% else %}
+                <i class="bi bi-graph-up-arrow"></i>
+            {% endif %}
+
         </div>
 
         <div>
 
-            <span class="dashboard-card-label">
-                Progreso
-            </span>
+            {% if es_docente %}
 
-            <strong class="dashboard-card-value">
+                <span class="dashboard-card-label">
+                    Por corregir
+                </span>
 
-                {% if es_alumno %}
+                <strong class="dashboard-card-value">
+                    {{ entregas_por_corregir }}
+                </strong>
+
+                <span class="dashboard-card-detail">
+
+                    {% if entregas_por_corregir == 1 %}
+                        Entrega pendiente
+                    {% else %}
+                        Entregas pendientes
+                    {% endif %}
+
+                </span>
+
+            {% elif es_alumno %}
+
+                <span class="dashboard-card-label">
+                    Progreso
+                </span>
+
+                <strong class="dashboard-card-value">
                     {{ progreso }}%
-                {% else %}
-                    0%
-                {% endif %}
+                </strong>
 
-            </strong>
-
-            <span class="dashboard-card-detail">
-
-                {% if es_alumno %}
+                <span class="dashboard-card-detail">
                     Actividades completadas
-                {% else %}
-                    Progreso general
-                {% endif %}
+                </span>
 
-            </span>
+            {% else %}
+
+                <span class="dashboard-card-label">
+                    Progreso
+                </span>
+
+                <strong class="dashboard-card-value">
+                    0%
+                </strong>
+
+                <span class="dashboard-card-detail">
+                    Progreso general
+                </span>
+
+            {% endif %}
 
         </div>
 
@@ -174,7 +230,75 @@ Inicio
 </section>
 
 
-{% if es_alumno and cantidad_actividades > 0 %}
+<!-- ===================================================== -->
+<!-- RESUMEN DOCENTE -->
+<!-- ===================================================== -->
+
+{% if es_docente %}
+
+<section class="dashboard-activity-summary">
+
+    <div class="activity-summary-item">
+
+        <span class="activity-summary-value">
+            {{ cantidad_actividades_docente }}
+        </span>
+
+        <span class="activity-summary-label">
+            Actividades
+        </span>
+
+    </div>
+
+
+    <div class="activity-summary-item">
+
+        <span class="activity-summary-value">
+            {{ entregas_por_corregir }}
+        </span>
+
+        <span class="activity-summary-label">
+            Por corregir
+        </span>
+
+    </div>
+
+
+    <div class="activity-summary-item">
+
+        <span class="activity-summary-value">
+            {{ entregas_corregidas_docente }}
+        </span>
+
+        <span class="activity-summary-label">
+            Corregidas
+        </span>
+
+    </div>
+
+
+    <div class="activity-summary-item">
+
+        <span class="activity-summary-value">
+            {{ cantidad_cursos }}
+        </span>
+
+        <span class="activity-summary-label">
+            Cursos
+        </span>
+
+    </div>
+
+</section>
+
+{% endif %}
+
+
+<!-- ===================================================== -->
+<!-- RESUMEN ALUMNO -->
+<!-- ===================================================== -->
+
+{% if es_alumno and not es_docente and cantidad_actividades > 0 %}
 
 <section class="dashboard-activity-summary">
 
@@ -234,6 +358,10 @@ Inicio
 {% endif %}
 
 
+<!-- ===================================================== -->
+<!-- MIS CURSOS -->
+<!-- ===================================================== -->
+
 <section class="dashboard-section">
 
     <div class="section-heading">
@@ -260,7 +388,8 @@ Inicio
 
         </div>
 
-        {% if es_alumno %}
+
+        {% if es_alumno and not es_docente %}
 
             <a
                 href="{% url 'mis_cursos' %}"
@@ -281,17 +410,22 @@ Inicio
 
             {% for curso in cursos %}
 
-                {% if es_alumno %}
+                <!-- ========================================= -->
+                <!-- TARJETA PARA DOCENTE -->
+                <!-- ========================================= -->
+
+                {% if es_docente %}
 
                     <a
-                        href="{% url 'detalle_curso_alumno' curso.pk %}"
+                        href="{% url 'lista_modulos' curso.pk %}"
                         class="course-card course-card-link"
-                        aria-label="Entrar al curso {{ curso.nombre }}"
+                        aria-label="Gestionar curso {{ curso.nombre }}"
                     >
 
                         <div class="course-card-icon">
                             <i class="bi bi-journal-bookmark"></i>
                         </div>
+
 
                         <div class="course-card-content">
 
@@ -302,6 +436,7 @@ Inicio
                             <h3>
                                 {{ curso.nombre }}
                             </h3>
+
 
                             {% if curso.descripcion %}
 
@@ -329,6 +464,7 @@ Inicio
                                     {% endif %}
 
                                 </span>
+
 
                                 <span class="course-status">
                                     {{ curso.get_estado_display }}
@@ -340,8 +476,11 @@ Inicio
                             <div class="course-card-action">
 
                                 <span class="course-enter-link">
-                                    Entrar al curso
+
+                                    Gestionar curso
+
                                     <i class="bi bi-arrow-right"></i>
+
                                 </span>
 
                             </div>
@@ -351,13 +490,22 @@ Inicio
                     </a>
 
 
-                {% else %}
+                <!-- ========================================= -->
+                <!-- TARJETA PARA ALUMNO -->
+                <!-- ========================================= -->
 
-                    <article class="course-card">
+                {% elif es_alumno %}
+
+                    <a
+                        href="{% url 'detalle_curso_alumno' curso.pk %}"
+                        class="course-card course-card-link"
+                        aria-label="Entrar al curso {{ curso.nombre }}"
+                    >
 
                         <div class="course-card-icon">
                             <i class="bi bi-journal-bookmark"></i>
                         </div>
+
 
                         <div class="course-card-content">
 
@@ -368,6 +516,7 @@ Inicio
                             <h3>
                                 {{ curso.nombre }}
                             </h3>
+
 
                             {% if curso.descripcion %}
 
@@ -395,6 +544,83 @@ Inicio
                                     {% endif %}
 
                                 </span>
+
+
+                                <span class="course-status">
+                                    {{ curso.get_estado_display }}
+                                </span>
+
+                            </div>
+
+
+                            <div class="course-card-action">
+
+                                <span class="course-enter-link">
+
+                                    Entrar al curso
+
+                                    <i class="bi bi-arrow-right"></i>
+
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </a>
+
+
+                <!-- ========================================= -->
+                <!-- TARJETA GENÉRICA -->
+                <!-- ========================================= -->
+
+                {% else %}
+
+                    <article class="course-card">
+
+                        <div class="course-card-icon">
+                            <i class="bi bi-journal-bookmark"></i>
+                        </div>
+
+
+                        <div class="course-card-content">
+
+                            <span class="course-institution">
+                                {{ curso.institucion.nombre }}
+                            </span>
+
+                            <h3>
+                                {{ curso.nombre }}
+                            </h3>
+
+
+                            {% if curso.descripcion %}
+
+                                <p>
+                                    {{ curso.descripcion|truncatechars:120 }}
+                                </p>
+
+                            {% endif %}
+
+
+                            <div class="course-card-footer">
+
+                                <span>
+
+                                    <i class="bi bi-calendar3"></i>
+
+                                    {% if curso.fecha_inicio %}
+
+                                        {{ curso.fecha_inicio|date:"d/m/Y" }}
+
+                                    {% else %}
+
+                                        Sin fecha
+
+                                    {% endif %}
+
+                                </span>
+
 
                                 <span class="course-status">
                                     {{ curso.get_estado_display }}
@@ -424,6 +650,7 @@ Inicio
             <h3>
                 Todavía no tenés cursos
             </h3>
+
 
             {% if es_docente %}
 

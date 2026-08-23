@@ -43,8 +43,26 @@ urlpatterns = [
     ),
 
     path(
+        "cursos/<int:curso_id>/calificaciones/",
+        views.libro_calificaciones,
+        name="libro_calificaciones",
+    ),
+
+    path(
         "mis-calificaciones/",
         views.mis_calificaciones,
         name="mis_calificaciones",
+    ),
+
+    path(
+        "calificaciones-docente/",
+        views.calificaciones_docente,
+        name="calificaciones_docente",
+    ),
+
+    path(
+        "actividades-docente/",
+        views.actividades_docente,
+        name="actividades_docente",
     ),
 ]

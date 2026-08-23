@@ -667,3 +667,299 @@ def mis_calificaciones(request):
             "promedio": promedio,
         },
     )
+
+
+@login_required
+def libro_calificaciones(request, curso_id):
+    from apps.cursos.models import Curso
+
+    curso = get_object_or_404(
+        Curso.objects.select_related(
+            "institucion",
+        ),
+        pk=curso_id,
+    )
+
+    if request.user.is_superuser:
+        puede_acceder = True
+
+    elif tiene_rol_en_institucion(
+        request.user,
+        "Coordinador",
+        curso.institucion,
+    ):
+        puede_acceder = True
+
+    elif (
+        tiene_rol_en_institucion(
+            request.user,
+            "Docente",
+            curso.institucion,
+        )
+        and curso.docentes.filter(
+            pk=request.user.pk
+        ).exists()
+    ):
+        puede_acceder = True
+
+    else:
+        puede_acceder = False
+
+    if not puede_acceder:
+        raise PermissionDenied
+
+
+    actividades = list(
+        Actividad.objects
+        .filter(
+            clase__modulo__curso=curso,
+        )
+        .select_related(
+            "clase",
+            "clase__modulo",
+        )
+        .order_by(
+            "clase__modulo__orden",
+            "clase__orden",
+            "id",
+        )
+    )
+
+
+    inscripciones = (
+        Inscripcion.objects
+        .filter(
+            curso=curso,
+            estado__in=[
+                Inscripcion.ESTADO_INSCRIPTO,
+                Inscripcion.ESTADO_CURSANDO,
+            ],
+        )
+        .select_related(
+            "alumno",
+        )
+        .order_by(
+            "alumno__last_name",
+            "alumno__first_name",
+            "alumno__username",
+        )
+    )
+
+
+    entregas = (
+        Entrega.objects
+        .filter(
+            actividad__in=actividades,
+            alumno__in=inscripciones.values(
+                "alumno_id"
+            ),
+        )
+        .select_related(
+            "actividad",
+            "alumno",
+        )
+    )
+
+
+    entregas_por_clave = {
+        (
+            entrega.alumno_id,
+            entrega.actividad_id,
+        ): entrega
+        for entrega in entregas
+    }
+
+
+    filas = []
+
+    for inscripcion in inscripciones:
+        alumno = inscripcion.alumno
+
+        celdas = []
+
+        suma_porcentajes = 0
+        cantidad_calificadas = 0
+
+        for actividad in actividades:
+            entrega = entregas_por_clave.get(
+                (
+                    alumno.pk,
+                    actividad.pk,
+                )
+            )
+
+            estado = "PENDIENTE"
+            porcentaje = None
+
+            if entrega:
+                if (
+                    entrega.estado
+                    == Entrega.ESTADO_CORREGIDA
+                ):
+                    estado = "CORREGIDA"
+
+                    if (
+                        entrega.calificacion
+                        is not None
+                        and actividad.puntaje_maximo
+                    ):
+                        porcentaje = (
+                            float(
+                                entrega.calificacion
+                            )
+                            / float(
+                                actividad.puntaje_maximo
+                            )
+                        ) * 100
+
+                        suma_porcentajes += porcentaje
+                        cantidad_calificadas += 1
+
+                else:
+                    estado = "ENTREGADA"
+
+            celdas.append(
+                {
+                    "actividad": actividad,
+                    "entrega": entrega,
+                    "estado": estado,
+                }
+            )
+
+
+        promedio = None
+
+        if cantidad_calificadas > 0:
+            promedio = round(
+                suma_porcentajes
+                / cantidad_calificadas
+            )
+
+
+        filas.append(
+            {
+                "alumno": alumno,
+                "celdas": celdas,
+                "promedio": promedio,
+            }
+        )
+
+
+    return render(
+        request,
+        "actividades/libro_calificaciones.html",
+        {
+            "curso": curso,
+            "actividades": actividades,
+            "filas": filas,
+        },
+    )
+
+@login_required
+def calificaciones_docente(request):
+    from apps.cursos.models import Curso
+
+    cursos = (
+        Curso.objects
+        .filter(
+            docentes=request.user,
+        )
+        .select_related(
+            "institucion",
+        )
+        .distinct()
+        .order_by(
+            "institucion__nombre",
+            "nombre",
+        )
+    )
+
+    return render(
+        request,
+        "actividades/calificaciones_docente.html",
+        {
+            "cursos": cursos,
+        },
+    )
+
+
+@login_required
+def actividades_docente(request):
+    from apps.cursos.models import Curso
+
+    if request.user.is_superuser:
+        cursos = Curso.objects.all()
+
+    else:
+        cursos = (
+            Curso.objects
+            .filter(
+                docentes=request.user,
+            )
+            .distinct()
+        )
+
+    actividades = (
+        Actividad.objects
+        .filter(
+            clase__modulo__curso__in=cursos,
+        )
+        .select_related(
+            "clase",
+            "clase__modulo",
+            "clase__modulo__curso",
+            "clase__modulo__curso__institucion",
+        )
+        .prefetch_related(
+            "entregas",
+        )
+        .order_by(
+            "clase__modulo__curso__nombre",
+            "clase__modulo__orden",
+            "clase__orden",
+            "id",
+        )
+        .distinct()
+    )
+
+    actividades_data = []
+
+    for actividad in actividades:
+        entregas = list(
+            actividad.entregas.all()
+        )
+
+        cantidad_entregas = len(
+            entregas
+        )
+
+        pendientes_correccion = sum(
+            1
+            for entrega in entregas
+            if entrega.estado
+            == Entrega.ESTADO_ENTREGADA
+        )
+
+        corregidas = sum(
+            1
+            for entrega in entregas
+            if entrega.estado
+            == Entrega.ESTADO_CORREGIDA
+        )
+
+        actividades_data.append(
+            {
+                "actividad": actividad,
+                "cantidad_entregas": cantidad_entregas,
+                "pendientes_correccion": pendientes_correccion,
+                "corregidas": corregidas,
+            }
+        )
+
+    return render(
+        request,
+        "actividades/actividades_docente.html",
+        {
+            "actividades_data": actividades_data,
+        },
+    )
