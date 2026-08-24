@@ -31,7 +31,7 @@ Entrega
         </a>
 
         <h1>
-            Entregar actividad
+            {% if es_reentrega %}Nueva entrega{% else %}Entregar actividad{% endif %}
         </h1>
 
         <p>
@@ -134,6 +134,14 @@ Entrega
     <!-- ENTREGA -->
     <section class="form-card delivery-form-card">
 
+        {% if es_reentrega and entrega_anterior.devolucion %}
+            <div class="redo-form-notice">
+                <strong><i class="bi bi-arrow-repeat"></i> El docente solicitó que rehagas esta actividad</strong>
+                <div>{{ entrega_anterior.devolucion|linebreaks }}</div>
+                <small>Esta nueva entrega está habilitada aunque haya vencido la fecha límite original.</small>
+            </div>
+        {% endif %}
+
         <form
             method="post"
             enctype="multipart/form-data"
@@ -201,7 +209,7 @@ Entrega
                     class="btn-primary-custom"
                 >
                     <i class="bi bi-send"></i>
-                    Entregar actividad
+                    {% if es_reentrega %}Enviar nueva entrega{% else %}Entregar actividad{% endif %}
                 </button>
 
             </div>

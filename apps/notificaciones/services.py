@@ -49,7 +49,11 @@ def notificar_actividad_publicada(actividad):
         )
 
 
-def notificar_nueva_entrega(entrega):
+def notificar_nueva_entrega(
+    entrega,
+    numero_intento=1,
+    es_reentrega=False,
+):
     actividad = entrega.actividad
     curso = actividad.clase.modulo.curso
 
@@ -67,29 +71,43 @@ def notificar_nueva_entrega(entrega):
         },
     )
 
+    titulo = (
+        "Nueva reentrega recibida"
+        if es_reentrega
+        else "Nueva entrega recibida"
+    )
+
+    clave = (
+        f"entrega_nueva:"
+        f"{entrega.pk}:"
+        f"{numero_intento}"
+    )
+
     docentes = curso.docentes.all()
 
     for docente in docentes:
-        Notificacion.objects.get_or_create(
+        Notificacion.objects.update_or_create(
             usuario=docente,
-            clave=(
-                f"entrega_nueva:"
-                f"{entrega.pk}"
-            ),
+            clave=clave,
             defaults={
                 "tipo": Notificacion.TIPO_ENTREGA,
-                "titulo": "Nueva entrega recibida",
+                "titulo": titulo,
                 "mensaje": (
                     f"{nombre_alumno} entregó "
                     f"“{actividad.titulo}” "
                     f"en {curso.nombre}."
                 ),
                 "url": url,
+                "leida": False,
+                "fecha_lectura": None,
             },
         )
 
 
-def notificar_entrega_corregida(entrega):
+def notificar_entrega_corregida(
+    entrega,
+    numero_intento=1,
+):
     actividad = entrega.actividad
     curso = actividad.clase.modulo.curso
 
@@ -104,7 +122,8 @@ def notificar_entrega_corregida(entrega):
         usuario=entrega.alumno,
         clave=(
             f"entrega_corregida:"
-            f"{entrega.pk}"
+            f"{entrega.pk}:"
+            f"{numero_intento}"
         ),
         defaults={
             "tipo": Notificacion.TIPO_CORRECCION,
@@ -119,3 +138,4 @@ def notificar_entrega_corregida(entrega):
             "fecha_lectura": None,
         },
     )
+

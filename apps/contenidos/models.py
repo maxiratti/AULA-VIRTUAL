@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 
@@ -245,3 +246,49 @@ class ContenidoClase(models.Model):
             self.titulo
             or f"{self.get_tipo_display()} - {self.clase}"
         )
+    
+
+
+class ProgresoClase(models.Model):
+
+    alumno = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="progresos_clases",
+    )
+
+    clase = models.ForeignKey(
+        Clase,
+        on_delete=models.CASCADE,
+        related_name="progresos_alumnos",
+    )
+
+    completada = models.BooleanField(
+        default=True,
+    )
+
+    fecha_completada = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    class Meta:
+        verbose_name = "progreso de clase"
+        verbose_name_plural = "progresos de clases"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "alumno",
+                    "clase",
+                ],
+                name="progreso_clase_unico_por_alumno",
+            )
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.alumno} - "
+            f"{self.clase}"
+        )
+
+

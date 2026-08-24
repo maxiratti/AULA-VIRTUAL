@@ -224,6 +224,8 @@ Calificaciones
                                         </a>
 
 
+                                    {% elif celda.estado == "REHACER" %}
+                                        <span class="grade-cell pending">Rehacer</span>
                                     {% elif celda.estado == "ENTREGADA" %}
 
                                         <a

@@ -419,4 +419,82 @@
 
 {% endif %}
 
+<section class="lesson-completion">
+
+    <div class="lesson-completion-content">
+
+        <div class="lesson-completion-icon">
+
+            {% if clase_completada %}
+                <i class="bi bi-check-circle-fill"></i>
+            {% else %}
+                <i class="bi bi-circle"></i>
+            {% endif %}
+
+        </div>
+
+        <div>
+
+            {% if clase_completada %}
+
+                <span class="lesson-completion-label">
+                    Clase completada
+                </span>
+
+                <p>
+                    Esta clase forma parte de tu progreso
+                    en el curso.
+                </p>
+
+            {% else %}
+
+                <span class="lesson-completion-label">
+                    ¿Terminaste esta clase?
+                </span>
+
+                <p>
+                    Marcala como completada para registrar
+                    tu avance en el curso.
+                </p>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <form
+        method="post"
+        action="{% url 'cambiar_estado_clase' clase.pk %}"
+    >
+
+        {% csrf_token %}
+
+        {% if clase_completada %}
+
+            <button
+                type="submit"
+                class="lesson-completion-button completed"
+            >
+                <i class="bi bi-check2"></i>
+                Completada
+            </button>
+
+        {% else %}
+
+            <button
+                type="submit"
+                class="lesson-completion-button"
+            >
+                <i class="bi bi-check2-circle"></i>
+                Marcar como completada
+            </button>
+
+        {% endif %}
+
+    </form>
+
+</section>
+
 {% endblock %}

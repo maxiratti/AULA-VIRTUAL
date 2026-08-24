@@ -19,6 +19,16 @@ urlpatterns = [
         views.editar_curso,
         name="editar_curso",
     ),
+    path(
+        "cursos/<int:pk>/seguimiento/",
+        views.seguimiento_curso,
+        name="seguimiento_curso",
+    ),
+    path(
+        "cursos/<int:curso_pk>/seguimiento/<int:alumno_pk>/",
+        views.seguimiento_alumno,
+        name="seguimiento_alumno",
+    ),
 
     path(
         "mis-cursos/",

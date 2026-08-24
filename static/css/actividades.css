@@ -2027,3 +2027,310 @@ textarea.form-control {
         justify-content: flex-start;
     }
 }
+
+/* =========================================================
+   REENTREGAS E HISTORIAL DE INTENTOS
+   ========================================================= */
+
+.btn-revision-custom {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: 42px; padding: 0 16px; border: 1px solid #f59e0b; border-radius: 9px;
+    background: #fffbeb; color: #b45309; font-size: 14px; font-weight: 650;
+}
+.btn-revision-custom:hover { background: #fef3c7; color: #92400e; }
+.delivery-status.redo { background: #fff7ed; color: #c2410c; }
+.delivery-redo-alert, .redo-form-notice {
+    margin-bottom: 18px; padding: 16px; border: 1px solid #fed7aa; border-radius: 12px;
+    background: #fff7ed; color: #9a3412;
+}
+.delivery-redo-alert { display: flex; gap: 12px; align-items: flex-start; }
+.delivery-redo-icon {
+    display: flex; align-items: center; justify-content: center; flex: 0 0 38px; width: 38px; height: 38px;
+    border-radius: 10px; background: #ffedd5; color: #ea580c; font-size: 18px;
+}
+.delivery-redo-alert strong, .redo-form-notice strong { display: block; margin-bottom: 6px; }
+.delivery-redo-alert span, .redo-form-notice small { display: block; margin-top: 6px; font-size: 12px; color: #c2410c; }
+.attempt-history, .student-attempt-history { margin-top: 24px; padding-top: 20px; border-top: 1px solid #e5e7eb; }
+.attempt-history h3, .student-attempt-history h3 { margin: 0 0 12px; font-size: 14px; font-weight: 700; }
+.attempt-history-item, .student-attempt-item { padding: 13px 14px; margin-bottom: 10px; border: 1px solid #e5e7eb; border-radius: 10px; background: #f9fafb; }
+.attempt-history-heading, .student-attempt-item > div:first-child { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.attempt-history-heading span, .student-attempt-item span { color: #6b7280; font-size: 11px; }
+.attempt-feedback { margin-top: 9px; padding: 10px 12px; border-radius: 8px; background: #ffffff; color: #4b5563; font-size: 12px; }
+.redo-form-notice { margin-top: 0; }
+@media (max-width: 767.98px) { .correction-form .form-actions { flex-wrap: wrap; } .btn-revision-custom { width: 100%; } }
+
+/* =========================================================
+   DETALLE VISUAL DEL HISTORIAL DE INTENTOS
+   ========================================================= */
+
+.attempt-history-heading {
+    justify-content: flex-start;
+}
+
+.attempt-history-heading strong {
+    flex: 0 0 auto;
+}
+
+.attempt-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 8px;
+    color: #6b7280;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.attempt-meta-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 9px;
+}
+
+.attempt-grade {
+    color: #047857;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.attempt-response,
+.attempt-feedback {
+    margin-top: 10px;
+    padding: 11px 12px;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #4b5563;
+    font-size: 12px;
+}
+
+.attempt-response > span,
+.attempt-feedback > span {
+    display: block;
+    margin-bottom: 5px;
+    color: #374151;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.attempt-response p,
+.attempt-feedback p {
+    margin-bottom: 0;
+}
+
+
+@media (max-width: 575.98px) {
+    .submitted-file-action {
+        font-size: 0;
+    }
+
+    .submitted-file-action i {
+        font-size: 15px;
+    }
+}
+
+
+/* =========================================================
+   ARCHIVOS DE ENTREGA - TARJETAS CLICKEABLES
+   ========================================================= */
+
+.submitted-file-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    margin-top: 14px;
+    padding: 13px 14px;
+    border: 1px solid #dbe4f0;
+    border-radius: 11px;
+    background: #f8fafc;
+    color: #1f2937;
+    text-decoration: none;
+    transition:
+        border-color 0.15s ease,
+        background 0.15s ease,
+        transform 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.submitted-file-card:hover {
+    transform: translateY(-1px);
+    border-color: #93c5fd;
+    background: #eff6ff;
+    color: #1d4ed8;
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.08);
+}
+
+.submitted-file-card:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.18);
+    outline-offset: 2px;
+}
+
+.submitted-file-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    border-radius: 10px;
+    background: #eaf2ff;
+    color: #2563eb;
+    font-size: 18px;
+}
+
+.submitted-file-info {
+    min-width: 0;
+    flex: 1;
+}
+
+.submitted-file-info strong,
+.submitted-file-info small {
+    display: block;
+}
+
+.submitted-file-info strong {
+    color: #111827;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.submitted-file-info small {
+    margin-top: 3px;
+    overflow: hidden;
+    color: #64748b;
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.submitted-file-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    color: #2563eb;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.attempt-file-card {
+    margin-top: 10px;
+    background: #ffffff;
+}
+
+@media (max-width: 575.98px) {
+    .submitted-file-action {
+        font-size: 0;
+    }
+
+    .submitted-file-action i {
+        font-size: 15px;
+    }
+}
+
+
+/* =========================================================
+   CORRECCIÓN - LAYOUT Y ACCIONES DEFINITIVAS
+   ========================================================= */
+
+.correction-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(390px, 0.85fr);
+    gap: 22px;
+    align-items: start;
+}
+
+.correction-form {
+    min-width: 0;
+}
+
+.correction-form form {
+    min-width: 0;
+}
+
+.correction-form .form-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+    gap: 10px;
+    width: 100%;
+    margin-top: 22px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.correction-form .form-actions .btn-secondary-custom,
+.correction-form .form-actions .btn-revision-custom,
+.correction-form .form-actions .btn-primary-custom {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    width: 100%;
+    min-width: 0;
+    min-height: 46px;
+    padding: 10px 12px;
+    border-radius: 9px;
+    line-height: 1.25;
+    text-align: center;
+    text-decoration: none;
+    white-space: normal;
+}
+
+.correction-form .form-actions .btn-secondary-custom,
+.correction-form .form-actions .btn-revision-custom {
+    grid-row: 1;
+}
+
+.correction-form .form-actions .btn-primary-custom {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    white-space: nowrap;
+}
+
+.btn-revision-custom {
+    border: 1px solid #f59e0b;
+    background: #fffbeb;
+    color: #b45309;
+    font-size: 13px;
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.btn-revision-custom:hover {
+    border-color: #d97706;
+    background: #fef3c7;
+    color: #92400e;
+}
+
+@media (max-width: 1100px) {
+    .correction-layout {
+        grid-template-columns: minmax(0, 1fr) minmax(340px, 0.8fr);
+    }
+}
+
+@media (max-width: 991.98px) {
+    .correction-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .correction-form {
+        max-width: none;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .correction-form .form-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .correction-form .form-actions .btn-secondary-custom,
+    .correction-form .form-actions .btn-revision-custom,
+    .correction-form .form-actions .btn-primary-custom {
+        grid-column: 1;
+        grid-row: auto;
+    }
+}

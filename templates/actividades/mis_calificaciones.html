@@ -84,6 +84,8 @@ Calificaciones
 
                         <i class="bi bi-patch-check-fill"></i>
 
+                    {% elif actividad.estado_alumno == "REHACER" %}
+                        <span class="grade-status pending"><i class="bi bi-arrow-repeat"></i> Rehacer</span>
                     {% elif actividad.estado_alumno == "ENTREGADA" %}
 
                         <i class="bi bi-check-circle"></i>
@@ -129,7 +131,9 @@ Calificaciones
                                 Corregida
                             </span>
 
-                        {% elif actividad.estado_alumno == "ENTREGADA" %}
+                        {% elif actividad.estado_alumno == "REHACER" %}
+                        <span class="grade-status pending"><i class="bi bi-arrow-repeat"></i> Rehacer</span>
+                    {% elif actividad.estado_alumno == "ENTREGADA" %}
 
                             <span class="delivery-status delivered">
                                 <i class="bi bi-check-circle-fill"></i>

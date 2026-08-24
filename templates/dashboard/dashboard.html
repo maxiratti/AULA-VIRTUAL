@@ -57,259 +57,103 @@ Inicio
 </section>
 
 
-<section class="dashboard-grid">
-
-    <!-- CURSOS -->
+<section class="dashboard-grid {% if es_docente %}dashboard-grid-teacher{% endif %}">
 
     <article class="dashboard-card">
-
         <div class="dashboard-card-icon">
             <i class="bi bi-journal-bookmark"></i>
         </div>
-
         <div>
-
-            <span class="dashboard-card-label">
-                Cursos
-            </span>
-
-            <strong class="dashboard-card-value">
-                {{ cantidad_cursos }}
-            </strong>
-
+            <span class="dashboard-card-label">Cursos</span>
+            <strong class="dashboard-card-value">{{ cantidad_cursos }}</strong>
             <span class="dashboard-card-detail">
-
-                {% if cantidad_cursos == 1 %}
-                    Curso activo
-                {% else %}
-                    Cursos activos
-                {% endif %}
-
+                {% if cantidad_cursos == 1 %}Curso activo{% else %}Cursos activos{% endif %}
             </span>
-
         </div>
-
     </article>
 
-
-    <!-- ACTIVIDADES -->
-
     <article class="dashboard-card">
-
         <div class="dashboard-card-icon">
             <i class="bi bi-check2-square"></i>
         </div>
-
         <div>
-
-            {% if es_docente %}
-
-                <span class="dashboard-card-label">
-                    Actividades
-                </span>
-
-                <strong class="dashboard-card-value">
-                    {{ cantidad_actividades_docente }}
-                </strong>
-
-                <span class="dashboard-card-detail">
-                    Actividades creadas
-                </span>
-
-            {% elif es_alumno %}
-
-                <span class="dashboard-card-label">
-                    Actividades
-                </span>
-
-                <strong class="dashboard-card-value">
-                    {{ actividades_pendientes }}
-                </strong>
-
-                <span class="dashboard-card-detail">
-
-                    {% if actividades_pendientes == 1 %}
-                        Pendiente
-                    {% else %}
-                        Pendientes
-                    {% endif %}
-
-                </span>
-
-            {% else %}
-
-                <span class="dashboard-card-label">
-                    Actividades
-                </span>
-
-                <strong class="dashboard-card-value">
-                    0
-                </strong>
-
-                <span class="dashboard-card-detail">
-                    Actividades
-                </span>
-
-            {% endif %}
-
+            <span class="dashboard-card-label">Actividades</span>
+            <strong class="dashboard-card-value">
+                {% if es_docente %}{{ cantidad_actividades_docente }}{% elif es_alumno %}{{ actividades_pendientes }}{% else %}0{% endif %}
+            </strong>
+            <span class="dashboard-card-detail">
+                {% if es_docente %}Actividades creadas{% elif es_alumno %}{% if actividades_pendientes == 1 %}Pendiente{% else %}Pendientes{% endif %}{% else %}Actividades{% endif %}
+            </span>
         </div>
-
     </article>
-
-
-    <!-- POR CORREGIR / PROGRESO -->
 
     <article class="dashboard-card">
-
         <div class="dashboard-card-icon">
-
-            {% if es_docente %}
-                <i class="bi bi-inbox"></i>
-            {% else %}
-                <i class="bi bi-graph-up-arrow"></i>
-            {% endif %}
-
+            {% if es_docente %}<i class="bi bi-inbox"></i>{% else %}<i class="bi bi-graph-up-arrow"></i>{% endif %}
         </div>
-
         <div>
-
             {% if es_docente %}
-
-                <span class="dashboard-card-label">
-                    Por corregir
-                </span>
-
-                <strong class="dashboard-card-value">
-                    {{ entregas_por_corregir }}
-                </strong>
-
+                <span class="dashboard-card-label">Por corregir</span>
+                <strong class="dashboard-card-value">{{ entregas_por_corregir }}</strong>
                 <span class="dashboard-card-detail">
-
-                    {% if entregas_por_corregir == 1 %}
-                        Entrega pendiente
-                    {% else %}
-                        Entregas pendientes
-                    {% endif %}
-
+                    {% if entregas_por_corregir == 1 %}Entrega pendiente{% else %}Entregas pendientes{% endif %}
                 </span>
-
             {% elif es_alumno %}
-
-                <span class="dashboard-card-label">
-                    Progreso
-                </span>
-
-                <strong class="dashboard-card-value">
-                    {{ progreso }}%
-                </strong>
-
-                <span class="dashboard-card-detail">
-                    Actividades completadas
-                </span>
-
+                <span class="dashboard-card-label">Progreso</span>
+                <strong class="dashboard-card-value">{{ progreso }}%</strong>
+                <span class="dashboard-card-detail">{{ clases_completadas }} de {{ total_clases }} clases completadas</span>
             {% else %}
-
-                <span class="dashboard-card-label">
-                    Progreso
-                </span>
-
-                <strong class="dashboard-card-value">
-                    0%
-                </strong>
-
-                <span class="dashboard-card-detail">
-                    Progreso general
-                </span>
-
+                <span class="dashboard-card-label">Progreso</span>
+                <strong class="dashboard-card-value">0%</strong>
+                <span class="dashboard-card-detail">Progreso general</span>
             {% endif %}
-
         </div>
-
     </article>
 
-</section>
-
-
-<!-- ===================================================== -->
-<!-- RESUMEN DOCENTE -->
-<!-- ===================================================== -->
-
-{% if es_docente %}
-
-<section class="dashboard-activity-summary">
-
-    <div class="activity-summary-item">
-
-        <span class="activity-summary-value">
-            {{ cantidad_actividades_docente }}
-        </span>
-
-        <span class="activity-summary-label">
-            Actividades
-        </span>
-
-    </div>
-
-
-    <div class="activity-summary-item">
-
-        <span class="activity-summary-value">
-            {{ entregas_por_corregir }}
-        </span>
-
-        <span class="activity-summary-label">
-            Por corregir
-        </span>
-
-    </div>
-
-
-    <div class="activity-summary-item">
-
-        <span class="activity-summary-value">
-            {{ entregas_corregidas_docente }}
-        </span>
-
-        <span class="activity-summary-label">
-            Corregidas
-        </span>
-
-    </div>
-
-
-    <div class="activity-summary-item">
-
-        <span class="activity-summary-value">
-            {{ cantidad_cursos }}
-        </span>
-
-        <span class="activity-summary-label">
-            Cursos
-        </span>
-
-    </div>
+    {% if es_docente %}
+        <article class="dashboard-card">
+            <div class="dashboard-card-icon">
+                <i class="bi bi-patch-check"></i>
+            </div>
+            <div>
+                <span class="dashboard-card-label">Corregidas</span>
+                <strong class="dashboard-card-value">{{ entregas_corregidas_docente }}</strong>
+                <span class="dashboard-card-detail">Entregas corregidas</span>
+            </div>
+        </article>
+    {% endif %}
 
 </section>
-
-{% endif %}
-
 
 <!-- ===================================================== -->
 <!-- RESUMEN ALUMNO -->
 <!-- ===================================================== -->
 
-{% if es_alumno and not es_docente and cantidad_actividades > 0 %}
+{% if es_alumno and not es_docente %}
 
 <section class="dashboard-activity-summary">
 
     <div class="activity-summary-item">
 
         <span class="activity-summary-value">
-            {{ cantidad_actividades }}
+            {{ clases_completadas }}
         </span>
 
         <span class="activity-summary-label">
-            Total
+            Clases completadas
+        </span>
+
+    </div>
+
+
+    <div class="activity-summary-item">
+
+        <span class="activity-summary-value">
+            {{ total_clases }}
+        </span>
+
+        <span class="activity-summary-label">
+            Clases disponibles
         </span>
 
     </div>
@@ -322,20 +166,7 @@ Inicio
         </span>
 
         <span class="activity-summary-label">
-            Pendientes
-        </span>
-
-    </div>
-
-
-    <div class="activity-summary-item">
-
-        <span class="activity-summary-value">
-            {{ actividades_entregadas }}
-        </span>
-
-        <span class="activity-summary-label">
-            Entregadas
+            Actividades pendientes
         </span>
 
     </div>
@@ -348,7 +179,7 @@ Inicio
         </span>
 
         <span class="activity-summary-label">
-            Corregidas
+            Actividades corregidas
         </span>
 
     </div>
@@ -410,9 +241,7 @@ Inicio
 
             {% for curso in cursos %}
 
-                <!-- ========================================= -->
-                <!-- TARJETA PARA DOCENTE -->
-                <!-- ========================================= -->
+                <!-- DOCENTE -->
 
                 {% if es_docente %}
 
@@ -490,9 +319,7 @@ Inicio
                     </a>
 
 
-                <!-- ========================================= -->
-                <!-- TARJETA PARA ALUMNO -->
-                <!-- ========================================= -->
+                <!-- ALUMNO -->
 
                 {% elif es_alumno %}
 
@@ -570,9 +397,7 @@ Inicio
                     </a>
 
 
-                <!-- ========================================= -->
-                <!-- TARJETA GENÉRICA -->
-                <!-- ========================================= -->
+                <!-- OTROS -->
 
                 {% else %}
 

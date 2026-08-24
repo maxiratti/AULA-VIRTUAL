@@ -1,0 +1,434 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+{{ alumno.get_full_name|default:alumno.username }} | Seguimiento | Aula Virtual
+{% endblock %}
+
+{% block page_title %}
+Seguimiento del alumno
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'css/cursos.css' %}"
+>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header tracking-student-header">
+
+    <div>
+
+        <a
+            href="{% url 'seguimiento_curso' curso.pk %}"
+            class="back-link"
+        >
+            <i class="bi bi-arrow-left"></i>
+            Volver al seguimiento
+        </a>
+
+        <div class="student-profile-heading">
+
+            <div class="student-profile-avatar">
+                {% if alumno.first_name %}
+                    {{ alumno.first_name|slice:":1"|upper }}
+                {% else %}
+                    {{ alumno.username|slice:":1"|upper }}
+                {% endif %}
+            </div>
+
+            <div>
+
+                <h1>
+                    {{ alumno.get_full_name|default:alumno.username }}
+                </h1>
+
+                <p>
+                    {{ curso.nombre }}
+                    ·
+                    {{ curso.institucion.nombre }}
+                    ·
+                    {{ inscripcion.get_estado_display }}
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="student-tracking-header-actions">
+
+        <a
+            href="{% url 'libro_calificaciones' curso.pk %}"
+            class="btn-secondary-custom"
+        >
+            <i class="bi bi-bar-chart"></i>
+            Ver calificaciones
+        </a>
+
+    </div>
+
+</section>
+
+
+<section class="student-tracking-summary">
+
+    <article class="student-metric-card">
+
+        <span>
+            Progreso de clases
+        </span>
+
+        <strong>
+            {{ progreso }}%
+        </strong>
+
+        <div class="student-metric-progress">
+            <progress
+                value="{{ progreso }}"
+                max="100"
+                aria-label="Progreso de clases"
+            >
+                {{ progreso }}%
+            </progress>
+        </div>
+
+        <small>
+            {{ clases_completadas }} de {{ total_clases }} clases completadas
+        </small>
+
+    </article>
+
+
+    <article class="student-metric-card">
+
+        <span>
+            Actividades entregadas
+        </span>
+
+        <strong>
+            {{ actividades_entregadas }} / {{ total_actividades }}
+        </strong>
+
+        <small>
+            {{ actividades_entregadas }} de {{ total_actividades }} entregadas
+            ·
+            {{ actividades_corregidas }} corregidas
+        </small>
+
+    </article>
+
+
+    <article class="student-metric-card">
+
+        <span>
+            Corregidas
+        </span>
+
+        <strong>
+            {{ actividades_corregidas }}
+        </strong>
+
+        <small>
+            Actividades con corrección docente
+        </small>
+
+    </article>
+
+
+    <article class="student-metric-card">
+
+        <span>
+            Promedio
+        </span>
+
+        {% if promedio != None %}
+
+            <strong>
+                {{ promedio }}%
+            </strong>
+
+            <small>
+                Sobre actividades calificadas
+            </small>
+
+        {% else %}
+
+            <strong>
+                —
+            </strong>
+
+            <small>
+                Sin actividades calificadas
+            </small>
+
+        {% endif %}
+
+    </article>
+
+</section>
+
+
+<section class="tracking-detail-grid">
+
+    <!-- CLASES -->
+
+    <article class="tracking-detail-card">
+
+        <div class="tracking-detail-heading">
+
+            <div>
+
+                <span class="tracking-detail-eyebrow">
+                    CLASES
+                </span>
+
+                <h2>
+                    Avance por clase
+                </h2>
+
+            </div>
+
+            <span class="tracking-detail-count">
+                {{ clases_completadas }} / {{ total_clases }}
+            </span>
+
+        </div>
+
+
+        {% if detalle_clases %}
+
+            <div class="tracking-detail-list">
+
+                {% for item in detalle_clases %}
+
+                    <a
+                        href="{% url 'detalle_clase' item.clase.pk %}"
+                        class="tracking-detail-item tracking-detail-link"
+                    >
+
+                        <div
+                            class="tracking-detail-state {% if item.completada %}is-complete{% endif %}"
+                        >
+
+                            <i
+                                class="bi {% if item.completada %}bi-check-lg{% else %}bi-circle{% endif %}"
+                            ></i>
+
+                        </div>
+
+
+                        <div class="tracking-detail-main">
+
+                            <strong>
+                                {{ item.clase.titulo }}
+                            </strong>
+
+                            <span>
+                                {{ item.clase.modulo.titulo }}
+                            </span>
+
+                        </div>
+
+
+                        {% if item.completada %}
+
+                            <span class="detail-badge detail-badge-success">
+                                Completada
+                            </span>
+
+                        {% else %}
+
+                            <span class="detail-badge">
+                                Pendiente
+                            </span>
+
+                        {% endif %}
+
+
+                        <i class="bi bi-chevron-right tracking-detail-arrow"></i>
+
+                    </a>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="tracking-detail-empty">
+                No hay clases disponibles.
+            </div>
+
+        {% endif %}
+
+    </article>
+
+
+    <!-- ACTIVIDADES -->
+
+    <article class="tracking-detail-card tracking-activities-card">
+
+        <div class="tracking-detail-heading">
+
+            <div>
+
+                <span class="tracking-detail-eyebrow">
+                    ACTIVIDADES
+                </span>
+
+                <h2>
+                    Entregas y calificaciones
+                </h2>
+
+            </div>
+
+            <span class="tracking-detail-count">
+                {{ actividades_entregadas }} / {{ total_actividades }}
+            </span>
+
+        </div>
+
+
+        {% if detalle_actividades %}
+
+            <div class="tracking-activity-list">
+
+                {% for item in detalle_actividades %}
+
+                    {% if item.entrega %}
+
+                        <a
+                            href="{% url 'corregir_entrega' item.entrega.pk %}"
+                            class="tracking-activity-item tracking-activity-link"
+                        >
+
+                    {% else %}
+
+                        <a
+                            href="{% url 'lista_entregas' item.actividad.pk %}"
+                            class="tracking-activity-item tracking-activity-link"
+                        >
+
+                    {% endif %}
+
+                        <div class="tracking-activity-top">
+
+                            <div>
+
+                                <strong>
+                                    {{ item.actividad.titulo }}
+                                </strong>
+
+                                <span>
+                                    {{ item.actividad.clase.titulo }}
+                                </span>
+
+                            </div>
+
+
+                            <div class="tracking-activity-status-area">
+
+                                {% if item.entrega %}
+
+                                    {% if item.entrega.estado == "CORREGIDA" %}
+
+                                        <span class="detail-badge detail-badge-success">
+                                            Corregida
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="detail-badge detail-badge-blue">
+                                            Entregada
+                                        </span>
+
+                                    {% endif %}
+
+                                {% else %}
+
+                                    <span class="detail-badge detail-badge-warning">
+                                        Pendiente
+                                    </span>
+
+                                {% endif %}
+
+                                <i class="bi bi-chevron-right tracking-detail-arrow"></i>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="tracking-activity-meta">
+
+                            <span>
+                                <i class="bi bi-star"></i>
+                                {{ item.actividad.puntaje_maximo }} pts.
+                            </span>
+
+                            {% if item.entrega %}
+
+                                <span>
+                                    <i class="bi bi-calendar-check"></i>
+                                    {{ item.entrega.fecha_entrega|date:"d/m/Y H:i" }}
+                                </span>
+
+                            {% endif %}
+
+                            {% if item.entrega.calificacion != None %}
+
+                                <span class="activity-grade">
+                                    <i class="bi bi-award"></i>
+                                    {{ item.entrega.calificacion }}
+                                    /
+                                    {{ item.actividad.puntaje_maximo }}
+
+                                    {% if item.porcentaje_nota != None %}
+                                        · {{ item.porcentaje_nota }}%
+                                    {% endif %}
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        {% if item.entrega.devolucion %}
+
+                            <div class="tracking-feedback">
+
+                                <strong>
+                                    Devolución
+                                </strong>
+
+                                {{ item.entrega.devolucion|linebreaks }}
+
+                            </div>
+
+                        {% endif %}
+
+                    </a>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="tracking-detail-empty">
+                No hay actividades disponibles.
+            </div>
+
+        {% endif %}
+
+    </article>
+
+</section>
+
+{% endblock %}

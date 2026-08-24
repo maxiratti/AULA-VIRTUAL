@@ -79,6 +79,7 @@ class Entrega(models.Model):
 
     ESTADO_ENTREGADA = "ENTREGADA"
     ESTADO_CORREGIDA = "CORREGIDA"
+    ESTADO_REHACER = "REHACER"
 
     ESTADOS = [
         (
@@ -88,6 +89,10 @@ class Entrega(models.Model):
         (
             ESTADO_CORREGIDA,
             "Corregida",
+        ),
+        (
+            ESTADO_REHACER,
+            "Requiere nueva entrega",
         ),
     ]
 
@@ -177,3 +182,74 @@ class Entrega(models.Model):
             f"{self.actividad.titulo} - "
             f"{self.alumno}"
         )
+
+class IntentoEntrega(models.Model):
+
+    ESTADO_ENTREGADO = "ENTREGADO"
+    ESTADO_REHACER = "REHACER"
+    ESTADO_CORREGIDO = "CORREGIDO"
+
+    ESTADOS = [
+        (ESTADO_ENTREGADO, "Entregado"),
+        (ESTADO_REHACER, "Rehacer"),
+        (ESTADO_CORREGIDO, "Corregido"),
+    ]
+
+    entrega = models.ForeignKey(
+        Entrega,
+        on_delete=models.CASCADE,
+        related_name="intentos",
+    )
+
+    numero = models.PositiveIntegerField()
+
+    texto = models.TextField(blank=True)
+
+    archivo = models.FileField(
+        upload_to="actividades/intentos/",
+        null=True,
+        blank=True,
+    )
+
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADOS,
+        default=ESTADO_ENTREGADO,
+    )
+
+    fecha_entrega = models.DateTimeField()
+
+    calificacion = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0)],
+    )
+
+    devolucion = models.TextField(blank=True)
+
+    fecha_correccion = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    corregido_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="intentos_corregidos",
+        null=True,
+        blank=True,
+    )
+
+    class Meta:
+        ordering = ["numero"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["entrega", "numero"],
+                name="intento_unico_por_entrega_numero",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.entrega} - intento {self.numero}"

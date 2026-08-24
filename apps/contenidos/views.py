@@ -25,6 +25,7 @@ from .models import (
     Clase,
     ContenidoClase,
     Modulo,
+    ProgresoClase,
 )
 
 
@@ -620,6 +621,20 @@ def detalle_clase_alumno(request, pk):
         else:
             actividad.estado_alumno = "PENDIENTE"
 
+        progreso_clase = (
+            ProgresoClase.objects
+            .filter(
+                alumno=request.user,
+                clase=clase,
+                completada=True,
+            )
+            .first()
+        )
+
+        clase_completada = (
+            progreso_clase is not None
+        )
+
     return render(
         request,
         "contenidos/clases/detalle_alumno.html",
@@ -629,5 +644,87 @@ def detalle_clase_alumno(request, pk):
             "clase": clase,
             "contenidos": contenidos,
             "actividades": actividades,
+            "clase_completada": clase_completada,
         },
+    )
+
+@login_required
+def cambiar_estado_clase(request, pk):
+    if request.method != "POST":
+        raise PermissionDenied
+
+    clase = get_object_or_404(
+        Clase.objects.select_related(
+            "modulo",
+            "modulo__curso",
+            "modulo__curso__institucion",
+        ),
+        pk=pk,
+        visible=True,
+        modulo__visible=True,
+    )
+
+    curso = clase.modulo.curso
+
+    inscripcion = (
+        Inscripcion.objects
+        .filter(
+            curso=curso,
+            alumno=request.user,
+            estado__in=[
+                Inscripcion.ESTADO_INSCRIPTO,
+                Inscripcion.ESTADO_CURSANDO,
+            ],
+        )
+        .first()
+    )
+
+    if not inscripcion:
+        raise PermissionDenied
+
+    if not tiene_rol_en_institucion(
+        request.user,
+        "Alumno",
+        curso.institucion,
+    ):
+        raise PermissionDenied
+
+    if (
+        clase.fecha_publicacion
+        and clase.fecha_publicacion > timezone.now()
+    ):
+        raise PermissionDenied
+
+    progreso = (
+        ProgresoClase.objects
+        .filter(
+            alumno=request.user,
+            clase=clase,
+        )
+        .first()
+    )
+
+    if progreso:
+        progreso.delete()
+
+        messages.info(
+            request,
+            "La clase se marcó como pendiente.",
+        )
+
+    else:
+        ProgresoClase.objects.create(
+            alumno=request.user,
+            clase=clase,
+            completada=True,
+        )
+
+        messages.success(
+            request,
+            "Clase completada.",
+        )
+
+    return redirect(
+        "detalle_clase_alumno",
+        pk=clase.pk,
     )

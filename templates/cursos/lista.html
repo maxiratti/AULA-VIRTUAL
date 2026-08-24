@@ -171,6 +171,15 @@ Cursos
                                     </a>
 
                                     <a
+                                        href="{% url 'seguimiento_curso' curso.pk %}"
+                                        class="action-button"
+                                        title="Seguimiento"
+                                        aria-label="Seguimiento"
+                                    >
+                                        <i class="bi bi-activity"></i>
+                                    </a>
+
+                                    <a
                                         href="{% url 'editar_curso' curso.pk %}"
                                         class="action-button"
                                         title="Editar curso"

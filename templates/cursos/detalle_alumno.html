@@ -43,6 +43,69 @@
 </section>
 
 
+<!-- PROGRESO DEL CURSO -->
+
+<section class="course-progress-card">
+
+    <div class="course-progress-heading">
+
+        <div>
+
+            <span class="course-progress-label">
+                Tu progreso
+            </span>
+
+            <strong>
+                {{ clases_completadas }}
+                de
+                {{ total_clases }}
+                clases completadas
+            </strong>
+
+        </div>
+
+        <span class="course-progress-percentage">
+            {{ porcentaje_progreso }}%
+        </span>
+
+    </div>
+
+
+    <progress
+        class="course-progress-native"
+        value="{{ porcentaje_progreso }}"
+        max="100"
+        aria-label="Progreso del curso"
+    >
+        {{ porcentaje_progreso }}%
+    </progress>
+
+
+    {% if total_clases == 0 %}
+
+        <p class="course-progress-message">
+            Todavía no hay clases disponibles
+            para calcular tu progreso.
+        </p>
+
+    {% elif porcentaje_progreso == 100 %}
+
+        <p class="course-progress-message completed">
+            <i class="bi bi-check-circle-fill"></i>
+            Completaste todas las clases disponibles.
+        </p>
+
+    {% else %}
+
+        <p class="course-progress-message">
+            Continuá avanzando para completar el curso.
+        </p>
+
+    {% endif %}
+
+</section>
+
+
 {% if curso.descripcion %}
 
     <section class="content-card mb-4">
@@ -94,6 +157,7 @@
 
                     </div>
 
+
                     {% if modulo.descripcion %}
 
                         <p class="module-description">
@@ -112,9 +176,27 @@
                                 class="student-class-item"
                             >
 
-                                <div class="student-class-icon">
-                                    <i class="bi bi-file-earmark-text"></i>
+                                <div
+                                    class="
+                                        student-class-icon
+                                        {% if clase.completada_alumno %}
+                                            completed
+                                        {% endif %}
+                                    "
+                                >
+
+                                    {% if clase.completada_alumno %}
+
+                                        <i class="bi bi-check-circle-fill"></i>
+
+                                    {% else %}
+
+                                        <i class="bi bi-file-earmark-text"></i>
+
+                                    {% endif %}
+
                                 </div>
+
 
                                 <div>
 
@@ -126,7 +208,24 @@
                                         {{ clase.titulo }}
                                     </strong>
 
+
+                                    {% if clase.completada_alumno %}
+
+                                        <small class="student-class-status completed">
+                                            <i class="bi bi-check2"></i>
+                                            Completada
+                                        </small>
+
+                                    {% else %}
+
+                                        <small class="student-class-status">
+                                            Pendiente
+                                        </small>
+
+                                    {% endif %}
+
                                 </div>
+
 
                                 <i class="bi bi-chevron-right"></i>
 

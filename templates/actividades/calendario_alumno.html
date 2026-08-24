@@ -129,6 +129,8 @@ Calendario
                             Corregida
                         </span>
 
+                    {% elif actividad.estado_alumno == "REHACER" %}
+                        <span class="calendar-status pending"><i class="bi bi-arrow-repeat"></i> Rehacer</span>
                     {% elif actividad.estado_alumno == "ENTREGADA" %}
 
                         <span class="delivery-status delivered">

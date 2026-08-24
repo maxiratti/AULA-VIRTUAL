@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Seguimiento | {{ curso.nombre }} | Aula Virtual
+{% endblock %}
+
+{% block page_title %}
+Seguimiento
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/cursos.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <a href="{% url 'lista_cursos' %}" class="back-link">
+            <i class="bi bi-arrow-left"></i>
+            Volver a cursos
+        </a>
+        <h1>Seguimiento del curso</h1>
+        <p>{{ curso.nombre }} · {{ curso.institucion.nombre }}</p>
+    </div>
+</section>
+
+<section class="tracking-summary">
+    <article class="tracking-summary-card">
+        <div class="tracking-summary-icon"><i class="bi bi-people"></i></div>
+        <div><span>Alumnos</span><strong>{{ seguimiento|length }}</strong></div>
+    </article>
+    <article class="tracking-summary-card">
+        <div class="tracking-summary-icon"><i class="bi bi-journal-text"></i></div>
+        <div><span>Clases disponibles</span><strong>{{ total_clases }}</strong></div>
+    </article>
+    <article class="tracking-summary-card">
+        <div class="tracking-summary-icon"><i class="bi bi-check2-square"></i></div>
+        <div><span>Actividades</span><strong>{{ total_actividades }}</strong></div>
+    </article>
+</section>
+
+<section class="content-card">
+    {% if seguimiento %}
+        <div class="table-responsive">
+            <table class="table align-middle tracking-table">
+                <thead>
+                    <tr>
+                        <th>Alumno</th><th>Estado</th><th>Clases</th><th>Progreso</th>
+                        <th>Actividades</th><th>Corregidas</th><th>Promedio</th><th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fila in seguimiento %}
+                        <tr class="tracking-row">
+                            <td>
+                                <a class="tracking-student-link" href="{% url 'seguimiento_alumno' curso.pk fila.alumno.pk %}">
+                                    <div class="tracking-student">
+                                        <div class="tracking-avatar">
+                                            {% if fila.alumno.first_name %}{{ fila.alumno.first_name|slice:":1"|upper }}{% else %}{{ fila.alumno.username|slice:":1"|upper }}{% endif %}
+                                        </div>
+                                        <div class="tracking-student-data">
+                                            <strong>{{ fila.alumno.get_full_name|default:fila.alumno.username }}</strong>
+                                            <span>{{ fila.alumno.username }}</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </td>
+                            <td><span class="tracking-status">{{ fila.inscripcion.get_estado_display }}</span></td>
+                            <td><strong class="tracking-number">{{ fila.clases_completadas }} / {{ total_clases }}</strong></td>
+                            <td>
+                                <div class="tracking-progress">
+                                    <div class="tracking-progress-heading"><span>{{ fila.progreso }}%</span></div>
+                                    <progress value="{{ fila.progreso }}" max="100" aria-label="Progreso de {{ fila.alumno.get_full_name|default:fila.alumno.username }}">{{ fila.progreso }}%</progress>
+                                </div>
+                            </td>
+                            <td><strong class="tracking-number">{{ fila.actividades_entregadas }} / {{ total_actividades }}</strong></td>
+                            <td><strong class="tracking-number">{{ fila.actividades_corregidas }}</strong></td>
+                            <td>
+                                {% if fila.promedio != None %}<span class="tracking-grade">{{ fila.promedio }}%</span>{% else %}<span class="tracking-no-grade">Sin calificar</span>{% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'seguimiento_alumno' curso.pk fila.alumno.pk %}" class="tracking-open-button" title="Ver seguimiento" aria-label="Ver seguimiento de {{ fila.alumno.get_full_name|default:fila.alumno.username }}">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="bi bi-people"></i></div>
+            <h2>No hay alumnos inscriptos</h2>
+            <p>El seguimiento aparecerá cuando el curso tenga alumnos inscriptos.</p>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

@@ -119,6 +119,55 @@ Corrección
 
         {% endif %}
 
+        {% if intentos %}
+            <div class="attempt-history">
+                <h3>Historial de intentos</h3>
+                {% for intento in intentos %}
+                    <div class="attempt-history-item">
+                        <div class="attempt-history-heading">
+                            <strong>Intento {{ intento.numero }}</strong>
+                            <span class="attempt-date"><i class="bi bi-calendar3"></i> {{ intento.fecha_entrega|date:"d/m/Y H:i" }}</span>
+                        </div>
+
+                        <div class="attempt-meta-row">
+                            {% if intento.estado == "REHACER" %}
+                                <span class="delivery-status redo">Rehacer</span>
+                            {% elif intento.estado == "CORREGIDO" %}
+                                <span class="delivery-status corrected">Corregido</span>
+                            {% else %}
+                                <span class="delivery-status delivered">Entregado</span>
+                            {% endif %}
+
+                            {% if intento.calificacion != None %}
+                                <strong class="attempt-grade">{{ intento.calificacion }} / {{ actividad.puntaje_maximo }}</strong>
+                            {% endif %}
+                        </div>
+
+                        {% if intento.texto %}
+                            <div class="attempt-response">
+                                <span>Respuesta del alumno</span>
+                                {{ intento.texto|linebreaks }}
+                            </div>
+                        {% endif %}
+
+                        {% if intento.archivo %}
+                            <a href="{{ intento.archivo.url }}" target="_blank" rel="noopener noreferrer" class="attempt-file-link">
+                                <i class="bi bi-paperclip"></i>
+                                Abrir archivo de este intento
+                            </a>
+                        {% endif %}
+
+                        {% if intento.devolucion %}
+                            <div class="attempt-feedback">
+                                <span>Devolución docente</span>
+                                {{ intento.devolucion|linebreaks }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
     </section>
 
 
@@ -182,6 +231,18 @@ Corrección
 
                 <button
                     type="submit"
+                    name="accion"
+                    value="rehacer"
+                    class="btn-revision-custom"
+                >
+                    <i class="bi bi-arrow-repeat"></i>
+                    Solicitar nueva entrega
+                </button>
+
+                <button
+                    type="submit"
+                    name="accion"
+                    value="corregir"
                     class="btn-primary-custom"
                 >
                     <i class="bi bi-check-lg"></i>

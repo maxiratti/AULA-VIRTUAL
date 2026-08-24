@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.core.files.base import File
 from django.shortcuts import (
     get_object_or_404,
     redirect,
@@ -20,7 +21,7 @@ from .forms import (
     EntregaForm,
 )
 
-from .models import Actividad, Entrega
+from .models import Actividad, Entrega, IntentoEntrega
 
 from django.urls import reverse
 
@@ -31,6 +32,76 @@ from apps.notificaciones.services import (
     notificar_entrega_corregida,
     notificar_nueva_entrega,
 )
+
+
+
+def copiar_archivo_a_intento(entrega, intento):
+    """Guarda una copia independiente del archivo de la entrega en el intento."""
+    if not entrega.archivo:
+        return
+
+    nombre_origen = entrega.archivo.name or ""
+    nombre_intento = intento.archivo.name if intento.archivo else ""
+
+    # Si ya está almacenado dentro de actividades/intentos/, no duplicamos.
+    if nombre_intento.startswith("actividades/intentos/"):
+        return
+
+    entrega.archivo.open("rb")
+    try:
+        nombre_archivo = nombre_origen.rsplit("/", 1)[-1]
+        intento.archivo.save(
+            nombre_archivo,
+            File(entrega.archivo.file),
+            save=False,
+        )
+        intento.save(update_fields=["archivo"])
+    finally:
+        entrega.archivo.close()
+
+
+def crear_intento_desde_entrega(entrega, numero, estado):
+    intento = IntentoEntrega.objects.create(
+        entrega=entrega,
+        numero=numero,
+        texto=entrega.texto,
+        estado=estado,
+        fecha_entrega=entrega.fecha_entrega,
+        calificacion=entrega.calificacion,
+        devolucion=entrega.devolucion,
+        fecha_correccion=entrega.fecha_correccion,
+        corregido_por=entrega.corregido_por,
+    )
+    copiar_archivo_a_intento(entrega, intento)
+    return intento
+
+
+def obtener_o_crear_intento_actual(entrega):
+    intento = entrega.intentos.order_by("-numero").first()
+
+    if intento is None:
+        intento = crear_intento_desde_entrega(
+            entrega=entrega,
+            numero=1,
+            estado=(
+                IntentoEntrega.ESTADO_CORREGIDO
+                if entrega.estado == Entrega.ESTADO_CORREGIDA
+                else IntentoEntrega.ESTADO_REHACER
+                if entrega.estado == Entrega.ESTADO_REHACER
+                else IntentoEntrega.ESTADO_ENTREGADO
+            ),
+        )
+    elif (
+        intento.archivo
+        and not intento.archivo.name.startswith("actividades/intentos/")
+        and entrega.archivo
+        and intento.archivo.name == entrega.archivo.name
+    ):
+        # Normaliza intentos creados por la primera versión del historial,
+        # que apuntaban al mismo archivo de Entrega.
+        copiar_archivo_a_intento(entrega, intento)
+
+    return intento
 
 
 def puede_gestionar_actividad(usuario, clase):
@@ -298,6 +369,18 @@ def detalle_actividad_alumno(request, pk):
         .first()
     )
 
+    intentos = []
+
+    if entrega:
+        obtener_o_crear_intento_actual(entrega)
+        intentos = entrega.intentos.select_related(
+            "corregido_por"
+        ).order_by("numero")
+
+        if entrega.estado == Entrega.ESTADO_REHACER:
+            disponible = True
+            mensaje_bloqueo = ""
+
     return render(
         request,
         "actividades/detalle_alumno.html",
@@ -307,6 +390,7 @@ def detalle_actividad_alumno(request, pk):
             "modulo": actividad.clase.modulo,
             "curso": actividad.clase.modulo.curso,
             "entrega": entrega,
+            "intentos": intentos,
             "disponible": disponible,
             "mensaje_bloqueo": mensaje_bloqueo,
         },
@@ -327,55 +411,30 @@ def entregar_actividad(request, pk):
         clase__modulo__visible=True,
     )
 
-    if not alumno_puede_acceder_actividad(
-        request.user,
-        actividad,
-    ):
+    if not alumno_puede_acceder_actividad(request.user, actividad):
         raise PermissionDenied
 
     ahora = timezone.now()
-
-    if (
-        actividad.fecha_apertura
-        and ahora < actividad.fecha_apertura
-    ):
-        messages.error(
-            request,
-            "La actividad todavía no está disponible.",
-        )
-
-        return redirect(
-            "detalle_actividad_alumno",
-            pk=actividad.pk,
-        )
-
-    if (
-        actividad.fecha_limite
-        and ahora > actividad.fecha_limite
-    ):
-        messages.error(
-            request,
-            "El plazo de entrega finalizó.",
-        )
-
-        return redirect(
-            "detalle_actividad_alumno",
-            pk=actividad.pk,
-        )
-
-    if Entrega.objects.filter(
+    entrega_existente = Entrega.objects.filter(
         actividad=actividad,
         alumno=request.user,
-    ).exists():
-        messages.info(
-            request,
-            "Ya realizaste la entrega de esta actividad.",
-        )
+    ).first()
+    es_reentrega = bool(
+        entrega_existente
+        and entrega_existente.estado == Entrega.ESTADO_REHACER
+    )
 
-        return redirect(
-            "detalle_actividad_alumno",
-            pk=actividad.pk,
-        )
+    if actividad.fecha_apertura and ahora < actividad.fecha_apertura:
+        messages.error(request, "La actividad todavía no está disponible.")
+        return redirect("detalle_actividad_alumno", pk=actividad.pk)
+
+    if actividad.fecha_limite and ahora > actividad.fecha_limite and not es_reentrega:
+        messages.error(request, "El plazo de entrega finalizó.")
+        return redirect("detalle_actividad_alumno", pk=actividad.pk)
+
+    if entrega_existente and not es_reentrega:
+        messages.info(request, "Ya realizaste la entrega de esta actividad.")
+        return redirect("detalle_actividad_alumno", pk=actividad.pk)
 
     if request.method == "POST":
         form = EntregaForm(
@@ -385,63 +444,52 @@ def entregar_actividad(request, pk):
         )
 
         if form.is_valid():
-            entrega = form.save(
-                commit=False
-            )
+            if es_reentrega:
+                entrega = entrega_existente
+                intento_anterior = obtener_o_crear_intento_actual(entrega)
+                numero_intento = intento_anterior.numero + 1
 
-            entrega.actividad = actividad
-            entrega.alumno = request.user
-            entrega.save()
+                entrega.texto = form.cleaned_data.get("texto", "")
+                archivo_nuevo = form.cleaned_data.get("archivo")
+                if archivo_nuevo:
+                    entrega.archivo = archivo_nuevo
+                else:
+                    entrega.archivo = None
+                entrega.estado = Entrega.ESTADO_ENTREGADA
+                entrega.fecha_entrega = ahora
+                entrega.calificacion = None
+                entrega.devolucion = ""
+                entrega.fecha_correccion = None
+                entrega.corregido_por = None
+                entrega.save()
+            else:
+                entrega = form.save(commit=False)
+                entrega.actividad = actividad
+                entrega.alumno = request.user
+                entrega.save()
+                numero_intento = 1
+
+            crear_intento_desde_entrega(
+                entrega=entrega,
+                numero=numero_intento,
+                estado=IntentoEntrega.ESTADO_ENTREGADO,
+            )
 
             notificar_nueva_entrega(
-                entrega
+                entrega,
+                numero_intento=numero_intento,
+                es_reentrega=es_reentrega,
             )
-
-            curso = actividad.clase.modulo.curso
-
-            nombre_alumno = (
-                request.user.get_full_name()
-                or request.user.username
-            )
-
-            url_entrega = reverse(
-                "corregir_entrega",
-                kwargs={
-                    "pk": entrega.pk,
-                },
-            )
-
-            for docente in curso.docentes.all():
-
-                Notificacion.objects.get_or_create(
-                    usuario=docente,
-                    clave=f"entrega_nueva:{entrega.pk}",
-                    defaults={
-                        "tipo": Notificacion.TIPO_ENTREGA,
-                        "titulo": "Nueva entrega recibida",
-                        "mensaje": (
-                            f"{nombre_alumno} entregó "
-                            f"“{actividad.titulo}” "
-                            f"en {curso.nombre}."
-                        ),
-                        "url": url_entrega,
-                    },
-                )
 
             messages.success(
                 request,
-                "Tu actividad fue entregada correctamente.",
+                "Tu nueva entrega fue enviada correctamente."
+                if es_reentrega
+                else "Tu actividad fue entregada correctamente.",
             )
-
-            return redirect(
-                "detalle_actividad_alumno",
-                pk=actividad.pk,
-            )
-
+            return redirect("detalle_actividad_alumno", pk=actividad.pk)
     else:
-        form = EntregaForm(
-            actividad=actividad,
-        )
+        form = EntregaForm(actividad=actividad)
 
     return render(
         request,
@@ -451,6 +499,8 @@ def entregar_actividad(request, pk):
             "clase": actividad.clase,
             "curso": actividad.clase.modulo.curso,
             "form": form,
+            "es_reentrega": es_reentrega,
+            "entrega_anterior": entrega_existente if es_reentrega else None,
         },
     )
 
@@ -551,75 +601,97 @@ def corregir_entrega(request, pk):
     actividad = entrega.actividad
     clase = actividad.clase
 
-    if not puede_gestionar_actividad(
-        request.user,
-        clase,
-    ):
+    if not puede_gestionar_actividad(request.user, clase):
         raise PermissionDenied
 
+    intento_actual = obtener_o_crear_intento_actual(entrega)
+
     if request.method == "POST":
+        accion = request.POST.get("accion", "corregir")
         form = CorreccionEntregaForm(
             request.POST,
             instance=entrega,
             actividad=actividad,
         )
 
-        if form.is_valid():
-            entrega = form.save(
-                commit=False
-            )
+        if accion == "rehacer":
+            devolucion = request.POST.get("devolucion", "").strip()
 
+            if not devolucion:
+                form.add_error(
+                    "devolucion",
+                    "Escribí una devolución indicando qué debe rehacer el alumno.",
+                )
+            else:
+                entrega.estado = Entrega.ESTADO_REHACER
+                entrega.calificacion = None
+                entrega.devolucion = devolucion
+                entrega.fecha_correccion = timezone.now()
+                entrega.corregido_por = request.user
+                entrega.save()
+
+                intento_actual.estado = IntentoEntrega.ESTADO_REHACER
+                intento_actual.calificacion = None
+                intento_actual.devolucion = devolucion
+                intento_actual.fecha_correccion = entrega.fecha_correccion
+                intento_actual.corregido_por = request.user
+                intento_actual.save()
+
+                curso = actividad.clase.modulo.curso
+                url_actividad = reverse(
+                    "detalle_actividad_alumno",
+                    kwargs={"pk": actividad.pk},
+                )
+                Notificacion.objects.update_or_create(
+                    usuario=entrega.alumno,
+                    clave=f"entrega_rehacer:{entrega.pk}:{intento_actual.numero}",
+                    defaults={
+                        "tipo": Notificacion.TIPO_CORRECCION,
+                        "titulo": "Tenés que rehacer una actividad",
+                        "mensaje": (
+                            f"El docente solicitó una nueva entrega de "
+                            f"“{actividad.titulo}” en {curso.nombre}."
+                        ),
+                        "url": url_actividad,
+                        "leida": False,
+                        "fecha_lectura": None,
+                    },
+                )
+                messages.success(
+                    request,
+                    "Se solicitó una nueva entrega al alumno.",
+                )
+                return redirect("lista_entregas", actividad_id=actividad.pk)
+
+        elif form.is_valid():
+            entrega = form.save(commit=False)
             entrega.estado = Entrega.ESTADO_CORREGIDA
             entrega.fecha_correccion = timezone.now()
             entrega.corregido_por = request.user
-
             entrega.save()
 
+            intento_actual.estado = IntentoEntrega.ESTADO_CORREGIDO
+            intento_actual.calificacion = entrega.calificacion
+            intento_actual.devolucion = entrega.devolucion
+            intento_actual.fecha_correccion = entrega.fecha_correccion
+            intento_actual.corregido_por = request.user
+            intento_actual.save()
+
             notificar_entrega_corregida(
-                entrega
+                entrega,
+                numero_intento=intento_actual.numero,
             )
-
-            curso = actividad.clase.modulo.curso
-
-            url_actividad = reverse(
-                "detalle_actividad_alumno",
-                kwargs={
-                    "pk": actividad.pk,
-                },
-            )
-
-            Notificacion.objects.update_or_create(
-                usuario=entrega.alumno,
-                clave=f"entrega_corregida:{entrega.pk}",
-                defaults={
-                    "tipo": Notificacion.TIPO_CORRECCION,
-                    "titulo": "Actividad corregida",
-                    "mensaje": (
-                        f"Tu entrega de "
-                        f"“{actividad.titulo}” "
-                        f"en {curso.nombre} fue corregida."
-                    ),
-                    "url": url_actividad,
-                    "leida": False,
-                    "fecha_lectura": None,
-                },
-            )
-
-            messages.success(
-                request,
-                "Entrega corregida correctamente.",
-            )
-
-            return redirect(
-                "lista_entregas",
-                actividad_id=actividad.pk,
-            )
-
+            messages.success(request, "Entrega corregida correctamente.")
+            return redirect("lista_entregas", actividad_id=actividad.pk)
     else:
         form = CorreccionEntregaForm(
             instance=entrega,
             actividad=actividad,
         )
+
+    intentos = entrega.intentos.select_related(
+        "corregido_por"
+    ).order_by("numero")
 
     return render(
         request,
@@ -629,10 +701,10 @@ def corregir_entrega(request, pk):
             "clase": clase,
             "actividad": actividad,
             "entrega": entrega,
+            "intentos": intentos,
             "form": form,
         },
     )
-
 
 @login_required
 def mis_calificaciones(request):
@@ -722,6 +794,8 @@ def mis_calificaciones(request):
 
                     suma_porcentajes += porcentaje
 
+            elif entrega.estado == Entrega.ESTADO_REHACER:
+                actividad.estado_alumno = "REHACER"
             else:
                 actividad.estado_alumno = "ENTREGADA"
 
@@ -904,6 +978,8 @@ def libro_calificaciones(request, curso_id):
                         suma_porcentajes += porcentaje
                         cantidad_calificadas += 1
 
+                elif entrega.estado == Entrega.ESTADO_REHACER:
+                    estado = "REHACER"
                 else:
                     estado = "ENTREGADA"
 
@@ -1123,6 +1199,8 @@ def calendario_alumno(request):
         if entrega:
             if entrega.estado == Entrega.ESTADO_CORREGIDA:
                 actividad.estado_alumno = "CORREGIDA"
+            elif entrega.estado == Entrega.ESTADO_REHACER:
+                actividad.estado_alumno = "REHACER"
             else:
                 actividad.estado_alumno = "ENTREGADA"
 

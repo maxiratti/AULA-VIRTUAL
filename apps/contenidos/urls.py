@@ -57,4 +57,10 @@ urlpatterns = [
         views.detalle_clase_alumno,
         name="detalle_clase_alumno",
     ),
+
+    path(
+        "clases/<int:pk>/estado/",
+        views.cambiar_estado_clase,
+        name="cambiar_estado_clase",
+    ),
 ]

@@ -111,6 +111,13 @@ Entregas
                                             Corregida
                                         </span>
 
+                                    {% elif item.entrega.estado == "REHACER" %}
+
+                                        <span class="delivery-status redo">
+                                            <i class="bi bi-arrow-repeat"></i>
+                                            Rehacer
+                                        </span>
+
                                     {% else %}
 
                                         <span class="delivery-status delivered">

@@ -136,114 +136,124 @@ Actividad
 
     <div class="student-delivery-area">
 
-        {% if entrega %}
-
-            <div class="delivery-success">
-
-                <div class="delivery-success-icon">
-                    <i class="bi bi-check-circle-fill"></i>
-                </div>
-
+        {% if entrega and entrega.estado == "REHACER" %}
+            <div class="delivery-redo-alert">
+                <div class="delivery-redo-icon"><i class="bi bi-arrow-repeat"></i></div>
                 <div>
-
-                    <strong>
-                        Actividad entregada
-                    </strong>
-
-                    <span>
-                        Entregaste el
-                        {{ entrega.fecha_entrega|date:"d/m/Y H:i" }}
-                    </span>
-
-                </div>
-
-            </div>
-
-
-            {% if entrega.texto %}
-
-                <div class="submitted-answer">
-
-                    <h3>
-                        Tu respuesta
-                    </h3>
-
-                    {{ entrega.texto|linebreaks }}
-
-                </div>
-
-            {% endif %}
-
-
-            {% if entrega.archivo %}
-
-                <a
-                    href="{{ entrega.archivo.url }}"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="resource-link"
-                >
-                    <i class="bi bi-file-earmark"></i>
-                    Ver archivo entregado
-                </a>
-
-            {% endif %}
-
-
-            {% if entrega.estado == "CORREGIDA" %}
-
-                <div class="student-feedback">
-
-                    <h3>
-                        Corrección
-                    </h3>
-
-                    {% if entrega.calificacion != None %}
-
-                        <div class="student-grade">
-                            {{ entrega.calificacion }}
-                            /
-                            {{ actividad.puntaje_maximo }}
-                        </div>
-
-                    {% endif %}
-
+                    <strong>El docente solicitó una nueva entrega</strong>
                     {% if entrega.devolucion %}
-
-                        <div>
-                            {{ entrega.devolucion|linebreaks }}
-                        </div>
-
+                        <div>{{ entrega.devolucion|linebreaks }}</div>
                     {% endif %}
-
+                    <span>Podés volver a entregar aunque haya vencido la fecha límite original.</span>
                 </div>
-
-            {% endif %}
-
-
-        {% elif disponible %}
-
-            <a
-                href="{% url 'entregar_actividad' actividad.pk %}"
-                class="btn-primary-custom"
-            >
-                <i class="bi bi-send"></i>
-                Realizar entrega
+            </div>
+            <a href="{% url 'entregar_actividad' actividad.pk %}" class="btn-primary-custom">
+                <i class="bi bi-arrow-repeat"></i> Realizar nueva entrega
             </a>
 
-
-        {% else %}
-
-            <div class="activity-unavailable">
-
-                <i class="bi bi-lock"></i>
-
-                <span>
-                    {{ mensaje_bloqueo }}
-                </span>
-
+        {% elif entrega %}
+            <div class="delivery-success">
+                <div class="delivery-success-icon"><i class="bi bi-check-circle-fill"></i></div>
+                <div>
+                    <strong>{% if entrega.estado == "CORREGIDA" %}Actividad corregida{% else %}Actividad entregada{% endif %}</strong>
+                    <span>Última entrega: {{ entrega.fecha_entrega|date:"d/m/Y H:i" }}</span>
+                </div>
             </div>
 
+            {% if entrega.texto %}
+                <div class="submitted-answer"><h3>Tu respuesta</h3>{{ entrega.texto|linebreaks }}</div>
+            {% endif %}
+            {% if entrega.archivo %}
+                <a href="{{ entrega.archivo.url }}" target="_blank" rel="noopener noreferrer" class="submitted-file-card">
+                    <span class="submitted-file-icon"><i class="bi bi-file-earmark-arrow-down"></i></span>
+                    <span class="submitted-file-info">
+                        <strong>Archivo entregado</strong>
+                        <small>{{ entrega.archivo.name|cut:"actividades/entregas/" }}</small>
+                    </span>
+                    <span class="submitted-file-action"><i class="bi bi-box-arrow-up-right"></i> Abrir</span>
+                </a>
+            {% endif %}
+            {% if entrega.estado == "CORREGIDA" %}
+                <div class="student-feedback">
+                    <h3>Corrección</h3>
+                    {% if entrega.calificacion != None %}
+                        <div class="student-grade">{{ entrega.calificacion }} / {{ actividad.puntaje_maximo }}</div>
+                    {% endif %}
+                    {% if entrega.devolucion %}<div>{{ entrega.devolucion|linebreaks }}</div>{% endif %}
+                </div>
+            {% endif %}
+
+        {% elif disponible %}
+            <a href="{% url 'entregar_actividad' actividad.pk %}" class="btn-primary-custom">
+                <i class="bi bi-send"></i> Realizar entrega
+            </a>
+        {% else %}
+            <div class="activity-unavailable"><i class="bi bi-lock"></i><span>{{ mensaje_bloqueo }}</span></div>
+        {% endif %}
+
+        {% if intentos|length > 1 %}
+            <div class="student-attempt-history">
+                <h3>Historial de entregas</h3>
+                {% for intento in intentos %}
+                    <div class="student-attempt-item">
+                        <div class="attempt-history-heading">
+                            <strong>Intento {{ intento.numero }}</strong>
+                            <span class="attempt-date"><i class="bi bi-calendar3"></i> {{ intento.fecha_entrega|date:"d/m/Y H:i" }}</span>
+                        </div>
+
+                        <div class="attempt-meta-row">
+                            {% if intento.estado == "REHACER" %}
+                                <span class="delivery-status redo">Rehacer</span>
+                            {% elif intento.estado == "CORREGIDO" %}
+                                <span class="delivery-status corrected">Corregido</span>
+                            {% else %}
+                                <span class="delivery-status delivered">Entregado</span>
+                            {% endif %}
+
+                            {% if intento.calificacion != None %}
+                                <strong class="attempt-grade">{{ intento.calificacion }} / {{ actividad.puntaje_maximo }}</strong>
+                            {% endif %}
+                        </div>
+
+                        {% if intento.texto %}
+                            <div class="attempt-response">
+                                <span>Respuesta</span>
+                                {{ intento.texto|linebreaks }}
+                            </div>
+                        {% endif %}
+
+                        {% if intento.archivo %}
+                            <a
+                                href="{{ intento.archivo.url }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="submitted-file-card attempt-file-card"
+                            >
+                                <span class="submitted-file-icon">
+                                    <i class="bi bi-file-earmark-arrow-down"></i>
+                                </span>
+
+                                <span class="submitted-file-info">
+                                    <strong>Archivo del intento {{ intento.numero }}</strong>
+                                    <small>{{ intento.archivo.name|cut:"actividades/intentos/" }}</small>
+                                </span>
+
+                                <span class="submitted-file-action">
+                                    <i class="bi bi-box-arrow-up-right"></i>
+                                    Abrir
+                                </span>
+                            </a>
+                        {% endif %}
+
+                        {% if intento.devolucion %}
+                            <div class="attempt-feedback">
+                                <span>Devolución docente</span>
+                                {{ intento.devolucion|linebreaks }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
         {% endif %}
 
     </div>
