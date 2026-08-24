@@ -15,6 +15,11 @@ urlpatterns = [
         name="nueva_inscripcion",
     ),
     path(
+        "cursos/<int:curso_id>/inscripciones/nuevo-alumno/",
+        views.nuevo_alumno_curso,
+        name="nuevo_alumno_curso",
+    ),
+    path(
         "cursos/<int:curso_id>/inscripciones/carga-masiva/",
         views.carga_masiva_alumnos,
         name="carga_masiva_alumnos",

@@ -475,6 +475,18 @@ def entregar_actividad(request, pk):
                 estado=IntentoEntrega.ESTADO_ENTREGADO,
             )
 
+            inscripcion = (
+                Inscripcion.objects
+                .filter(
+                    curso=actividad.clase.modulo.curso,
+                    alumno=request.user,
+                )
+                .first()
+            )
+
+            if inscripcion:
+                inscripcion.iniciar_cursado()
+
             notificar_nueva_entrega(
                 entrega,
                 numero_intento=numero_intento,

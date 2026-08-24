@@ -58,5 +58,20 @@ class Inscripcion(models.Model):
             )
         ]
 
+    def iniciar_cursado(self):
+        """
+        Pasa automáticamente de INSCRIPTO a CURSANDO cuando el alumno
+        comienza a participar en el curso.
+
+        Los estados CURSANDO, APROBADO, DESAPROBADO y ABANDONO no se
+        modifican automáticamente.
+        """
+        if self.estado != self.ESTADO_INSCRIPTO:
+            return False
+
+        self.estado = self.ESTADO_CURSANDO
+        self.save(update_fields=["estado"])
+        return True
+
     def __str__(self):
         return f"{self.alumno} - {self.curso}"

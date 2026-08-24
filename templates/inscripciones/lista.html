@@ -51,6 +51,14 @@ Inscripciones
         </a>
 
         <a
+            href="{% url 'nuevo_alumno_curso' curso.pk %}"
+            class="btn-secondary-custom"
+        >
+            <i class="bi bi-person-add"></i>
+            Nuevo alumno
+        </a>
+
+        <a
             href="{% url 'nueva_inscripcion' curso.pk %}"
             class="btn-primary-custom"
         >

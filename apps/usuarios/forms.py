@@ -103,6 +103,9 @@ class UsuarioForm(forms.ModelForm):
         if password:
             usuario.set_password(password)
 
+            if not self.instance.pk:
+                usuario.debe_cambiar_password = True
+
         if commit:
             usuario.save()
 

@@ -719,6 +719,8 @@ def cambiar_estado_clase(request, pk):
             completada=True,
         )
 
+        inscripcion.iniciar_cursado()
+
         messages.success(
             request,
             "Clase completada.",

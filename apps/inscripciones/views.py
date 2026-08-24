@@ -24,6 +24,7 @@ from apps.usuarios.models import (
 from .forms import (
     CargaMasivaAlumnosForm,
     InscripcionForm,
+    NuevoAlumnoCursoForm,
 )
 from .models import Inscripcion
 
@@ -32,10 +33,17 @@ def puede_gestionar_curso(usuario, curso):
     if usuario.is_superuser:
         return True
 
-    return tiene_rol_en_institucion(
-        usuario,
-        "Coordinador",
-        curso.institucion,
+    return (
+        tiene_rol_en_institucion(
+            usuario,
+            "Administrador institucional",
+            curso.institucion,
+        )
+        or tiene_rol_en_institucion(
+            usuario,
+            "Coordinador",
+            curso.institucion,
+        )
     )
 
 
@@ -122,6 +130,74 @@ def nueva_inscripcion(request, curso_id):
             "curso": curso,
             "form": form,
             "titulo": "Inscribir alumno",
+        },
+    )
+
+
+@login_required
+def nuevo_alumno_curso(request, curso_id):
+    curso = get_object_or_404(
+        Curso.objects.select_related("institucion"),
+        pk=curso_id,
+    )
+
+    if not puede_gestionar_curso(request.user, curso):
+        raise PermissionDenied
+
+    if request.method == "POST":
+        form = NuevoAlumnoCursoForm(request.POST)
+
+        if form.is_valid():
+            with transaction.atomic():
+                usuario = Usuario(
+                    username=form.cleaned_data["username"],
+                    first_name=form.cleaned_data["nombre"],
+                    last_name=form.cleaned_data["apellido"],
+                    email=form.cleaned_data["email"],
+                    is_active=True,
+                    debe_cambiar_password=True,
+                )
+                usuario.set_password(
+                    form.cleaned_data["password"]
+                )
+                usuario.save()
+
+                rol_alumno = Group.objects.get(name="Alumno")
+
+                membresia = MembresiaInstitucional.objects.create(
+                    usuario=usuario,
+                    institucion=curso.institucion,
+                    activa=True,
+                )
+                membresia.roles.add(rol_alumno)
+
+                Inscripcion.objects.create(
+                    curso=curso,
+                    alumno=usuario,
+                    estado=Inscripcion.ESTADO_INSCRIPTO,
+                )
+
+            messages.success(
+                request,
+                (
+                    "Alumno creado e inscripto correctamente. "
+                    "En su primer ingreso deberá cambiar la contraseña."
+                ),
+            )
+
+            return redirect(
+                "lista_inscripciones",
+                curso_id=curso.pk,
+            )
+    else:
+        form = NuevoAlumnoCursoForm()
+
+    return render(
+        request,
+        "inscripciones/nuevo_alumno.html",
+        {
+            "curso": curso,
+            "form": form,
         },
     )
 
