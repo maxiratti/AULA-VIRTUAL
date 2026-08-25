@@ -42,16 +42,38 @@ Actividades
 
     </div>
 
-    <a
-        href="{% url 'nueva_actividad' clase.pk %}"
-        class="btn-primary-custom"
-    >
-        <i class="bi bi-plus-lg"></i>
-        Nueva actividad
-    </a>
+    {% if curso.estado != "FINALIZADO" %}
+        <div class="page-header-actions">
+            <a href="{% url 'nuevo_cuestionario' clase.pk %}" class="btn btn-outline-primary">
+                <i class="bi bi-ui-checks"></i> Nuevo cuestionario
+            </a>
+            <a href="{% url 'nueva_actividad' clase.pk %}" class="btn-primary-custom">
+                <i class="bi bi-plus-lg"></i> Nueva actividad
+            </a>
+        </div>
+    {% endif %}
 
 </section>
 
+{% if curso.estado == "FINALIZADO" %}
+<div class="alert alert-secondary mb-4">
+    <i class="bi bi-lock me-2"></i>
+    <strong>Curso finalizado.</strong>
+    Las actividades, cuestionarios y entregas se conservan en modo consulta.
+</div>
+{% endif %}
+
+{% if cuestionarios %}
+<section class="activity-list mb-4">
+{% for cuestionario in cuestionarios %}
+<article class="activity-card">
+<div class="activity-icon"><i class="bi bi-ui-checks"></i></div>
+<div class="activity-main"><div class="activity-header"><div><span class="activity-label">Cuestionario autocorregible</span><h2>{{ cuestionario.titulo }}</h2></div><span class="status-badge {% if cuestionario.visible %}status-visible{% else %}status-hidden{% endif %}">{% if cuestionario.visible %}Publicado{% else %}Borrador{% endif %}</span></div>
+<p class="activity-description">{{ cuestionario.descripcion|default:"Sin descripción."|truncatechars:180 }}</p><div class="activity-meta"><span><i class="bi bi-question-circle"></i> {{ cuestionario.preguntas.count }} preguntas</span><span><i class="bi bi-star"></i> {{ cuestionario.puntaje_maximo }} puntos</span><span><i class="bi bi-arrow-repeat"></i> {{ cuestionario.intentos_permitidos }} intento{% if cuestionario.intentos_permitidos != 1 %}s{% endif %}</span></div></div>
+{% if curso.estado != "FINALIZADO" %}<div class="activity-actions"><a href="{% url 'editar_cuestionario' cuestionario.pk %}" class="action-button" title="Editar cuestionario"><i class="bi bi-pencil"></i></a></div>{% endif %}
+</article>
+{% endfor %}</section>
+{% endif %}
 
 {% if actividades %}
 
@@ -152,13 +174,15 @@ Actividades
                         <i class="bi bi-inbox"></i>
                     </a>
 
-                    <a
-                        href="{% url 'editar_actividad' actividad.pk %}"
-                        class="action-button"
-                        title="Editar actividad"
-                    >
-                        <i class="bi bi-pencil"></i>
-                    </a>
+                    {% if curso.estado != "FINALIZADO" %}
+                        <a
+                            href="{% url 'editar_actividad' actividad.pk %}"
+                            class="action-button"
+                            title="Editar actividad"
+                        >
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    {% endif %}
 
                 </div>
 

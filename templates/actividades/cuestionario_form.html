@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Nuevo cuestionario{% endblock %}
+{% block page_title %}Nuevo cuestionario{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/actividades.css' %}">{% endblock %}
+{% block content %}
+<section class="page-header"><div><a href="{% url 'lista_actividades' clase.pk %}" class="back-link"><i class="bi bi-arrow-left"></i> Volver a actividades</a><h1>Nuevo cuestionario</h1><p>{{ curso.nombre }} · {{ clase.titulo }}</p></div></section>
+<section class="content-card quiz-editor-card">
+<form method="post">{% csrf_token %}
+<div class="mb-3"><label class="form-label">Título</label><input name="titulo" class="form-control" required></div>
+<div class="mb-3"><label class="form-label">Descripción</label><textarea name="descripcion" rows="4" class="form-control"></textarea></div>
+<div class="mb-3"><label class="form-label">Intentos permitidos</label><input name="intentos_permitidos" type="number" min="1" value="1" class="form-control"></div>
+<button class="btn-primary-custom" type="submit"><i class="bi bi-arrow-right"></i> Crear y agregar preguntas</button>
+</form></section>{% endblock %}

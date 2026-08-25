@@ -5,6 +5,31 @@ from . import views
 
 urlpatterns = [
     path(
+        "clases/<int:clase_id>/cuestionarios/nuevo/",
+        views.nuevo_cuestionario,
+        name="nuevo_cuestionario",
+    ),
+    path(
+        "cuestionarios/<int:pk>/editar/",
+        views.editar_cuestionario,
+        name="editar_cuestionario",
+    ),
+    path(
+        "cuestionarios/<int:pk>/preguntas/nueva/",
+        views.nueva_pregunta_cuestionario,
+        name="nueva_pregunta_cuestionario",
+    ),
+    path(
+        "mis-cuestionarios/<int:pk>/resolver/",
+        views.resolver_cuestionario,
+        name="resolver_cuestionario",
+    ),
+    path(
+        "mis-cuestionarios/<int:pk>/resultado/",
+        views.resultado_cuestionario,
+        name="resultado_cuestionario",
+    ),
+    path(
         "clases/<int:clase_id>/actividades/",
         views.lista_actividades,
         name="lista_actividades",

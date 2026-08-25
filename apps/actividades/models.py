@@ -253,3 +253,155 @@ class IntentoEntrega(models.Model):
 
     def __str__(self):
         return f"{self.entrega} - intento {self.numero}"
+
+
+class Cuestionario(models.Model):
+
+    clase = models.ForeignKey(
+        "contenidos.Clase",
+        on_delete=models.CASCADE,
+        related_name="cuestionarios",
+    )
+
+    titulo = models.CharField(max_length=200)
+    descripcion = models.TextField(blank=True)
+
+    fecha_apertura = models.DateTimeField(null=True, blank=True)
+    fecha_limite = models.DateTimeField(null=True, blank=True)
+
+    intentos_permitidos = models.PositiveIntegerField(default=1)
+    visible = models.BooleanField(default=True)
+
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["fecha_limite", "id"]
+        verbose_name = "cuestionario"
+        verbose_name_plural = "cuestionarios"
+
+    @property
+    def puntaje_maximo(self):
+        return sum(
+            pregunta.puntaje
+            for pregunta in self.preguntas.all()
+        )
+
+    def __str__(self):
+        return f"{self.clase} - {self.titulo}"
+
+
+class PreguntaCuestionario(models.Model):
+
+    cuestionario = models.ForeignKey(
+        Cuestionario,
+        on_delete=models.CASCADE,
+        related_name="preguntas",
+    )
+
+    enunciado = models.TextField()
+    puntaje = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        default=1,
+        validators=[MinValueValidator(0)],
+    )
+    orden = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        ordering = ["orden", "id"]
+
+    def __str__(self):
+        return self.enunciado[:80]
+
+
+class OpcionCuestionario(models.Model):
+
+    pregunta = models.ForeignKey(
+        PreguntaCuestionario,
+        on_delete=models.CASCADE,
+        related_name="opciones",
+    )
+
+    texto = models.CharField(max_length=500)
+    es_correcta = models.BooleanField(default=False)
+    orden = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        ordering = ["orden", "id"]
+
+    def __str__(self):
+        return self.texto
+
+
+class IntentoCuestionario(models.Model):
+
+    cuestionario = models.ForeignKey(
+        Cuestionario,
+        on_delete=models.CASCADE,
+        related_name="intentos",
+    )
+
+    alumno = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="intentos_cuestionarios",
+    )
+
+    numero = models.PositiveIntegerField()
+    puntaje_obtenido = models.DecimalField(
+        max_digits=7,
+        decimal_places=2,
+        default=0,
+    )
+    fecha_inicio = models.DateTimeField(auto_now_add=True)
+    fecha_envio = models.DateTimeField(null=True, blank=True)
+    finalizado = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["-numero"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["cuestionario", "alumno", "numero"],
+                name="intento_cuestionario_unico",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.cuestionario} - {self.alumno} - {self.numero}"
+
+
+class RespuestaCuestionario(models.Model):
+
+    intento = models.ForeignKey(
+        IntentoCuestionario,
+        on_delete=models.CASCADE,
+        related_name="respuestas",
+    )
+
+    pregunta = models.ForeignKey(
+        PreguntaCuestionario,
+        on_delete=models.CASCADE,
+        related_name="respuestas",
+    )
+
+    opcion = models.ForeignKey(
+        OpcionCuestionario,
+        on_delete=models.PROTECT,
+        related_name="respuestas",
+    )
+
+    correcta = models.BooleanField(default=False)
+    puntaje_obtenido = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        default=0,
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["intento", "pregunta"],
+                name="respuesta_unica_por_pregunta_intento",
+            )
+        ]

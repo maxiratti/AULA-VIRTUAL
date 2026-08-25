@@ -23,7 +23,16 @@ from .forms import (
     EntregaForm,
 )
 
-from .models import Actividad, Entrega, IntentoEntrega
+from .models import (
+    Actividad,
+    Cuestionario,
+    Entrega,
+    IntentoCuestionario,
+    IntentoEntrega,
+    OpcionCuestionario,
+    PreguntaCuestionario,
+    RespuestaCuestionario,
+)
 
 from django.urls import reverse
 
@@ -169,6 +178,7 @@ def lista_actividades(request, clase_id):
             "modulo": clase.modulo,
             "clase": clase,
             "actividades": actividades,
+            "cuestionarios": clase.cuestionarios.all(),
         },
     )
 
@@ -189,6 +199,13 @@ def nueva_actividad(request, clase_id):
         clase,
     ):
         raise PermissionDenied
+
+    if clase.modulo.curso.estado == Curso.ESTADO_FINALIZADO:
+        messages.warning(
+            request,
+            "El curso está finalizado. Sus actividades están disponibles solo para consulta.",
+        )
+        return redirect("lista_actividades", clase_id=clase.pk)
 
     if request.method == "POST":
         form = ActividadForm(
@@ -565,10 +582,6 @@ def lista_entregas(request, actividad_id):
         Inscripcion.objects
         .filter(
             curso=curso,
-            estado__in=[
-                Inscripcion.ESTADO_INSCRIPTO,
-                Inscripcion.ESTADO_CURSANDO,
-            ],
         )
         .select_related("alumno")
         .order_by(
@@ -935,15 +948,20 @@ def libro_calificaciones(request, curso_id):
     )
 
 
-    inscripciones = (
-        Inscripcion.objects
-        .filter(
-            curso=curso,
+    inscripciones = Inscripcion.objects.filter(
+        curso=curso,
+    )
+
+    if curso.estado != Curso.ESTADO_FINALIZADO:
+        inscripciones = inscripciones.filter(
             estado__in=[
                 Inscripcion.ESTADO_INSCRIPTO,
                 Inscripcion.ESTADO_CURSANDO,
             ],
         )
+
+    inscripciones = (
+        inscripciones
         .select_related(
             "alumno",
         )
@@ -1099,13 +1117,16 @@ def actividades_docente(request):
     from apps.cursos.models import Curso
 
     if request.user.is_superuser:
-        cursos = Curso.objects.all()
+        cursos = Curso.objects.filter(
+            estado=Curso.ESTADO_ACTIVO,
+        )
 
     else:
         cursos = (
             Curso.objects
             .filter(
                 docentes=request.user,
+                estado=Curso.ESTADO_ACTIVO,
             )
             .distinct()
         )
@@ -1273,5 +1294,370 @@ def calendario_alumno(request):
         "actividades/calendario_alumno.html",
         {
             "actividades": actividades,
+        },
+    )
+
+
+@login_required
+def nuevo_cuestionario(request, clase_id):
+    clase = get_object_or_404(
+        Clase.objects.select_related(
+            "modulo",
+            "modulo__curso",
+            "modulo__curso__institucion",
+        ),
+        pk=clase_id,
+    )
+
+    if not puede_gestionar_actividad(request.user, clase):
+        raise PermissionDenied
+
+    if clase.modulo.curso.estado == Curso.ESTADO_FINALIZADO:
+        messages.warning(
+            request,
+            "El curso está finalizado. Los cuestionarios están disponibles solo para consulta.",
+        )
+        return redirect("lista_actividades", clase_id=clase.pk)
+
+    if request.method == "POST":
+        titulo = request.POST.get("titulo", "").strip()
+        descripcion = request.POST.get("descripcion", "").strip()
+        intentos = request.POST.get("intentos_permitidos", "1").strip()
+
+        if not titulo:
+            messages.error(request, "Ingresá un título para el cuestionario.")
+        else:
+            try:
+                intentos = max(1, int(intentos))
+            except ValueError:
+                intentos = 1
+
+            cuestionario = Cuestionario.objects.create(
+                clase=clase,
+                titulo=titulo,
+                descripcion=descripcion,
+                intentos_permitidos=intentos,
+                visible=False,
+            )
+            messages.success(
+                request,
+                "Cuestionario creado. Ahora agregá las preguntas.",
+            )
+            return redirect(
+                "editar_cuestionario",
+                pk=cuestionario.pk,
+            )
+
+    return render(
+        request,
+        "actividades/cuestionario_form.html",
+        {
+            "clase": clase,
+            "curso": clase.modulo.curso,
+        },
+    )
+
+
+@login_required
+def editar_cuestionario(request, pk):
+    cuestionario = get_object_or_404(
+        Cuestionario.objects.select_related(
+            "clase",
+            "clase__modulo",
+            "clase__modulo__curso",
+            "clase__modulo__curso__institucion",
+        ),
+        pk=pk,
+    )
+
+    if not puede_gestionar_actividad(
+        request.user,
+        cuestionario.clase,
+    ):
+        raise PermissionDenied
+
+    if cuestionario.clase.modulo.curso.estado == Curso.ESTADO_FINALIZADO:
+        messages.warning(
+            request,
+            "El curso está finalizado. El cuestionario está disponible solo para consulta.",
+        )
+        return redirect("lista_actividades", clase_id=cuestionario.clase.pk)
+
+    if request.method == "POST":
+        accion = request.POST.get("accion")
+
+        if accion == "publicar":
+            preguntas = cuestionario.preguntas.prefetch_related("opciones")
+            valido = bool(preguntas)
+
+            for pregunta in preguntas:
+                opciones = list(pregunta.opciones.all())
+                if (
+                    len(opciones) < 2
+                    or sum(1 for opcion in opciones if opcion.es_correcta) != 1
+                ):
+                    valido = False
+                    break
+
+            if valido:
+                cuestionario.visible = True
+                cuestionario.save(update_fields=["visible"])
+                messages.success(request, "Cuestionario publicado.")
+            else:
+                messages.error(
+                    request,
+                    "Cada pregunta debe tener al menos dos opciones y exactamente una correcta.",
+                )
+
+        elif accion == "ocultar":
+            cuestionario.visible = False
+            cuestionario.save(update_fields=["visible"])
+            messages.success(request, "Cuestionario ocultado.")
+
+        return redirect("editar_cuestionario", pk=cuestionario.pk)
+
+    return render(
+        request,
+        "actividades/cuestionario_editar.html",
+        {
+            "cuestionario": cuestionario,
+            "clase": cuestionario.clase,
+            "curso": cuestionario.clase.modulo.curso,
+        },
+    )
+
+
+@login_required
+def nueva_pregunta_cuestionario(request, pk):
+    cuestionario = get_object_or_404(
+        Cuestionario.objects.select_related(
+            "clase",
+            "clase__modulo",
+            "clase__modulo__curso",
+            "clase__modulo__curso__institucion",
+        ),
+        pk=pk,
+    )
+
+    if not puede_gestionar_actividad(request.user, cuestionario.clase):
+        raise PermissionDenied
+
+    if cuestionario.clase.modulo.curso.estado == Curso.ESTADO_FINALIZADO:
+        messages.warning(
+            request,
+            "El curso está finalizado. El cuestionario está disponible solo para consulta.",
+        )
+        return redirect("lista_actividades", clase_id=cuestionario.clase.pk)
+
+    if request.method != "POST":
+        return redirect("editar_cuestionario", pk=cuestionario.pk)
+
+    enunciado = request.POST.get("enunciado", "").strip()
+    puntaje = request.POST.get("puntaje", "1").strip()
+    opciones = [
+        request.POST.get(f"opcion_{i}", "").strip()
+        for i in range(1, 5)
+    ]
+    correcta = request.POST.get("correcta", "1")
+
+    opciones_validas = [
+        (indice, texto)
+        for indice, texto in enumerate(opciones, start=1)
+        if texto
+    ]
+
+    if not enunciado or len(opciones_validas) < 2:
+        messages.error(
+            request,
+            "Ingresá el enunciado y al menos dos opciones.",
+        )
+        return redirect("editar_cuestionario", pk=cuestionario.pk)
+
+    try:
+        from decimal import Decimal
+        puntaje = Decimal(puntaje)
+        if puntaje < 0:
+            raise ValueError
+    except Exception:
+        messages.error(request, "El puntaje ingresado no es válido.")
+        return redirect("editar_cuestionario", pk=cuestionario.pk)
+
+    try:
+        correcta = int(correcta)
+    except ValueError:
+        correcta = 1
+
+    if correcta not in [indice for indice, _ in opciones_validas]:
+        messages.error(
+            request,
+            "Seleccioná como correcta una opción que tenga texto.",
+        )
+        return redirect("editar_cuestionario", pk=cuestionario.pk)
+
+    pregunta = PreguntaCuestionario.objects.create(
+        cuestionario=cuestionario,
+        enunciado=enunciado,
+        puntaje=puntaje,
+        orden=cuestionario.preguntas.count() + 1,
+    )
+
+    for indice, texto in opciones_validas:
+        OpcionCuestionario.objects.create(
+            pregunta=pregunta,
+            texto=texto,
+            es_correcta=(indice == correcta),
+            orden=indice,
+        )
+
+    cuestionario.visible = False
+    cuestionario.save(update_fields=["visible"])
+
+    messages.success(request, "Pregunta agregada.")
+    return redirect("editar_cuestionario", pk=cuestionario.pk)
+
+
+@login_required
+def resolver_cuestionario(request, pk):
+    cuestionario = get_object_or_404(
+        Cuestionario.objects.select_related(
+            "clase",
+            "clase__modulo",
+            "clase__modulo__curso",
+        ).prefetch_related("preguntas__opciones"),
+        pk=pk,
+        visible=True,
+    )
+
+    curso = cuestionario.clase.modulo.curso
+
+    inscripcion = Inscripcion.objects.filter(
+        curso=curso,
+        alumno=request.user,
+        estado__in=[
+            Inscripcion.ESTADO_INSCRIPTO,
+            Inscripcion.ESTADO_CURSANDO,
+        ],
+    ).first()
+
+    if not inscripcion:
+        raise PermissionDenied
+
+    ahora = timezone.now()
+    if cuestionario.fecha_apertura and ahora < cuestionario.fecha_apertura:
+        messages.error(request, "El cuestionario todavía no está disponible.")
+        return redirect("detalle_clase_alumno", pk=cuestionario.clase.pk)
+
+    if cuestionario.fecha_limite and ahora > cuestionario.fecha_limite:
+        messages.error(request, "El plazo del cuestionario finalizó.")
+        return redirect("detalle_clase_alumno", pk=cuestionario.clase.pk)
+
+    realizados = cuestionario.intentos.filter(
+        alumno=request.user,
+        finalizado=True,
+    ).count()
+
+    if realizados >= cuestionario.intentos_permitidos:
+        messages.info(request, "Ya utilizaste todos los intentos permitidos.")
+        return redirect("resultado_cuestionario", pk=cuestionario.pk)
+
+    if request.method == "POST":
+        preguntas = list(cuestionario.preguntas.all())
+
+        if any(
+            not request.POST.get(f"pregunta_{pregunta.pk}")
+            for pregunta in preguntas
+        ):
+            messages.error(request, "Respondé todas las preguntas antes de enviar.")
+        else:
+            intento = IntentoCuestionario.objects.create(
+                cuestionario=cuestionario,
+                alumno=request.user,
+                numero=realizados + 1,
+            )
+
+            total = 0
+            for pregunta in preguntas:
+                opcion = get_object_or_404(
+                    OpcionCuestionario,
+                    pk=request.POST.get(f"pregunta_{pregunta.pk}"),
+                    pregunta=pregunta,
+                )
+                obtenido = pregunta.puntaje if opcion.es_correcta else 0
+                RespuestaCuestionario.objects.create(
+                    intento=intento,
+                    pregunta=pregunta,
+                    opcion=opcion,
+                    correcta=opcion.es_correcta,
+                    puntaje_obtenido=obtenido,
+                )
+                total += obtenido
+
+            intento.puntaje_obtenido = total
+            intento.fecha_envio = timezone.now()
+            intento.finalizado = True
+            intento.save(
+                update_fields=[
+                    "puntaje_obtenido",
+                    "fecha_envio",
+                    "finalizado",
+                ]
+            )
+
+            inscripcion.iniciar_cursado()
+
+            messages.success(
+                request,
+                "Cuestionario enviado y corregido automáticamente.",
+            )
+            return redirect("resultado_cuestionario", pk=cuestionario.pk)
+
+    return render(
+        request,
+        "actividades/cuestionario_resolver.html",
+        {
+            "cuestionario": cuestionario,
+            "curso": curso,
+            "intento_numero": realizados + 1,
+        },
+    )
+
+
+@login_required
+def resultado_cuestionario(request, pk):
+    cuestionario = get_object_or_404(
+        Cuestionario.objects.select_related(
+            "clase",
+            "clase__modulo",
+            "clase__modulo__curso",
+        ),
+        pk=pk,
+    )
+
+    if not Inscripcion.objects.filter(
+        curso=cuestionario.clase.modulo.curso,
+        alumno=request.user,
+    ).exists():
+        raise PermissionDenied
+
+    intentos = (
+        cuestionario.intentos
+        .filter(
+            alumno=request.user,
+            finalizado=True,
+        )
+        .prefetch_related(
+            "respuestas__pregunta",
+            "respuestas__opcion",
+        )
+        .order_by("-numero")
+    )
+
+    return render(
+        request,
+        "actividades/cuestionario_resultado.html",
+        {
+            "cuestionario": cuestionario,
+            "curso": cuestionario.clase.modulo.curso,
+            "intentos": intentos,
         },
     )

@@ -52,13 +52,15 @@ Contenido de la clase
             Actividades
         </a>
 
-        <a
-            href="{% url 'nuevo_contenido' clase.pk %}"
-            class="btn-primary-custom"
-        >
-            <i class="bi bi-plus-lg"></i>
-            Agregar contenido
-        </a>
+        {% if curso.estado != "FINALIZADO" %}
+            <a
+                href="{% url 'nuevo_contenido' clase.pk %}"
+                class="btn-primary-custom"
+            >
+                <i class="bi bi-plus-lg"></i>
+                Agregar contenido
+            </a>
+        {% endif %}
 
     </div>
 
@@ -283,18 +285,18 @@ Contenido de la clase
                 </div>
 
 
-                <div class="lesson-content-actions">
-
-                    <a
-                        href="{% url 'editar_contenido' contenido.pk %}"
-                        class="action-button"
-                        title="Editar contenido"
-                        aria-label="Editar contenido"
-                    >
-                        <i class="bi bi-pencil"></i>
-                    </a>
-
-                </div>
+                {% if curso.estado != "FINALIZADO" %}
+                    <div class="lesson-content-actions">
+                        <a
+                            href="{% url 'editar_contenido' contenido.pk %}"
+                            class="action-button"
+                            title="Editar contenido"
+                            aria-label="Editar contenido"
+                        >
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </div>
+                {% endif %}
 
             </article>
 
@@ -322,13 +324,15 @@ Contenido de la clase
                 videos o recursos interactivos.
             </p>
 
-            <a
-                href="{% url 'nuevo_contenido' clase.pk %}"
-                class="btn-primary-custom"
-            >
-                <i class="bi bi-plus-lg"></i>
-                Agregar primer contenido
-            </a>
+            {% if curso.estado != "FINALIZADO" %}
+                <a
+                    href="{% url 'nuevo_contenido' clase.pk %}"
+                    class="btn-primary-custom"
+                >
+                    <i class="bi bi-plus-lg"></i>
+                    Agregar primer contenido
+                </a>
+            {% endif %}
 
         </div>
 

@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Editar cuestionario{% endblock %}{% block page_title %}Cuestionario{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/actividades.css' %}">{% endblock %}
+{% block content %}
+<section class="page-header"><div><a href="{% url 'lista_actividades' clase.pk %}" class="back-link"><i class="bi bi-arrow-left"></i> Volver a actividades</a><h1>{{ cuestionario.titulo }}</h1><p>{% if cuestionario.visible %}Publicado{% else %}Borrador{% endif %} · {{ cuestionario.puntaje_maximo }} puntos</p></div>
+<form method="post">{% csrf_token %}{% if cuestionario.visible %}<button name="accion" value="ocultar" class="btn btn-outline-secondary">Ocultar</button>{% else %}<button name="accion" value="publicar" class="btn-primary-custom">Publicar cuestionario</button>{% endif %}</form></section>
+<section class="quiz-editor-grid">
+<div class="content-card"><h2>Preguntas</h2>
+{% for pregunta in cuestionario.preguntas.all %}<article class="quiz-question-summary"><strong>{{ forloop.counter }}. {{ pregunta.enunciado }}</strong><span>{{ pregunta.puntaje }} puntos</span><ul>{% for opcion in pregunta.opciones.all %}<li>{% if opcion.es_correcta %}<i class="bi bi-check-circle-fill"></i>{% endif %} {{ opcion.texto }}</li>{% endfor %}</ul></article>{% empty %}<p>Todavía no agregaste preguntas.</p>{% endfor %}
+</div>
+<div class="content-card"><h2>Agregar pregunta</h2><form method="post" action="{% url 'nueva_pregunta_cuestionario' cuestionario.pk %}">{% csrf_token %}
+<div class="mb-3"><label class="form-label">Enunciado</label><textarea name="enunciado" class="form-control" rows="3" required></textarea></div>
+<div class="mb-3"><label class="form-label">Puntaje</label><input name="puntaje" type="number" min="0" step="0.01" value="1" class="form-control" required></div>
+{% for n in "1234" %}<div class="mb-2"><label class="form-label">Opción {{ n }}</label><div class="input-group"><div class="input-group-text"><input type="radio" name="correcta" value="{{ n }}" {% if forloop.first %}checked{% endif %}></div><input name="opcion_{{ n }}" class="form-control" {% if forloop.counter < 3 %}required{% endif %}></div></div>{% endfor %}
+<button class="btn-primary-custom" type="submit"><i class="bi bi-plus-lg"></i> Agregar pregunta</button></form></div></section>{% endblock %}

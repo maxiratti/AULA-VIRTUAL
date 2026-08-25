@@ -107,6 +107,17 @@ def nuevo_modulo(request, curso_id):
     ):
         raise PermissionDenied
 
+
+    if curso.estado == Curso.ESTADO_FINALIZADO:
+        messages.warning(
+            request,
+            "El curso está finalizado y se encuentra en modo consulta.",
+        )
+        return redirect(
+            "lista_modulos",
+            curso_id=curso.pk,
+        )
+
     if request.method == "POST":
         form = ModuloForm(
             request.POST,
@@ -161,6 +172,17 @@ def editar_modulo(request, pk):
         curso,
     ):
         raise PermissionDenied
+
+
+    if curso.estado == Curso.ESTADO_FINALIZADO:
+        messages.warning(
+            request,
+            "El curso está finalizado y se encuentra en modo consulta.",
+        )
+        return redirect(
+            "lista_modulos",
+            curso_id=curso.pk,
+        )
 
     if request.method == "POST":
         form = ModuloForm(
@@ -253,6 +275,17 @@ def nueva_clase(request, modulo_id):
     ):
         raise PermissionDenied
 
+
+    if curso.estado == Curso.ESTADO_FINALIZADO:
+        messages.warning(
+            request,
+            "El curso está finalizado y se encuentra en modo consulta.",
+        )
+        return redirect(
+            "lista_clases",
+            modulo_id=modulo.pk,
+        )
+
     if request.method == "POST":
         form = ClaseForm(
             request.POST,
@@ -310,6 +343,17 @@ def editar_clase(request, pk):
         curso,
     ):
         raise PermissionDenied
+
+
+    if curso.estado == Curso.ESTADO_FINALIZADO:
+        messages.warning(
+            request,
+            "El curso está finalizado y se encuentra en modo consulta.",
+        )
+        return redirect(
+            "lista_clases",
+            modulo_id=modulo.pk,
+        )
 
     if request.method == "POST":
         form = ClaseForm(
@@ -407,6 +451,17 @@ def nuevo_contenido(request, clase_id):
     ):
         raise PermissionDenied
 
+
+    if curso.estado == Curso.ESTADO_FINALIZADO:
+        messages.warning(
+            request,
+            "El curso está finalizado y se encuentra en modo consulta.",
+        )
+        return redirect(
+            "detalle_clase",
+            pk=clase.pk,
+        )
+
     if request.method == "POST":
         form = ContenidoClaseForm(
             request.POST,
@@ -470,6 +525,17 @@ def editar_contenido(request, pk):
         curso,
     ):
         raise PermissionDenied
+
+
+    if curso.estado == Curso.ESTADO_FINALIZADO:
+        messages.warning(
+            request,
+            "El curso está finalizado y se encuentra en modo consulta.",
+        )
+        return redirect(
+            "detalle_clase",
+            pk=clase.pk,
+        )
 
     if request.method == "POST":
         form = ContenidoClaseForm(

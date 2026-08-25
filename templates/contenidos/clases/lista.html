@@ -42,13 +42,15 @@ Clases
 
     </div>
 
-    <a
-        href="{% url 'nueva_clase' modulo.pk %}"
-        class="btn-primary-custom"
-    >
-        <i class="bi bi-plus-lg"></i>
-        Nueva clase
-    </a>
+    {% if curso.estado != "FINALIZADO" %}
+        <a
+            href="{% url 'nueva_clase' modulo.pk %}"
+            class="btn-primary-custom"
+        >
+            <i class="bi bi-plus-lg"></i>
+            Nueva clase
+        </a>
+    {% endif %}
 
 </section>
 
@@ -142,14 +144,16 @@ Clases
                         <i class="bi bi-box-seam"></i>
                     </a>
 
-                    <a
-                        href="{% url 'editar_clase' clase.pk %}"
-                        class="action-button"
-                        title="Editar clase"
-                        aria-label="Editar clase"
-                    >
-                        <i class="bi bi-pencil"></i>
-                    </a>
+                    {% if curso.estado != "FINALIZADO" %}
+                        <a
+                            href="{% url 'editar_clase' clase.pk %}"
+                            class="action-button"
+                            title="Editar clase"
+                            aria-label="Editar clase"
+                        >
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    {% endif %}
 
                 </div>
 
@@ -178,13 +182,15 @@ Clases
                 a organizar el contenido.
             </p>
 
-            <a
-                href="{% url 'nueva_clase' modulo.pk %}"
-                class="btn-primary-custom"
-            >
-                <i class="bi bi-plus-lg"></i>
-                Crear primera clase
-            </a>
+            {% if curso.estado != "FINALIZADO" %}
+                <a
+                    href="{% url 'nueva_clase' modulo.pk %}"
+                    class="btn-primary-custom"
+                >
+                    <i class="bi bi-plus-lg"></i>
+                    Crear primera clase
+                </a>
+            {% endif %}
 
         </div>
 
