@@ -35,6 +35,11 @@ urlpatterns = [
         name="exportar_seguimiento_excel",
     ),
     path(
+        "cursos/<int:pk>/seguimiento/reporte-cierre/",
+        views.reporte_cierre_pdf,
+        name="reporte_cierre_pdf",
+    ),
+    path(
         "cursos/<int:pk>/avisos/",
         views.avisos_curso,
         name="avisos_curso",

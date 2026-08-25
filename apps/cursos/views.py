@@ -6,6 +6,11 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Prefetch, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.http import HttpResponse
+from reportlab.lib import colors as rl_colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.graphics import renderPDF
 from reportlab.graphics.barcode import qr
 from reportlab.graphics.shapes import Drawing
@@ -1534,6 +1539,325 @@ def exportar_seguimiento_excel(request, pk):
     )
 
     libro.save(response)
+    return response
+
+
+@login_required
+def reporte_cierre_pdf(request, pk):
+    curso = get_object_or_404(
+        Curso.objects.select_related("institucion"),
+        pk=pk,
+    )
+
+    puede_ver = (
+        request.user.is_superuser
+        or curso.docentes.filter(pk=request.user.pk).exists()
+        or tiene_rol_en_institucion(
+            request.user,
+            "Coordinador",
+            curso.institucion,
+        )
+        or tiene_rol_en_institucion(
+            request.user,
+            "Administrador institucional",
+            curso.institucion,
+        )
+    )
+
+    if not puede_ver:
+        raise PermissionDenied
+
+    ahora = timezone.now()
+
+    clases_disponibles = list(
+        Clase.objects
+        .filter(
+            modulo__curso=curso,
+            modulo__visible=True,
+            visible=True,
+        )
+        .filter(
+            Q(fecha_publicacion__isnull=True)
+            | Q(fecha_publicacion__lte=ahora)
+        )
+        .order_by("modulo__orden", "orden", "id")
+    )
+    total_clases = len(clases_disponibles)
+
+    actividades_disponibles = list(
+        Actividad.objects
+        .filter(
+            clase__in=clases_disponibles,
+            visible=True,
+        )
+        .select_related("clase")
+        .distinct()
+    )
+    total_actividades = len(actividades_disponibles)
+
+    inscripciones = list(
+        Inscripcion.objects
+        .filter(curso=curso)
+        .select_related("alumno")
+        .order_by(
+            "alumno__last_name",
+            "alumno__first_name",
+            "alumno__username",
+        )
+    )
+
+    alumnos_ids = [
+        inscripcion.alumno_id
+        for inscripcion in inscripciones
+    ]
+
+    progresos = (
+        ProgresoClase.objects
+        .filter(
+            alumno_id__in=alumnos_ids,
+            clase__in=clases_disponibles,
+            completada=True,
+        )
+        .values_list("alumno_id", "clase_id")
+    )
+
+    clases_por_alumno = {}
+    for alumno_id, clase_id in progresos:
+        clases_por_alumno.setdefault(alumno_id, set()).add(clase_id)
+
+    entregas = (
+        Entrega.objects
+        .filter(
+            alumno_id__in=alumnos_ids,
+            actividad__in=actividades_disponibles,
+        )
+        .select_related("actividad")
+    )
+
+    entregas_por_alumno = {}
+    for entrega in entregas:
+        entregas_por_alumno.setdefault(
+            entrega.alumno_id,
+            [],
+        ).append(entrega)
+
+    filas = []
+    for inscripcion in inscripciones:
+        alumno = inscripcion.alumno
+        completadas = len(
+            clases_por_alumno.get(alumno.pk, set())
+        )
+        progreso = (
+            round(completadas / total_clases * 100)
+            if total_clases
+            else 0
+        )
+
+        entregas_alumno = entregas_por_alumno.get(
+            alumno.pk,
+            [],
+        )
+        entregadas = sum(
+            1
+            for entrega in entregas_alumno
+            if entrega.estado in [
+                Entrega.ESTADO_ENTREGADA,
+                Entrega.ESTADO_CORREGIDA,
+            ]
+        )
+
+        porcentajes = []
+        for entrega in entregas_alumno:
+            if (
+                entrega.calificacion is not None
+                and entrega.actividad.puntaje_maximo
+                and entrega.actividad.puntaje_maximo > 0
+            ):
+                porcentajes.append(
+                    float(entrega.calificacion)
+                    / float(entrega.actividad.puntaje_maximo)
+                    * 100
+                )
+
+        promedio = (
+            round(sum(porcentajes) / len(porcentajes))
+            if porcentajes
+            else None
+        )
+
+        filas.append([
+            alumno.get_full_name() or alumno.username,
+            inscripcion.get_estado_display(),
+            f"{completadas}/{total_clases}",
+            f"{progreso}%",
+            f"{entregadas}/{total_actividades}",
+            f"{promedio}%" if promedio is not None else "-",
+        ])
+
+    total = len(inscripciones)
+    aprobados = sum(
+        1 for i in inscripciones
+        if i.estado == Inscripcion.ESTADO_APROBADO
+    )
+    desaprobados = sum(
+        1 for i in inscripciones
+        if i.estado == Inscripcion.ESTADO_DESAPROBADO
+    )
+    abandonos = sum(
+        1 for i in inscripciones
+        if i.estado == Inscripcion.ESTADO_ABANDONO
+    )
+    cursando = sum(
+        1 for i in inscripciones
+        if i.estado == Inscripcion.ESTADO_CURSANDO
+    )
+    inscriptos = sum(
+        1 for i in inscripciones
+        if i.estado == Inscripcion.ESTADO_INSCRIPTO
+    )
+
+    response = HttpResponse(
+        content_type="application/pdf",
+    )
+    response["Content-Disposition"] = (
+        f'attachment; filename="reporte_cierre_curso_{curso.pk}.pdf"'
+    )
+
+    doc = SimpleDocTemplate(
+        response,
+        pagesize=A4,
+        rightMargin=32,
+        leftMargin=32,
+        topMargin=32,
+        bottomMargin=32,
+        title=f"Reporte académico - {curso.nombre}",
+        author="Aula Virtual",
+    )
+
+    estilos = getSampleStyleSheet()
+    titulo = ParagraphStyle(
+        "TituloReporte",
+        parent=estilos["Title"],
+        fontName="Helvetica-Bold",
+        fontSize=18,
+        leading=22,
+        alignment=TA_CENTER,
+        textColor=rl_colors.HexColor("#172554"),
+        spaceAfter=6,
+    )
+    subtitulo = ParagraphStyle(
+        "SubtituloReporte",
+        parent=estilos["Normal"],
+        fontName="Helvetica",
+        fontSize=9,
+        leading=13,
+        alignment=TA_CENTER,
+        textColor=rl_colors.HexColor("#64748b"),
+        spaceAfter=14,
+    )
+    normal = ParagraphStyle(
+        "NormalReporte",
+        parent=estilos["Normal"],
+        fontSize=8,
+        leading=11,
+        textColor=rl_colors.HexColor("#334155"),
+    )
+
+    elementos = [
+        Paragraph("REPORTE ACADÉMICO DEL CURSO", titulo),
+        Paragraph(
+            f"<b>{curso.institucion.nombre}</b><br/>{curso.nombre}",
+            subtitulo,
+        ),
+    ]
+
+    datos_curso = [
+        ["Estado", curso.get_estado_display()],
+        ["Carga horaria", f"{curso.carga_horaria} h" if curso.carga_horaria else "-"],
+        ["Fecha de inicio", curso.fecha_inicio.strftime("%d/%m/%Y") if curso.fecha_inicio else "-"],
+        ["Fecha de fin", curso.fecha_fin.strftime("%d/%m/%Y") if curso.fecha_fin else "-"],
+        ["Generado", timezone.localtime().strftime("%d/%m/%Y %H:%M")],
+    ]
+    tabla_datos = Table(datos_curso, colWidths=[105, 370])
+    tabla_datos.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (0, -1), rl_colors.HexColor("#eff6ff")),
+        ("TEXTCOLOR", (0, 0), (0, -1), rl_colors.HexColor("#172554")),
+        ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+        ("FONTNAME", (1, 0), (1, -1), "Helvetica"),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+        ("GRID", (0, 0), (-1, -1), 0.5, rl_colors.HexColor("#dbeafe")),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+    ]))
+    elementos.extend([tabla_datos, Spacer(1, 14)])
+
+    resumen = [
+        ["Total", "Aprobados", "Desaprobados", "Abandonos", "Cursando", "Inscriptos"],
+        [total, aprobados, desaprobados, abandonos, cursando, inscriptos],
+    ]
+    tabla_resumen = Table(
+        resumen,
+        colWidths=[79] * 6,
+    )
+    tabla_resumen.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), rl_colors.HexColor("#2563eb")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), rl_colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTNAME", (0, 1), (-1, 1), "Helvetica-Bold"),
+        ("TEXTCOLOR", (0, 1), (-1, 1), rl_colors.HexColor("#172554")),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("FONTSIZE", (0, 0), (-1, -1), 7.5),
+        ("GRID", (0, 0), (-1, -1), 0.5, rl_colors.HexColor("#cbd5e1")),
+        ("TOPPADDING", (0, 0), (-1, -1), 7),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+    ]))
+    elementos.extend([
+        Paragraph("<b>Resumen académico</b>", normal),
+        Spacer(1, 6),
+        tabla_resumen,
+        Spacer(1, 16),
+    ])
+
+    encabezados = [
+        "Alumno",
+        "Estado",
+        "Clases",
+        "Progreso",
+        "Actividades",
+        "Promedio",
+    ]
+    datos_alumnos = [encabezados] + filas
+
+    tabla_alumnos = Table(
+        datos_alumnos,
+        colWidths=[155, 78, 55, 58, 70, 58],
+        repeatRows=1,
+    )
+    tabla_alumnos.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), rl_colors.HexColor("#172554")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), rl_colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+        ("FONTSIZE", (0, 0), (-1, -1), 7),
+        ("ALIGN", (1, 0), (-1, -1), "CENTER"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("GRID", (0, 0), (-1, -1), 0.4, rl_colors.HexColor("#cbd5e1")),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [
+            rl_colors.white,
+            rl_colors.HexColor("#f8fafc"),
+        ]),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+    ]))
+
+    elementos.extend([
+        Paragraph("<b>Detalle de alumnos</b>", normal),
+        Spacer(1, 6),
+        tabla_alumnos,
+    ])
+
+    doc.build(elementos)
     return response
 
 
