@@ -2362,3 +2362,186 @@
         border-right: 0;
     }
 }
+
+
+/* =========================================================
+   MENSAJERÍA PRIVADA DEL CURSO
+   ========================================================= */
+
+.course-messaging-card,
+.conversation-list-card {
+    max-width: 900px;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.course-message-thread {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 220px;
+    padding: 20px;
+    background: #f8fafc;
+}
+
+.course-message {
+    width: min(78%, 620px);
+}
+
+.course-message.is-own {
+    align-self: flex-end;
+}
+
+.course-message-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 5px;
+    color: #64748b;
+    font-size: 9px;
+}
+
+.course-message-meta strong {
+    color: #334155;
+}
+
+.course-message-bubble {
+    padding: 11px 13px;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px 12px 12px 12px;
+    background: #ffffff;
+    color: #334155;
+    font-size: 11px;
+    line-height: 1.55;
+}
+
+.course-message.is-own .course-message-bubble {
+    border-color: #bfdbfe;
+    border-radius: 12px 4px 12px 12px;
+    background: #eff6ff;
+}
+
+.course-message-form {
+    padding: 18px 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.course-message-form label {
+    display: block;
+    margin-bottom: 7px;
+    color: #334155;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.course-message-form textarea {
+    resize: vertical;
+    min-height: 90px;
+}
+
+.course-message-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+
+.message-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 180px;
+    padding: 30px;
+    color: #94a3b8;
+    text-align: center;
+}
+
+.message-empty-state i {
+    margin-bottom: 10px;
+    font-size: 28px;
+}
+
+.message-empty-state strong {
+    color: #475569;
+    font-size: 13px;
+}
+
+.message-empty-state span {
+    max-width: 420px;
+    margin-top: 4px;
+    font-size: 10px;
+}
+
+.conversation-list-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 17px;
+    border-bottom: 1px solid #f1f5f9;
+    color: inherit;
+    text-decoration: none;
+    transition: background .15s ease;
+}
+
+.conversation-list-item:last-child {
+    border-bottom: 0;
+}
+
+.conversation-list-item:hover {
+    background: #f8fafc;
+}
+
+.conversation-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.conversation-list-content {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.conversation-list-content strong {
+    color: #1e293b;
+    font-size: 11px;
+}
+
+.conversation-list-content span {
+    overflow: hidden;
+    margin-top: 3px;
+    color: #64748b;
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.conversation-list-side {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #94a3b8;
+    font-size: 9px;
+}
+
+@media (max-width: 700px) {
+    .course-message {
+        width: 92%;
+    }
+
+    .conversation-list-side span {
+        display: none;
+    }
+}

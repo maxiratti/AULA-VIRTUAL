@@ -37,11 +37,18 @@ from apps.inscripciones.models import Inscripcion
 from apps.notificaciones.services import (
     notificar_aviso_curso,
     notificar_curso_finalizado,
+    notificar_mensaje_curso,
 )
 from apps.roles.utils import tiene_rol_en_institucion
 
 from .forms import CursoForm
-from .models import AvisoCurso, Certificado, Curso
+from .models import (
+    AvisoCurso,
+    Certificado,
+    ConversacionCurso,
+    Curso,
+    MensajeCurso,
+)
 
 
 def instituciones_coordinadas(usuario):
@@ -465,6 +472,211 @@ def eliminar_aviso_curso(request, curso_pk, aviso_pk):
         )
 
     return redirect("avisos_curso", pk=curso.pk)
+
+
+def puede_gestionar_mensajeria(usuario, curso):
+    return (
+        usuario.is_superuser
+        or curso.docentes.filter(pk=usuario.pk).exists()
+        or tiene_rol_en_institucion(
+            usuario,
+            "Coordinador",
+            curso.institucion,
+        )
+        or tiene_rol_en_institucion(
+            usuario,
+            "Administrador institucional",
+            curso.institucion,
+        )
+    )
+
+
+@login_required
+def mensajeria_alumno(request, pk):
+    curso = get_object_or_404(
+        Curso.objects.select_related("institucion"),
+        pk=pk,
+    )
+
+    inscripcion = (
+        Inscripcion.objects
+        .filter(
+            curso=curso,
+            alumno=request.user,
+        )
+        .first()
+    )
+
+    if (
+        not inscripcion
+        or not tiene_rol_en_institucion(
+            request.user,
+            "Alumno",
+            curso.institucion,
+        )
+    ):
+        raise PermissionDenied
+
+    conversacion, _ = ConversacionCurso.objects.get_or_create(
+        curso=curso,
+        alumno=request.user,
+    )
+
+    if request.method == "POST":
+        if curso.estado == Curso.ESTADO_FINALIZADO:
+            messages.warning(
+                request,
+                "El curso está finalizado. La conversación queda en modo consulta.",
+            )
+            return redirect("mensajeria_alumno", pk=curso.pk)
+
+        texto = request.POST.get("mensaje", "").strip()
+
+        if not texto:
+            messages.error(
+                request,
+                "Escribí un mensaje antes de enviarlo.",
+            )
+        else:
+            mensaje = MensajeCurso.objects.create(
+                conversacion=conversacion,
+                autor=request.user,
+                mensaje=texto,
+            )
+            conversacion.save()
+            notificar_mensaje_curso(mensaje)
+
+            messages.success(
+                request,
+                "Consulta enviada correctamente.",
+            )
+            return redirect("mensajeria_alumno", pk=curso.pk)
+
+    mensajes_conversacion = (
+        conversacion.mensajes
+        .select_related("autor")
+        .all()
+    )
+
+    return render(
+        request,
+        "cursos/mensajeria_alumno.html",
+        {
+            "curso": curso,
+            "inscripcion": inscripcion,
+            "conversacion": conversacion,
+            "mensajes_conversacion": mensajes_conversacion,
+        },
+    )
+
+
+@login_required
+def mensajeria_docente(request, pk):
+    curso = get_object_or_404(
+        Curso.objects.select_related("institucion"),
+        pk=pk,
+    )
+
+    if not puede_gestionar_mensajeria(request.user, curso):
+        raise PermissionDenied
+
+    conversaciones = (
+        ConversacionCurso.objects
+        .filter(curso=curso)
+        .select_related("alumno")
+        .prefetch_related("mensajes")
+        .order_by("-fecha_actualizacion")
+    )
+
+    return render(
+        request,
+        "cursos/mensajeria_docente.html",
+        {
+            "curso": curso,
+            "conversaciones": conversaciones,
+        },
+    )
+
+
+@login_required
+def mensajeria_docente_conversacion(
+    request,
+    curso_pk,
+    alumno_pk,
+):
+    curso = get_object_or_404(
+        Curso.objects.select_related("institucion"),
+        pk=curso_pk,
+    )
+
+    if not puede_gestionar_mensajeria(request.user, curso):
+        raise PermissionDenied
+
+    inscripcion = get_object_or_404(
+        Inscripcion.objects.select_related("alumno"),
+        curso=curso,
+        alumno_id=alumno_pk,
+    )
+
+    conversacion, _ = ConversacionCurso.objects.get_or_create(
+        curso=curso,
+        alumno=inscripcion.alumno,
+    )
+
+    if request.method == "POST":
+        if curso.estado == Curso.ESTADO_FINALIZADO:
+            messages.warning(
+                request,
+                "El curso está finalizado. La conversación queda en modo consulta.",
+            )
+            return redirect(
+                "mensajeria_docente_conversacion",
+                curso_pk=curso.pk,
+                alumno_pk=inscripcion.alumno.pk,
+            )
+
+        texto = request.POST.get("mensaje", "").strip()
+
+        if not texto:
+            messages.error(
+                request,
+                "Escribí una respuesta antes de enviarla.",
+            )
+        else:
+            mensaje = MensajeCurso.objects.create(
+                conversacion=conversacion,
+                autor=request.user,
+                mensaje=texto,
+            )
+            conversacion.save()
+            notificar_mensaje_curso(mensaje)
+
+            messages.success(
+                request,
+                "Respuesta enviada correctamente.",
+            )
+            return redirect(
+                "mensajeria_docente_conversacion",
+                curso_pk=curso.pk,
+                alumno_pk=inscripcion.alumno.pk,
+            )
+
+    mensajes_conversacion = (
+        conversacion.mensajes
+        .select_related("autor")
+        .all()
+    )
+
+    return render(
+        request,
+        "cursos/mensajeria_conversacion.html",
+        {
+            "curso": curso,
+            "inscripcion": inscripcion,
+            "conversacion": conversacion,
+            "mensajes_conversacion": mensajes_conversacion,
+        },
+    )
 
 
 def verificar_certificado(request, codigo):

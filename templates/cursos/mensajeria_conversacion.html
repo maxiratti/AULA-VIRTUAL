@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/cursos.css' %}">
+{% endblock %}
+
+{% block title %}Conversación | {{ curso.nombre }}{% endblock %}
+{% block page_title %}Conversación{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <a href="{% url 'mensajeria_docente' curso.pk %}" class="back-link">
+            <i class="bi bi-arrow-left"></i>
+            Volver a consultas
+        </a>
+        <h1>{{ inscripcion.alumno.get_full_name|default:inscripcion.alumno.username }}</h1>
+        <p>{{ curso.nombre }} · conversación privada</p>
+    </div>
+</section>
+
+{% if curso.estado == "FINALIZADO" %}
+<div class="course-readonly-note mb-4">
+    <i class="bi bi-lock"></i>
+    Curso finalizado: la conversación está disponible solo para consulta.
+</div>
+{% endif %}
+
+<section class="course-messaging-card">
+    <div class="course-message-thread">
+        {% for item in mensajes_conversacion %}
+            <article class="course-message {% if item.autor_id == request.user.pk %}is-own{% endif %}">
+                <div class="course-message-meta">
+                    <strong>{{ item.autor.get_full_name|default:item.autor.username }}</strong>
+                    <span>{{ item.fecha_creacion|date:"d/m/Y H:i" }}</span>
+                </div>
+                <div class="course-message-bubble">
+                    {{ item.mensaje|linebreaksbr }}
+                </div>
+            </article>
+        {% empty %}
+            <div class="message-empty-state">
+                <i class="bi bi-chat-dots"></i>
+                <strong>Sin mensajes</strong>
+                <span>Esta conversación todavía no tiene mensajes.</span>
+            </div>
+        {% endfor %}
+    </div>
+
+    {% if curso.estado != "FINALIZADO" %}
+    <form method="post" class="course-message-form">
+        {% csrf_token %}
+        <label for="id_mensaje">Responder</label>
+        <textarea id="id_mensaje" name="mensaje" rows="4" class="form-control" required></textarea>
+        <div class="course-message-actions">
+            <button type="submit" class="btn-primary-custom">
+                <i class="bi bi-send"></i>
+                Enviar respuesta
+            </button>
+        </div>
+    </form>
+    {% endif %}
+</section>
+{% endblock %}

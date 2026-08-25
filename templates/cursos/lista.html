@@ -171,6 +171,15 @@ Cursos
                                     </a>
 
                                     <a
+                                        href="{% url 'mensajeria_docente' curso.pk %}"
+                                        class="action-button"
+                                        title="Consultas de alumnos"
+                                        aria-label="Consultas de alumnos"
+                                    >
+                                        <i class="bi bi-chat-dots"></i>
+                                    </a>
+
+                                    <a
                                         href="{% url 'libro_calificaciones' curso.pk %}"
                                         class="action-button"
                                         title="Calificaciones"

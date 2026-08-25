@@ -206,3 +206,52 @@ def notificar_aviso_curso(aviso):
                 "url": url,
             },
         )
+
+
+def notificar_mensaje_curso(mensaje):
+    conversacion = mensaje.conversacion
+    curso = conversacion.curso
+    alumno = conversacion.alumno
+
+    url_alumno = reverse(
+        "mensajeria_alumno",
+        kwargs={"pk": curso.pk},
+    )
+
+    if mensaje.autor_id == alumno.pk:
+        nombre_alumno = (
+            alumno.get_full_name()
+            or alumno.username
+        )
+
+        docentes = curso.docentes.all()
+
+        for docente in docentes:
+            Notificacion.objects.create(
+                usuario=docente,
+                tipo=Notificacion.TIPO_SISTEMA,
+                titulo="Nueva consulta de alumno",
+                mensaje=(
+                    f"{nombre_alumno} envió un mensaje "
+                    f"en {curso.nombre}."
+                ),
+                url=reverse(
+                    "mensajeria_docente_conversacion",
+                    kwargs={
+                        "curso_pk": curso.pk,
+                        "alumno_pk": alumno.pk,
+                    },
+                ),
+            )
+
+    else:
+        Notificacion.objects.create(
+            usuario=alumno,
+            tipo=Notificacion.TIPO_SISTEMA,
+            titulo="Nueva respuesta del curso",
+            mensaje=(
+                f"Tenés una nueva respuesta "
+                f"en {curso.nombre}."
+            ),
+            url=url_alumno,
+        )

@@ -67,6 +67,18 @@
 
     </div>
 
+    {% if curso.estado != "FINALIZADO" %}
+        <div class="page-header-actions">
+            <a
+                href="{% url 'mensajeria_alumno' curso.pk %}"
+                class="btn btn-outline-primary"
+            >
+                <i class="bi bi-chat-dots"></i>
+                Consultar al docente
+            </a>
+        </div>
+    {% endif %}
+
 </section>
 
 

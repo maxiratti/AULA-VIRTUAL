@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/cursos.css' %}">
+{% endblock %}
+
+{% block title %}Consultas | {{ curso.nombre }}{% endblock %}
+{% block page_title %}Consultas de alumnos{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <a href="{% url 'lista_cursos' %}" class="back-link">
+            <i class="bi bi-arrow-left"></i>
+            Volver a cursos
+        </a>
+        <h1>Consultas de alumnos</h1>
+        <p>{{ curso.nombre }} · {{ curso.institucion.nombre }}</p>
+    </div>
+</section>
+
+<section class="conversation-list-card">
+    {% for conversacion in conversaciones %}
+        <a
+            href="{% url 'mensajeria_docente_conversacion' curso.pk conversacion.alumno.pk %}"
+            class="conversation-list-item"
+        >
+            <div class="conversation-avatar">
+                {{ conversacion.alumno.first_name|default:conversacion.alumno.username|first|upper }}
+            </div>
+            <div class="conversation-list-content">
+                <strong>{{ conversacion.alumno.get_full_name|default:conversacion.alumno.username }}</strong>
+                <span>
+                    {% with ultimo=conversacion.mensajes.last %}
+                        {% if ultimo %}
+                            {{ ultimo.mensaje|truncatechars:90 }}
+                        {% else %}
+                            Conversación sin mensajes.
+                        {% endif %}
+                    {% endwith %}
+                </span>
+            </div>
+            <div class="conversation-list-side">
+                <span>{{ conversacion.fecha_actualizacion|date:"d/m/Y H:i" }}</span>
+                <i class="bi bi-chevron-right"></i>
+            </div>
+        </a>
+    {% empty %}
+        <div class="message-empty-state">
+            <i class="bi bi-inbox"></i>
+            <strong>No hay consultas</strong>
+            <span>Cuando un alumno escriba desde este curso, su conversación aparecerá aquí.</span>
+        </div>
+    {% endfor %}
+</section>
+{% endblock %}

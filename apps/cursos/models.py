@@ -174,3 +174,69 @@ class Certificado(models.Model):
 
     def __str__(self):
         return f"{self.codigo} - {self.alumno}"
+
+
+class ConversacionCurso(models.Model):
+
+    curso = models.ForeignKey(
+        Curso,
+        on_delete=models.CASCADE,
+        related_name="conversaciones",
+    )
+
+    alumno = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="conversaciones_curso",
+    )
+
+    fecha_creacion = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    fecha_actualizacion = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        ordering = ["-fecha_actualizacion"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["curso", "alumno"],
+                name="conversacion_unica_curso_alumno",
+            ),
+        ]
+        verbose_name = "conversación del curso"
+        verbose_name_plural = "conversaciones del curso"
+
+    def __str__(self):
+        return f"{self.curso} - {self.alumno}"
+
+
+class MensajeCurso(models.Model):
+
+    conversacion = models.ForeignKey(
+        ConversacionCurso,
+        on_delete=models.CASCADE,
+        related_name="mensajes",
+    )
+
+    autor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="mensajes_curso_enviados",
+    )
+
+    mensaje = models.TextField()
+
+    fecha_creacion = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    class Meta:
+        ordering = ["fecha_creacion", "id"]
+        verbose_name = "mensaje del curso"
+        verbose_name_plural = "mensajes del curso"
+
+    def __str__(self):
+        return f"{self.autor} - {self.fecha_creacion:%d/%m/%Y %H:%M}"

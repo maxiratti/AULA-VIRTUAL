@@ -40,6 +40,21 @@ urlpatterns = [
         name="reporte_cierre_pdf",
     ),
     path(
+        "cursos/<int:pk>/mensajeria/",
+        views.mensajeria_docente,
+        name="mensajeria_docente",
+    ),
+    path(
+        "cursos/<int:curso_pk>/mensajeria/<int:alumno_pk>/",
+        views.mensajeria_docente_conversacion,
+        name="mensajeria_docente_conversacion",
+    ),
+    path(
+        "mis-cursos/<int:pk>/consultas/",
+        views.mensajeria_alumno,
+        name="mensajeria_alumno",
+    ),
+    path(
         "cursos/<int:pk>/avisos/",
         views.avisos_curso,
         name="avisos_curso",
