@@ -177,6 +177,11 @@ Cursos
                                         aria-label="Consultas de alumnos"
                                     >
                                         <i class="bi bi-chat-dots"></i>
+                                        {% if curso.mensajes_pendientes %}
+                                            <span class="action-notification-badge">
+                                                {{ curso.mensajes_pendientes }}
+                                            </span>
+                                        {% endif %}
                                     </a>
 
                                     <a

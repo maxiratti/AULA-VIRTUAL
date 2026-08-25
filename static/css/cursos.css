@@ -2545,3 +2545,43 @@
         display: none;
     }
 }
+
+
+/* =========================================================
+   MENSAJES PENDIENTES
+   ========================================================= */
+
+.action-button {
+    position: relative;
+}
+
+.action-notification-badge {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+    border: 2px solid #ffffff;
+    border-radius: 999px;
+    background: #dc2626;
+    color: #ffffff;
+    font-size: 8px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.conversation-unread-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 7px;
+    border-radius: 999px;
+    background: #dbeafe;
+    color: #1d4ed8;
+    font-size: 8px;
+    font-weight: 800;
+    white-space: nowrap;
+}

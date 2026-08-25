@@ -42,6 +42,11 @@
                 </span>
             </div>
             <div class="conversation-list-side">
+                {% if conversacion.pendientes %}
+                    <strong class="conversation-unread-badge">
+                        {{ conversacion.pendientes }} nuevo{% if conversacion.pendientes != 1 %}s{% endif %}
+                    </strong>
+                {% endif %}
                 <span>{{ conversacion.fecha_actualizacion|date:"d/m/Y H:i" }}</span>
                 <i class="bi bi-chevron-right"></i>
             </div>

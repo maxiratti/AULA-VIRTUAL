@@ -229,6 +229,14 @@ class MensajeCurso(models.Model):
 
     mensaje = models.TextField()
 
+    leido_por_alumno = models.BooleanField(
+        default=False,
+    )
+
+    leido_por_equipo = models.BooleanField(
+        default=False,
+    )
+
     fecha_creacion = models.DateTimeField(
         auto_now_add=True,
     )

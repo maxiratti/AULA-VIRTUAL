@@ -87,7 +87,7 @@ def lista_cursos(request):
             institucion_id__in=instituciones_ids
         )
 
-    cursos = (
+    cursos = list(
         cursos
         .select_related("institucion")
         .prefetch_related("docentes")
@@ -96,6 +96,19 @@ def lista_cursos(request):
             "nombre",
         )
     )
+
+    for curso in cursos:
+        curso.mensajes_pendientes = (
+            MensajeCurso.objects
+            .filter(
+                conversacion__curso=curso,
+                autor__in=Inscripcion.objects
+                .filter(curso=curso)
+                .values("alumno"),
+                leido_por_equipo=False,
+            )
+            .count()
+        )
 
     return render(
         request,
@@ -542,6 +555,8 @@ def mensajeria_alumno(request, pk):
                 conversacion=conversacion,
                 autor=request.user,
                 mensaje=texto,
+                leido_por_alumno=True,
+                leido_por_equipo=False,
             )
             conversacion.save()
             notificar_mensaje_curso(mensaje)
@@ -551,6 +566,14 @@ def mensajeria_alumno(request, pk):
                 "Consulta enviada correctamente.",
             )
             return redirect("mensajeria_alumno", pk=curso.pk)
+
+    conversacion.mensajes.filter(
+        leido_por_alumno=False,
+    ).exclude(
+        autor=request.user,
+    ).update(
+        leido_por_alumno=True,
+    )
 
     mensajes_conversacion = (
         conversacion.mensajes
@@ -580,13 +603,23 @@ def mensajeria_docente(request, pk):
     if not puede_gestionar_mensajeria(request.user, curso):
         raise PermissionDenied
 
-    conversaciones = (
+    conversaciones = list(
         ConversacionCurso.objects
         .filter(curso=curso)
         .select_related("alumno")
         .prefetch_related("mensajes")
         .order_by("-fecha_actualizacion")
     )
+
+    for conversacion in conversaciones:
+        conversacion.pendientes = (
+            conversacion.mensajes
+            .filter(
+                autor=conversacion.alumno,
+                leido_por_equipo=False,
+            )
+            .count()
+        )
 
     return render(
         request,
@@ -647,6 +680,8 @@ def mensajeria_docente_conversacion(
                 conversacion=conversacion,
                 autor=request.user,
                 mensaje=texto,
+                leido_por_alumno=False,
+                leido_por_equipo=True,
             )
             conversacion.save()
             notificar_mensaje_curso(mensaje)
@@ -660,6 +695,13 @@ def mensajeria_docente_conversacion(
                 curso_pk=curso.pk,
                 alumno_pk=inscripcion.alumno.pk,
             )
+
+    conversacion.mensajes.filter(
+        autor=inscripcion.alumno,
+        leido_por_equipo=False,
+    ).update(
+        leido_por_equipo=True,
+    )
 
     mensajes_conversacion = (
         conversacion.mensajes
