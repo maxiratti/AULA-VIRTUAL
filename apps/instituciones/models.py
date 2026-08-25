@@ -17,6 +17,16 @@ class Institucion(models.Model):
         max_length=30,
         blank=True,
     )
+    autoridad_nombre = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name="Nombre de la autoridad",
+    )
+    autoridad_cargo = models.CharField(
+        max_length=150,
+        blank=True,
+        verbose_name="Cargo de la autoridad",
+    )
     activa = models.BooleanField(
         default=True,
     )

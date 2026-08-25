@@ -98,6 +98,44 @@ Instituciones
             </div>
 
             <div class="form-field form-field-full">
+                <div class="institution-form-section">
+                    <strong>Autoridad institucional</strong>
+                    <span>
+                        Estos datos se utilizarán en documentos institucionales,
+                        como los certificados de aprobación.
+                    </span>
+                </div>
+            </div>
+
+            <div class="form-field">
+                <label for="{{ form.autoridad_nombre.id_for_label }}">
+                    Nombre de la autoridad
+                </label>
+
+                {{ form.autoridad_nombre }}
+
+                {% for error in form.autoridad_nombre.errors %}
+                    <div class="field-error">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="form-field">
+                <label for="{{ form.autoridad_cargo.id_for_label }}">
+                    Cargo
+                </label>
+
+                {{ form.autoridad_cargo }}
+
+                {% for error in form.autoridad_cargo.errors %}
+                    <div class="field-error">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="form-field form-field-full">
 
                 <div class="form-check form-switch">
 

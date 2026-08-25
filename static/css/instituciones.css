@@ -337,3 +337,33 @@
         padding: 20px;
     }
 }
+
+/* =========================================================
+   DATOS DE AUTORIDAD INSTITUCIONAL
+   ========================================================= */
+
+.institution-form-section {
+    margin-top: 6px;
+    padding: 13px 14px;
+    border: 1px solid #dbeafe;
+    border-radius: 10px;
+    background: #eff6ff;
+}
+
+.institution-form-section strong,
+.institution-form-section span {
+    display: block;
+}
+
+.institution-form-section strong {
+    color: #1e3a8a;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.institution-form-section span {
+    margin-top: 3px;
+    color: #64748b;
+    font-size: 11px;
+    line-height: 1.45;
+}

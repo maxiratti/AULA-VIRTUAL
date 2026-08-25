@@ -457,8 +457,39 @@ def certificado_alumno(request, curso_pk, alumno_pk):
 
     pdf.setFillColor(gris)
     pdf.setFont("Helvetica", 8.5)
-    pdf.drawCentredString(firma_izq, firma_y - 5 * mm, "Docente / Responsable")
-    pdf.drawCentredString(firma_der, firma_y - 5 * mm, "Autoridad institucional")
+    pdf.drawCentredString(
+        firma_izq,
+        firma_y - 5 * mm,
+        "Docente / Responsable",
+    )
+
+    autoridad_nombre = curso.institucion.autoridad_nombre.strip()
+    autoridad_cargo = curso.institucion.autoridad_cargo.strip()
+
+    if autoridad_nombre:
+        pdf.setFillColor(azul_oscuro)
+        pdf.setFont("Helvetica-Bold", 8.5)
+        pdf.drawCentredString(
+            firma_der,
+            firma_y - 4.5 * mm,
+            autoridad_nombre,
+        )
+
+        pdf.setFillColor(gris)
+        pdf.setFont("Helvetica", 7.5)
+        pdf.drawCentredString(
+            firma_der,
+            firma_y - 8.5 * mm,
+            autoridad_cargo or "Autoridad institucional",
+        )
+    else:
+        pdf.setFillColor(gris)
+        pdf.setFont("Helvetica", 8.5)
+        pdf.drawCentredString(
+            firma_der,
+            firma_y - 5 * mm,
+            "Autoridad institucional",
+        )
 
     pdf.setFillColor(colors.HexColor("#94a3b8"))
     pdf.setFont("Helvetica", 7.5)

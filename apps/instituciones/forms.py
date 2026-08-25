@@ -13,6 +13,8 @@ class InstitucionForm(forms.ModelForm):
             "identificacion",
             "email",
             "telefono",
+            "autoridad_nombre",
+            "autoridad_cargo",
             "activa",
         ]
 
@@ -39,6 +41,18 @@ class InstitucionForm(forms.ModelForm):
                 attrs={
                     "class": "form-control",
                     "placeholder": "Teléfono",
+                }
+            ),
+            "autoridad_nombre": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Nombre y apellido de la autoridad",
+                }
+            ),
+            "autoridad_cargo": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Ej.: Director/a, Rector/a, Responsable institucional",
                 }
             ),
             "activa": forms.CheckboxInput(
