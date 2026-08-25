@@ -43,6 +43,18 @@
 </section>
 
 
+{% if curso.estado == "FINALIZADO" %}
+<section class="alert alert-secondary mb-4" role="status">
+    <div class="d-flex align-items-start gap-2">
+        <i class="bi bi-lock-fill mt-1"></i>
+        <div>
+            <strong>Curso finalizado</strong>
+            <div>El curso está disponible en modo consulta. Podés revisar sus contenidos, actividades y calificaciones.</div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
 <!-- PROGRESO DEL CURSO -->
 
 <section class="course-progress-card">

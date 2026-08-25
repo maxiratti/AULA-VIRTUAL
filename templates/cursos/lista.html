@@ -179,6 +179,18 @@ Cursos
                                         <i class="bi bi-activity"></i>
                                     </a>
 
+                                    {% if curso.estado != "FINALIZADO" %}
+                                        <a
+                                            href="{% url 'finalizar_curso' curso.pk %}"
+                                            class="action-button action-button-finish"
+                                            title="Finalizar curso"
+                                            aria-label="Finalizar curso"
+                                        >
+                                            <i class="bi bi-check2-circle"></i>
+                                        </a>
+                                    {% endif %}
+
+                                    {% if curso.estado != "FINALIZADO" %}
                                     <a
                                         href="{% url 'editar_curso' curso.pk %}"
                                         class="action-button"
@@ -187,6 +199,7 @@ Cursos
                                     >
                                         <i class="bi bi-pencil"></i>
                                     </a>
+                                    {% endif %}
 
                                 </div>
 

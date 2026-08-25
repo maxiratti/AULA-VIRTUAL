@@ -464,6 +464,7 @@
     </div>
 
 
+    {% if curso.estado != "FINALIZADO" %}
     <form
         method="post"
         action="{% url 'cambiar_estado_clase' clase.pk %}"
@@ -494,6 +495,12 @@
         {% endif %}
 
     </form>
+    {% else %}
+        <div class="lesson-completion-readonly">
+            <i class="bi bi-lock"></i>
+            Progreso cerrado: el curso está finalizado.
+        </div>
+    {% endif %}
 
 </section>
 

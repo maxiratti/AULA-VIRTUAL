@@ -139,3 +139,32 @@ def notificar_entrega_corregida(
         },
     )
 
+
+
+def notificar_curso_finalizado(curso):
+    inscripciones = (
+        Inscripcion.objects
+        .filter(curso=curso)
+        .select_related("alumno")
+    )
+
+    url = reverse(
+        "detalle_curso_alumno",
+        kwargs={"pk": curso.pk},
+    )
+
+    for inscripcion in inscripciones:
+        Notificacion.objects.get_or_create(
+            usuario=inscripcion.alumno,
+            clave=f"curso_finalizado:{curso.pk}",
+            defaults={
+                "tipo": Notificacion.TIPO_SISTEMA,
+                "titulo": "Curso finalizado",
+                "mensaje": (
+                    f"Finalizó el curso “{curso.nombre}”. "
+                    "Podés seguir consultando sus contenidos, "
+                    "actividades y calificaciones."
+                ),
+                "url": url,
+            },
+        )

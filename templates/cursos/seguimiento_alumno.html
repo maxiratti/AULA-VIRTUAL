@@ -76,6 +76,107 @@ Seguimiento del alumno
 </section>
 
 
+<section class="academic-status-card">
+
+    <div class="academic-status-info">
+
+        <span class="tracking-detail-eyebrow">
+            ESTADO ACADÉMICO
+        </span>
+
+        <div class="academic-status-heading">
+
+            <div>
+                <h2>
+                    Situación del alumno
+                </h2>
+
+                <p>
+                    El progreso y las calificaciones sirven como referencia.
+                    La decisión final queda a cargo del responsable del curso.
+                </p>
+            </div>
+
+            <span class="academic-current-status academic-status-{{ inscripcion.estado|lower }}">
+                {{ inscripcion.get_estado_display }}
+            </span>
+
+        </div>
+
+        {% if inscripcion.fecha_finalizacion %}
+            <small class="academic-final-date">
+                <i class="bi bi-calendar-check"></i>
+                Fecha de finalización:
+                {{ inscripcion.fecha_finalizacion|date:"d/m/Y" }}
+            </small>
+        {% endif %}
+
+    </div>
+
+
+    {% if curso.estado == "FINALIZADO" %}
+        <div class="alert alert-secondary d-flex align-items-center gap-2">
+            <i class="bi bi-lock"></i>
+            <span>Curso finalizado: el estado académico queda disponible solo para consulta.</span>
+        </div>
+    {% else %}
+<form
+        method="post"
+        class="academic-status-form"
+    >
+
+        {% csrf_token %}
+
+        <div class="academic-status-control">
+
+            <label for="estado_academico">
+                Cambiar estado
+            </label>
+
+            <select
+                name="estado_academico"
+                id="estado_academico"
+                class="form-select"
+            >
+                {% for valor, etiqueta in opciones_estado %}
+                    <option
+                        value="{{ valor }}"
+                        {% if inscripcion.estado == valor %}selected{% endif %}
+                    >
+                        {{ etiqueta }}
+                    </option>
+                {% endfor %}
+            </select>
+
+        </div>
+
+        <label class="academic-confirmation">
+            <input
+                type="checkbox"
+                name="confirmar_estado_final"
+                value="1"
+            >
+
+            <span>
+                Confirmo la decisión si selecciono
+                Aprobado, Desaprobado o Abandono.
+            </span>
+        </label>
+
+        <button
+            type="submit"
+            class="btn-primary-custom academic-status-submit"
+        >
+            <i class="bi bi-check2-circle"></i>
+            Guardar estado
+        </button>
+
+    </form>
+    {% endif %}
+
+</section>
+
+
 <section class="student-tracking-summary">
 
     <article class="student-metric-card">

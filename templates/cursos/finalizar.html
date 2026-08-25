@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Finalizar curso | Aula Virtual{% endblock %}
+{% block page_title %}Finalizar curso{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/cursos.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+    <div>
+        <a href="{% url 'lista_cursos' %}" class="back-link">
+            <i class="bi bi-arrow-left"></i>
+            Volver a cursos
+        </a>
+
+        <h1>Finalizar curso</h1>
+
+        <p>
+            {{ curso.nombre }} · {{ curso.institucion.nombre }}
+        </p>
+    </div>
+</section>
+
+<section class="course-close-card">
+
+    <div class="course-close-heading">
+        <div class="course-close-icon">
+            <i class="bi bi-check2-circle"></i>
+        </div>
+
+        <div>
+            <h2>Resumen académico</h2>
+            <p>
+                Revisá la situación de los alumnos antes de cerrar el curso.
+            </p>
+        </div>
+    </div>
+
+    <div class="course-close-summary">
+
+        <div class="course-close-stat">
+            <span>Total</span>
+            <strong>{{ total_alumnos }}</strong>
+        </div>
+
+        <div class="course-close-stat course-close-stat-success">
+            <span>Aprobados</span>
+            <strong>{{ aprobados }}</strong>
+        </div>
+
+        <div class="course-close-stat course-close-stat-danger">
+            <span>Desaprobados</span>
+            <strong>{{ desaprobados }}</strong>
+        </div>
+
+        <div class="course-close-stat course-close-stat-muted">
+            <span>Abandono</span>
+            <strong>{{ abandonos }}</strong>
+        </div>
+
+        <div class="course-close-stat course-close-stat-warning">
+            <span>Inscritos</span>
+            <strong>{{ inscriptos }}</strong>
+        </div>
+
+        <div class="course-close-stat course-close-stat-warning">
+            <span>Cursando</span>
+            <strong>{{ cursando }}</strong>
+        </div>
+
+    </div>
+
+    {% if curso.estado == "FINALIZADO" %}
+
+        <div class="course-close-alert course-close-alert-info">
+            <i class="bi bi-info-circle"></i>
+            <div>
+                <strong>Este curso ya está finalizado.</strong>
+                <span>
+                    Su información académica queda disponible para consulta.
+                </span>
+            </div>
+        </div>
+
+    {% elif pendientes_cierre > 0 %}
+
+        <div class="course-close-alert course-close-alert-warning">
+            <i class="bi bi-exclamation-triangle"></i>
+            <div>
+                <strong>
+                    Todavía no se puede finalizar el curso.
+                </strong>
+                <span>
+                    Hay {{ pendientes_cierre }} alumno{{ pendientes_cierre|pluralize }}
+                    con estado Inscripto o Cursando. Definí primero su
+                    situación académica desde Seguimiento.
+                </span>
+            </div>
+        </div>
+
+        <div class="course-close-actions">
+            <a
+                href="{% url 'seguimiento_curso' curso.pk %}"
+                class="btn-primary-custom"
+            >
+                <i class="bi bi-activity"></i>
+                Ir a Seguimiento
+            </a>
+        </div>
+
+    {% else %}
+
+        <div class="course-close-alert course-close-alert-success">
+            <i class="bi bi-check-circle"></i>
+            <div>
+                <strong>El curso está listo para finalizar.</strong>
+                <span>
+                    Todos los alumnos tienen definida su situación académica final.
+                </span>
+            </div>
+        </div>
+
+        <form method="post" class="course-close-form">
+            {% csrf_token %}
+
+            <label class="course-close-confirm">
+                <input
+                    type="checkbox"
+                    name="confirmar_finalizacion"
+                    value="1"
+                    required
+                >
+                <span>
+                    Confirmo que revisé los estados académicos y deseo
+                    finalizar este curso.
+                </span>
+            </label>
+
+            <div class="course-close-actions">
+                <a
+                    href="{% url 'lista_cursos' %}"
+                    class="btn-secondary-custom"
+                >
+                    Cancelar
+                </a>
+
+                <button
+                    type="submit"
+                    class="btn-primary-custom"
+                >
+                    <i class="bi bi-check2-circle"></i>
+                    Finalizar curso
+                </button>
+            </div>
+        </form>
+
+    {% endif %}
+
+</section>
+
+{% endblock %}

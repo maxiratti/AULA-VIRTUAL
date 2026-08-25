@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
@@ -13,6 +15,7 @@ from apps.contenidos.models import (
 )
 
 from apps.inscripciones.models import Inscripcion
+from apps.notificaciones.services import notificar_curso_finalizado
 from apps.roles.utils import tiene_rol_en_institucion
 
 from .forms import CursoForm
@@ -267,6 +270,117 @@ def editar_curso(request, pk):
 
 
 @login_required
+def finalizar_curso(request, pk):
+    curso = get_object_or_404(
+        Curso.objects.select_related("institucion"),
+        pk=pk,
+    )
+
+    puede_finalizar = (
+        request.user.is_superuser
+        or tiene_rol_en_institucion(
+            request.user,
+            "Coordinador",
+            curso.institucion,
+        )
+        or tiene_rol_en_institucion(
+            request.user,
+            "Administrador institucional",
+            curso.institucion,
+        )
+    )
+
+    if not puede_finalizar:
+        raise PermissionDenied
+
+    inscripciones = Inscripcion.objects.filter(
+        curso=curso,
+    )
+
+    total_alumnos = inscripciones.count()
+    aprobados = inscripciones.filter(
+        estado=Inscripcion.ESTADO_APROBADO,
+    ).count()
+    desaprobados = inscripciones.filter(
+        estado=Inscripcion.ESTADO_DESAPROBADO,
+    ).count()
+    abandonos = inscripciones.filter(
+        estado=Inscripcion.ESTADO_ABANDONO,
+    ).count()
+    inscriptos = inscripciones.filter(
+        estado=Inscripcion.ESTADO_INSCRIPTO,
+    ).count()
+    cursando = inscripciones.filter(
+        estado=Inscripcion.ESTADO_CURSANDO,
+    ).count()
+
+    pendientes_cierre = inscriptos + cursando
+    puede_cerrar = (
+        curso.estado != Curso.ESTADO_FINALIZADO
+        and pendientes_cierre == 0
+    )
+
+    if request.method == "POST":
+        if curso.estado == Curso.ESTADO_FINALIZADO:
+            messages.info(
+                request,
+                "El curso ya se encuentra finalizado.",
+            )
+            return redirect("lista_cursos")
+
+        if pendientes_cierre > 0:
+            messages.error(
+                request,
+                (
+                    "No se puede finalizar el curso mientras haya "
+                    "alumnos Inscritos o Cursando."
+                ),
+            )
+            return redirect(
+                "finalizar_curso",
+                pk=curso.pk,
+            )
+
+        if request.POST.get("confirmar_finalizacion") != "1":
+            messages.error(
+                request,
+                "Tenés que confirmar la finalización del curso.",
+            )
+            return redirect(
+                "finalizar_curso",
+                pk=curso.pk,
+            )
+
+        curso.estado = Curso.ESTADO_FINALIZADO
+        curso.save(update_fields=["estado"])
+
+        notificar_curso_finalizado(curso)
+
+        messages.success(
+            request,
+            "Curso finalizado correctamente.",
+        )
+
+        return redirect("lista_cursos")
+
+    return render(
+        request,
+        "cursos/finalizar.html",
+        {
+            "curso": curso,
+            "total_alumnos": total_alumnos,
+            "aprobados": aprobados,
+            "desaprobados": desaprobados,
+            "abandonos": abandonos,
+            "inscriptos": inscriptos,
+            "cursando": cursando,
+            "pendientes_cierre": pendientes_cierre,
+            "puede_cerrar": puede_cerrar,
+        },
+    )
+
+
+@login_required
 def mis_cursos(request):
     inscripciones = (
         request.user.inscripciones
@@ -275,10 +389,20 @@ def mis_cursos(request):
             "curso__institucion",
         )
         .filter(
-            estado__in=[
-                Inscripcion.ESTADO_INSCRIPTO,
-                Inscripcion.ESTADO_CURSANDO,
-            ]
+            Q(
+                estado__in=[
+                    Inscripcion.ESTADO_INSCRIPTO,
+                    Inscripcion.ESTADO_CURSANDO,
+                ]
+            )
+            | Q(
+                curso__estado=Curso.ESTADO_FINALIZADO,
+                estado__in=[
+                    Inscripcion.ESTADO_APROBADO,
+                    Inscripcion.ESTADO_DESAPROBADO,
+                    Inscripcion.ESTADO_ABANDONO,
+                ],
+            )
         )
         .order_by(
             "curso__institucion__nombre",
@@ -304,15 +428,26 @@ def detalle_curso_alumno(request, pk):
         pk=pk,
     )
 
+    estados_permitidos = [
+        Inscripcion.ESTADO_INSCRIPTO,
+        Inscripcion.ESTADO_CURSANDO,
+    ]
+
+    if curso.estado == Curso.ESTADO_FINALIZADO:
+        estados_permitidos.extend(
+            [
+                Inscripcion.ESTADO_APROBADO,
+                Inscripcion.ESTADO_DESAPROBADO,
+                Inscripcion.ESTADO_ABANDONO,
+            ]
+        )
+
     inscripcion = (
         Inscripcion.objects
         .filter(
             curso=curso,
             alumno=request.user,
-            estado__in=[
-                Inscripcion.ESTADO_INSCRIPTO,
-                Inscripcion.ESTADO_CURSANDO,
-            ],
+            estado__in=estados_permitidos,
         )
         .first()
     )
@@ -627,7 +762,7 @@ def seguimiento_alumno(request, curso_pk, alumno_pk):
         pk=curso_pk,
     )
 
-    puede_ver = (
+    puede_gestionar = (
         request.user.is_superuser
         or curso.docentes.filter(pk=request.user.pk).exists()
         or tiene_rol_en_institucion(
@@ -635,9 +770,14 @@ def seguimiento_alumno(request, curso_pk, alumno_pk):
             "Coordinador",
             curso.institucion,
         )
+        or tiene_rol_en_institucion(
+            request.user,
+            "Administrador institucional",
+            curso.institucion,
+        )
     )
 
-    if not puede_ver:
+    if not puede_gestionar:
         raise PermissionDenied
 
     inscripcion = get_object_or_404(
@@ -645,6 +785,93 @@ def seguimiento_alumno(request, curso_pk, alumno_pk):
         curso=curso,
         alumno_id=alumno_pk,
     )
+
+    estados_gestionables = {
+        Inscripcion.ESTADO_CURSANDO,
+        Inscripcion.ESTADO_APROBADO,
+        Inscripcion.ESTADO_DESAPROBADO,
+        Inscripcion.ESTADO_ABANDONO,
+    }
+
+    estados_finales = {
+        Inscripcion.ESTADO_APROBADO,
+        Inscripcion.ESTADO_DESAPROBADO,
+        Inscripcion.ESTADO_ABANDONO,
+    }
+
+    if (
+        request.method == "POST"
+        and curso.estado == Curso.ESTADO_FINALIZADO
+    ):
+        messages.warning(
+            request,
+            "El curso está finalizado. El estado académico ya no puede modificarse.",
+        )
+        return redirect(
+            "seguimiento_alumno",
+            curso_pk=curso.pk,
+            alumno_pk=inscripcion.alumno_id,
+        )
+
+    if request.method == "POST":
+        nuevo_estado = request.POST.get(
+            "estado_academico",
+            "",
+        ).strip()
+
+        if nuevo_estado not in estados_gestionables:
+            messages.error(
+                request,
+                "El estado académico seleccionado no es válido.",
+            )
+
+        elif nuevo_estado == inscripcion.estado:
+            messages.info(
+                request,
+                "El alumno ya tiene ese estado académico.",
+            )
+
+        elif (
+            nuevo_estado in estados_finales
+            and request.POST.get("confirmar_estado_final") != "1"
+        ):
+            messages.error(
+                request,
+                (
+                    "Para asignar un estado final tenés que "
+                    "confirmar la decisión."
+                ),
+            )
+
+        else:
+            inscripcion.estado = nuevo_estado
+
+            if nuevo_estado in estados_finales:
+                inscripcion.fecha_finalizacion = date.today()
+            else:
+                inscripcion.fecha_finalizacion = None
+
+            inscripcion.save(
+                update_fields=[
+                    "estado",
+                    "fecha_finalizacion",
+                ]
+            )
+
+            messages.success(
+                request,
+                (
+                    "Estado académico actualizado a "
+                    f"{inscripcion.get_estado_display()}."
+                ),
+            )
+
+            return redirect(
+                "seguimiento_alumno",
+                curso_pk=curso.pk,
+                alumno_pk=inscripcion.alumno_id,
+            )
+
     alumno = inscripcion.alumno
     ahora = timezone.now()
 
@@ -674,6 +901,7 @@ def seguimiento_alumno(request, curso_pk, alumno_pk):
     )
 
     detalle_clases = []
+
     for clase in clases:
         detalle_clases.append(
             {
@@ -684,6 +912,7 @@ def seguimiento_alumno(request, curso_pk, alumno_pk):
 
     total_clases = len(clases)
     clases_completadas = len(clases_completadas_ids)
+
     progreso = (
         round(clases_completadas / total_clases * 100)
         if total_clases
@@ -723,7 +952,10 @@ def seguimiento_alumno(request, curso_pk, alumno_pk):
         entrega = entregas.get(actividad.pk)
         porcentaje_nota = None
 
-        if entrega and entrega.estado == Entrega.ESTADO_CORREGIDA:
+        if (
+            entrega
+            and entrega.estado == Entrega.ESTADO_CORREGIDA
+        ):
             actividades_corregidas += 1
 
         if (
@@ -737,7 +969,10 @@ def seguimiento_alumno(request, curso_pk, alumno_pk):
                 / float(actividad.puntaje_maximo)
                 * 100
             )
-            porcentajes_calificados.append(porcentaje_nota)
+
+            porcentajes_calificados.append(
+                porcentaje_nota
+            )
 
         detalle_actividades.append(
             {
@@ -748,6 +983,7 @@ def seguimiento_alumno(request, curso_pk, alumno_pk):
         )
 
     total_actividades = len(actividades)
+
     actividades_entregadas = sum(
         1
         for entrega in entregas.values()
@@ -756,15 +992,18 @@ def seguimiento_alumno(request, curso_pk, alumno_pk):
             Entrega.ESTADO_CORREGIDA,
         ]
     )
+
     actividades_rehacer = sum(
         1
         for entrega in entregas.values()
         if entrega.estado == Entrega.ESTADO_REHACER
     )
+
     actividades_pendientes = max(
         total_actividades - actividades_entregadas,
         0,
     )
+
     promedio = (
         round(
             sum(porcentajes_calificados)
@@ -773,6 +1012,25 @@ def seguimiento_alumno(request, curso_pk, alumno_pk):
         if porcentajes_calificados
         else None
     )
+
+    opciones_estado = [
+        (
+            Inscripcion.ESTADO_CURSANDO,
+            "Cursando",
+        ),
+        (
+            Inscripcion.ESTADO_APROBADO,
+            "Aprobado",
+        ),
+        (
+            Inscripcion.ESTADO_DESAPROBADO,
+            "Desaprobado",
+        ),
+        (
+            Inscripcion.ESTADO_ABANDONO,
+            "Abandonó",
+        ),
+    ]
 
     return render(
         request,
@@ -792,5 +1050,6 @@ def seguimiento_alumno(request, curso_pk, alumno_pk):
             "actividades_rehacer": actividades_rehacer,
             "actividades_corregidas": actividades_corregidas,
             "promedio": promedio,
+            "opciones_estado": opciones_estado,
         },
     )

@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.files.base import File
+from django.db.models import Q
 from django.shortcuts import (
     get_object_or_404,
     redirect,
@@ -9,6 +10,7 @@ from django.shortcuts import (
 )
 
 from apps.contenidos.models import Clase
+from apps.cursos.models import Curso
 from apps.roles.utils import tiene_rol_en_institucion
 
 from django.utils import timezone
@@ -246,6 +248,13 @@ def editar_actividad(request, pk):
 
     clase = actividad.clase
 
+    if actividad.clase.modulo.curso.estado == Curso.ESTADO_FINALIZADO:
+        messages.warning(
+            request,
+            "El curso está finalizado. La actividad está disponible solo para consulta.",
+        )
+        return redirect("lista_cursos")
+
     if not puede_gestionar_actividad(
         request.user,
         clase,
@@ -306,13 +315,21 @@ def alumno_puede_acceder_actividad(
 ):
     curso = actividad.clase.modulo.curso
 
-    return Inscripcion.objects.filter(
+    inscripciones = Inscripcion.objects.filter(
         curso=curso,
         alumno=usuario,
+    )
+
+    if curso.estado == Curso.ESTADO_FINALIZADO:
+        # En un curso finalizado el alumno conserva acceso histórico
+        # a las actividades, aunque su inscripción ya sea un estado final.
+        return inscripciones.exists()
+
+    return inscripciones.filter(
         estado__in=[
             Inscripcion.ESTADO_INSCRIPTO,
             Inscripcion.ESTADO_CURSANDO,
-        ],
+        ]
     ).exists()
 
 
@@ -410,6 +427,13 @@ def entregar_actividad(request, pk):
         clase__visible=True,
         clase__modulo__visible=True,
     )
+
+    if actividad.clase.modulo.curso.estado == Curso.ESTADO_FINALIZADO:
+        messages.warning(
+            request,
+            "El curso está finalizado. La actividad está disponible solo para consulta.",
+        )
+        return redirect("lista_cursos")
 
     if not alumno_puede_acceder_actividad(request.user, actividad):
         raise PermissionDenied
@@ -613,6 +637,13 @@ def corregir_entrega(request, pk):
     actividad = entrega.actividad
     clase = actividad.clase
 
+    if actividad.clase.modulo.curso.estado == Curso.ESTADO_FINALIZADO:
+        messages.warning(
+            request,
+            "El curso está finalizado. La actividad está disponible solo para consulta.",
+        )
+        return redirect("lista_cursos")
+
     if not puede_gestionar_actividad(request.user, clase):
         raise PermissionDenied
 
@@ -724,12 +755,15 @@ def mis_calificaciones(request):
 
     inscripciones = (
         Inscripcion.objects
+        .filter(alumno=usuario)
         .filter(
-            alumno=usuario,
-            estado__in=[
-                Inscripcion.ESTADO_INSCRIPTO,
-                Inscripcion.ESTADO_CURSANDO,
-            ],
+            Q(
+                estado__in=[
+                    Inscripcion.ESTADO_INSCRIPTO,
+                    Inscripcion.ESTADO_CURSANDO,
+                ]
+            )
+            | Q(curso__estado=Curso.ESTADO_FINALIZADO)
         )
         .select_related(
             "curso",
@@ -1147,12 +1181,15 @@ def calendario_alumno(request):
 
     inscripciones = (
         Inscripcion.objects
+        .filter(alumno=usuario)
         .filter(
-            alumno=usuario,
-            estado__in=[
-                Inscripcion.ESTADO_INSCRIPTO,
-                Inscripcion.ESTADO_CURSANDO,
-            ],
+            Q(
+                estado__in=[
+                    Inscripcion.ESTADO_INSCRIPTO,
+                    Inscripcion.ESTADO_CURSANDO,
+                ]
+            )
+            | Q(curso__estado=Curso.ESTADO_FINALIZADO)
         )
         .select_related(
             "curso",

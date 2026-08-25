@@ -88,6 +88,16 @@ def nueva_inscripcion(request, curso_id):
         pk=curso_id,
     )
 
+    if curso.estado == Curso.ESTADO_FINALIZADO:
+        messages.warning(
+            request,
+            "El curso está finalizado. Las inscripciones están en modo solo lectura.",
+        )
+        return redirect(
+            "lista_inscripciones",
+            curso_id=curso.pk,
+        )
+
     if not puede_gestionar_curso(
         request.user,
         curso,
@@ -140,6 +150,16 @@ def nuevo_alumno_curso(request, curso_id):
         Curso.objects.select_related("institucion"),
         pk=curso_id,
     )
+
+    if curso.estado == Curso.ESTADO_FINALIZADO:
+        messages.warning(
+            request,
+            "El curso está finalizado. Las inscripciones están en modo solo lectura.",
+        )
+        return redirect(
+            "lista_inscripciones",
+            curso_id=curso.pk,
+        )
 
     if not puede_gestionar_curso(request.user, curso):
         raise PermissionDenied
@@ -321,6 +341,16 @@ def carga_masiva_alumnos(request, curso_id):
         Curso.objects.select_related("institucion"),
         pk=curso_id,
     )
+
+    if curso.estado == Curso.ESTADO_FINALIZADO:
+        messages.warning(
+            request,
+            "El curso está finalizado. Las inscripciones están en modo solo lectura.",
+        )
+        return redirect(
+            "lista_inscripciones",
+            curso_id=curso.pk,
+        )
 
     if not puede_gestionar_curso(
         request.user,

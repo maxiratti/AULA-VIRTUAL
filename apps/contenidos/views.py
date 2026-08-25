@@ -527,18 +527,22 @@ def detalle_clase_alumno(request, pk):
 
     curso = clase.modulo.curso
 
-    inscripcion = (
-        Inscripcion.objects
-        .filter(
-            curso=curso,
-            alumno=request.user,
+    inscripciones_alumno = Inscripcion.objects.filter(
+        curso=curso,
+        alumno=request.user,
+    )
+
+    if curso.estado == Curso.ESTADO_FINALIZADO:
+        # Un curso finalizado conserva el acceso histórico para cualquier
+        # alumno que haya tenido una inscripción en el curso.
+        inscripcion = inscripciones_alumno.first()
+    else:
+        inscripcion = inscripciones_alumno.filter(
             estado__in=[
                 Inscripcion.ESTADO_INSCRIPTO,
                 Inscripcion.ESTADO_CURSANDO,
-            ],
-        )
-        .first()
-    )
+            ]
+        ).first()
 
     if not inscripcion:
         raise PermissionDenied

@@ -25,6 +25,11 @@ urlpatterns = [
         name="seguimiento_curso",
     ),
     path(
+        "cursos/<int:pk>/finalizar/",
+        views.finalizar_curso,
+        name="finalizar_curso",
+    ),
+    path(
         "cursos/<int:curso_pk>/seguimiento/<int:alumno_pk>/",
         views.seguimiento_alumno,
         name="seguimiento_alumno",
