@@ -23,6 +23,15 @@ Seguimiento
         <h1>Seguimiento del curso</h1>
         <p>{{ curso.nombre }} · {{ curso.institucion.nombre }}</p>
     </div>
+
+    {% if seguimiento %}
+        <div class="page-header-actions">
+            <a href="{% url 'exportar_seguimiento_excel' curso.pk %}" class="btn btn-primary">
+                <i class="bi bi-file-earmark-excel"></i>
+                Exportar Excel
+            </a>
+        </div>
+    {% endif %}
 </section>
 
 <section class="tracking-summary">

@@ -15,6 +15,9 @@ from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Font
+from openpyxl.utils import get_column_letter
 from django.utils import timezone
 from django.urls import reverse
 
@@ -1279,6 +1282,259 @@ def seguimiento_curso(request, pk):
             "total_actividades": total_actividades,
         },
     )
+
+
+@login_required
+def exportar_seguimiento_excel(request, pk):
+    curso = get_object_or_404(
+        Curso.objects.select_related("institucion"),
+        pk=pk,
+    )
+
+    puede_ver = (
+        request.user.is_superuser
+        or curso.docentes.filter(pk=request.user.pk).exists()
+        or tiene_rol_en_institucion(
+            request.user,
+            "Coordinador",
+            curso.institucion,
+        )
+    )
+
+    if not puede_ver:
+        raise PermissionDenied
+
+    ahora = timezone.now()
+
+    clases_disponibles = list(
+        Clase.objects
+        .filter(
+            modulo__curso=curso,
+            modulo__visible=True,
+            visible=True,
+        )
+        .filter(
+            Q(fecha_publicacion__isnull=True)
+            | Q(fecha_publicacion__lte=ahora)
+        )
+        .order_by(
+            "modulo__orden",
+            "orden",
+            "id",
+        )
+    )
+
+    total_clases = len(clases_disponibles)
+
+    actividades_disponibles = list(
+        Actividad.objects
+        .filter(
+            clase__in=clases_disponibles,
+            visible=True,
+        )
+        .select_related("clase")
+        .distinct()
+    )
+
+    total_actividades = len(actividades_disponibles)
+
+    inscripciones = list(
+        Inscripcion.objects
+        .filter(curso=curso)
+        .select_related("alumno")
+        .order_by(
+            "alumno__last_name",
+            "alumno__first_name",
+            "alumno__username",
+        )
+    )
+
+    alumnos_ids = [
+        inscripcion.alumno_id
+        for inscripcion in inscripciones
+    ]
+
+    progresos = (
+        ProgresoClase.objects
+        .filter(
+            alumno_id__in=alumnos_ids,
+            clase__in=clases_disponibles,
+            completada=True,
+        )
+        .values_list("alumno_id", "clase_id")
+    )
+
+    clases_por_alumno = {}
+
+    for alumno_id, clase_id in progresos:
+        clases_por_alumno.setdefault(
+            alumno_id,
+            set(),
+        ).add(clase_id)
+
+    entregas = (
+        Entrega.objects
+        .filter(
+            alumno_id__in=alumnos_ids,
+            actividad__in=actividades_disponibles,
+        )
+        .select_related("actividad")
+    )
+
+    entregas_por_alumno = {}
+
+    for entrega in entregas:
+        entregas_por_alumno.setdefault(
+            entrega.alumno_id,
+            [],
+        ).append(entrega)
+
+    filas = []
+
+    for inscripcion in inscripciones:
+        alumno = inscripcion.alumno
+
+        completadas = len(
+            clases_por_alumno.get(
+                alumno.pk,
+                set(),
+            )
+        )
+
+        progreso = (
+            round(completadas / total_clases * 100)
+            if total_clases
+            else 0
+        )
+
+        entregas_alumno = entregas_por_alumno.get(
+            alumno.pk,
+            [],
+        )
+
+        cantidad_entregadas = sum(
+            1
+            for entrega in entregas_alumno
+            if entrega.estado in [
+                Entrega.ESTADO_ENTREGADA,
+                Entrega.ESTADO_CORREGIDA,
+            ]
+        )
+
+        cantidad_corregidas = sum(
+            1
+            for entrega in entregas_alumno
+            if entrega.estado == Entrega.ESTADO_CORREGIDA
+        )
+
+        porcentajes_calificados = []
+
+        for entrega in entregas_alumno:
+            if (
+                entrega.calificacion is not None
+                and entrega.actividad.puntaje_maximo
+                and entrega.actividad.puntaje_maximo > 0
+            ):
+                porcentajes_calificados.append(
+                    float(entrega.calificacion)
+                    / float(entrega.actividad.puntaje_maximo)
+                    * 100
+                )
+
+        promedio = (
+            round(
+                sum(porcentajes_calificados)
+                / len(porcentajes_calificados)
+            )
+            if porcentajes_calificados
+            else None
+        )
+
+        filas.append(
+            [
+                alumno.get_full_name() or alumno.username,
+                alumno.username,
+                inscripcion.get_estado_display(),
+                completadas,
+                total_clases,
+                progreso,
+                cantidad_entregadas,
+                total_actividades,
+                cantidad_corregidas,
+                promedio,
+            ]
+        )
+
+    libro = Workbook()
+    hoja = libro.active
+    hoja.title = "Seguimiento"
+
+    hoja.append(["SEGUIMIENTO DEL CURSO"])
+    hoja.append(["Institución", curso.institucion.nombre])
+    hoja.append(["Curso", curso.nombre])
+    hoja.append(["Generado", timezone.localtime().strftime("%d/%m/%Y %H:%M")])
+    hoja.append([])
+
+    encabezados = [
+        "Alumno",
+        "Usuario",
+        "Estado",
+        "Clases completadas",
+        "Total clases",
+        "Progreso (%)",
+        "Actividades entregadas",
+        "Total actividades",
+        "Actividades corregidas",
+        "Promedio (%)",
+    ]
+    hoja.append(encabezados)
+
+    fila_encabezado = hoja.max_row
+
+    for celda in hoja[fila_encabezado]:
+        celda.font = Font(bold=True)
+        celda.alignment = Alignment(horizontal="center")
+
+    for fila in filas:
+        hoja.append(fila)
+
+    hoja.freeze_panes = f"A{fila_encabezado + 1}"
+    hoja.auto_filter.ref = (
+        f"A{fila_encabezado}:"
+        f"J{hoja.max_row}"
+    )
+
+    anchos = [32, 20, 18, 20, 14, 15, 24, 18, 24, 16]
+
+    for indice, ancho_columna in enumerate(anchos, start=1):
+        hoja.column_dimensions[
+            get_column_letter(indice)
+        ].width = ancho_columna
+
+    for fila in hoja.iter_rows(
+        min_row=fila_encabezado + 1,
+        min_col=4,
+        max_col=10,
+    ):
+        for celda in fila:
+            celda.alignment = Alignment(horizontal="center")
+
+    nombre_archivo = (
+        f"seguimiento_curso_{curso.pk}.xlsx"
+    )
+
+    response = HttpResponse(
+        content_type=(
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        )
+    )
+    response["Content-Disposition"] = (
+        f'attachment; filename="{nombre_archivo}"'
+    )
+
+    libro.save(response)
+    return response
 
 
 @login_required

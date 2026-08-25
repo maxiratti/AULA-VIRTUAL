@@ -30,6 +30,11 @@ urlpatterns = [
         name="seguimiento_curso",
     ),
     path(
+        "cursos/<int:pk>/seguimiento/exportar/",
+        views.exportar_seguimiento_excel,
+        name="exportar_seguimiento_excel",
+    ),
+    path(
         "cursos/<int:pk>/avisos/",
         views.avisos_curso,
         name="avisos_curso",
