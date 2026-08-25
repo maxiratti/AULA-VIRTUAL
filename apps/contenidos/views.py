@@ -5,7 +5,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from apps.inscripciones.models import Inscripcion
-from apps.actividades.models import Entrega
+from apps.actividades.models import Cuestionario, Entrega
 from django.shortcuts import (
     get_object_or_404,
     redirect,
@@ -14,6 +14,8 @@ from django.shortcuts import (
 
 from apps.cursos.models import Curso
 from apps.roles.utils import tiene_rol_en_institucion
+
+from apps.notificaciones.services import notificar_clase_publicada
 
 from .forms import (
     ClaseForm,
@@ -192,7 +194,11 @@ def editar_modulo(request, pk):
         )
 
         if form.is_valid():
-            form.save()
+            clase = form.save()
+
+            notificar_clase_publicada(
+                clase
+            )
 
             messages.success(
                 request,
@@ -296,6 +302,10 @@ def nueva_clase(request, modulo_id):
             clase = form.save(commit=False)
             clase.modulo = modulo
             clase.save()
+
+            notificar_clase_publicada(
+                clase
+            )
 
             messages.success(
                 request,
@@ -663,6 +673,73 @@ def detalle_clase_alumno(request, pk):
 
     ahora = timezone.now()
 
+    cuestionarios = list(
+        Cuestionario.objects
+        .filter(
+            clase=clase,
+            visible=True,
+        )
+        .prefetch_related(
+            "preguntas",
+        )
+        .order_by(
+            "fecha_limite",
+            "id",
+        )
+    )
+
+    intentos_cuestionarios = {
+        intento.cuestionario_id: intento
+        for intento in (
+            request.user.intentos_cuestionarios
+            .filter(
+                cuestionario__in=cuestionarios,
+                finalizado=True,
+            )
+            .order_by(
+                "cuestionario_id",
+                "-numero",
+            )
+        )
+    }
+
+    for cuestionario in cuestionarios:
+        cuestionario.ultimo_intento_alumno = intentos_cuestionarios.get(
+            cuestionario.pk
+        )
+        cuestionario.intentos_realizados_alumno = (
+            cuestionario.intentos
+            .filter(
+                alumno=request.user,
+                finalizado=True,
+            )
+            .count()
+        )
+        cuestionario.intentos_restantes_alumno = max(
+            cuestionario.intentos_permitidos
+            - cuestionario.intentos_realizados_alumno,
+            0,
+        )
+
+        if curso.estado == Curso.ESTADO_FINALIZADO:
+            cuestionario.estado_alumno = "FINALIZADO"
+        elif (
+            cuestionario.fecha_apertura
+            and cuestionario.fecha_apertura > ahora
+        ):
+            cuestionario.estado_alumno = "PROXIMAMENTE"
+        elif (
+            cuestionario.fecha_limite
+            and cuestionario.fecha_limite < ahora
+        ):
+            cuestionario.estado_alumno = "VENCIDO"
+        elif cuestionario.intentos_restantes_alumno == 0:
+            cuestionario.estado_alumno = "COMPLETADO"
+        elif cuestionario.ultimo_intento_alumno:
+            cuestionario.estado_alumno = "REINTENTO"
+        else:
+            cuestionario.estado_alumno = "PENDIENTE"
+
     for actividad in actividades:
         entrega = entregas_por_actividad.get(
             actividad.pk
@@ -691,19 +768,19 @@ def detalle_clase_alumno(request, pk):
         else:
             actividad.estado_alumno = "PENDIENTE"
 
-        progreso_clase = (
-            ProgresoClase.objects
-            .filter(
-                alumno=request.user,
-                clase=clase,
-                completada=True,
-            )
-            .first()
+    progreso_clase = (
+        ProgresoClase.objects
+        .filter(
+            alumno=request.user,
+            clase=clase,
+            completada=True,
         )
+        .first()
+    )
 
-        clase_completada = (
-            progreso_clase is not None
-        )
+    clase_completada = (
+        progreso_clase is not None
+    )
 
     return render(
         request,
@@ -714,6 +791,7 @@ def detalle_clase_alumno(request, pk):
             "clase": clase,
             "contenidos": contenidos,
             "actividades": actividades,
+            "cuestionarios": cuestionarios,
             "clase_completada": clase_completada,
         },
     )

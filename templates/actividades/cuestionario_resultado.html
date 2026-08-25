@@ -1,6 +1,90 @@
-{% extends "base.html" %}{% load static %}
-{% block title %}Resultado{% endblock %}{% block page_title %}Resultado del cuestionario{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/actividades.css' %}">{% endblock %}
-{% block content %}<section class="page-header"><div><a href="{% url 'detalle_clase_alumno' cuestionario.clase.pk %}" class="back-link"><i class="bi bi-arrow-left"></i> Volver a la clase</a><h1>{{ cuestionario.titulo }}</h1><p>Resultados de tus intentos</p></div></section>
-{% for intento in intentos %}<section class="content-card quiz-result"><div class="quiz-result-score"><span>Intento {{ intento.numero }}</span><strong>{{ intento.puntaje_obtenido }} / {{ cuestionario.puntaje_maximo }}</strong></div>
-{% for respuesta in intento.respuestas.all %}<div class="quiz-result-answer {% if respuesta.correcta %}is-correct{% else %}is-wrong{% endif %}"><strong>{{ respuesta.pregunta.enunciado }}</strong><span>Tu respuesta: {{ respuesta.opcion.texto }}</span><small>{% if respuesta.correcta %}Correcta{% else %}Incorrecta{% endif %}</small></div>{% endfor %}</section>{% empty %}<section class="content-card"><p>Todavía no realizaste este cuestionario.</p></section>{% endfor %}{% endblock %}
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Resultado | {{ cuestionario.titulo }}{% endblock %}
+{% block page_title %}Resultado del cuestionario{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/actividades.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+    <div>
+        <a href="{% url 'detalle_clase_alumno' cuestionario.clase.pk %}" class="back-link">
+            <i class="bi bi-arrow-left"></i>
+            Volver a la clase
+        </a>
+        <span class="section-eyebrow">Resultados</span>
+        <h1>{{ cuestionario.titulo }}</h1>
+        <p>Historial de tus intentos y corrección automática.</p>
+    </div>
+</section>
+
+{% if curso.estado == "FINALIZADO" %}
+<div class="alert alert-secondary mb-4">
+    <i class="bi bi-lock me-2"></i>
+    <strong>Curso finalizado.</strong>
+    Los resultados se conservan en modo consulta.
+</div>
+{% endif %}
+
+{% for intento in intentos %}
+<section class="content-card quiz-result">
+    <div class="quiz-result-score">
+        <div>
+            <span>Intento {{ intento.numero }}</span>
+            {% if intento.fecha_envio %}
+                <small>Enviado {{ intento.fecha_envio|date:"d/m/Y H:i" }}</small>
+            {% endif %}
+        </div>
+        <strong>{{ intento.puntaje_obtenido }} / {{ cuestionario.puntaje_maximo }}</strong>
+    </div>
+
+    <div class="quiz-result-answers">
+        {% for respuesta in intento.respuestas.all %}
+            <div class="quiz-result-answer {% if respuesta.correcta %}is-correct{% else %}is-wrong{% endif %}">
+                <div>
+                    <strong>{{ respuesta.pregunta.enunciado }}</strong>
+                    <span>Tu respuesta: {{ respuesta.opcion.texto }}</span>
+                </div>
+                <small>
+                    {% if respuesta.correcta %}
+                        <i class="bi bi-check-circle-fill"></i>
+                        Correcta · {{ respuesta.puntaje_obtenido }} pts.
+                    {% else %}
+                        <i class="bi bi-x-circle-fill"></i>
+                        Incorrecta · 0 pts.
+                    {% endif %}
+                </small>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+{% empty %}
+<section class="content-card">
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <i class="bi bi-ui-checks"></i>
+        </div>
+        <h2>Todavía no realizaste este cuestionario</h2>
+        {% if curso.estado != "FINALIZADO" %}
+            <a href="{% url 'resolver_cuestionario' cuestionario.pk %}" class="btn-primary-custom">
+                Comenzar cuestionario
+            </a>
+        {% endif %}
+    </div>
+</section>
+{% endfor %}
+
+{% if curso.estado != "FINALIZADO" %}
+    <div class="quiz-result-actions">
+        <a href="{% url 'resolver_cuestionario' cuestionario.pk %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-repeat"></i>
+            Intentar nuevamente
+        </a>
+    </div>
+{% endif %}
+
+{% endblock %}

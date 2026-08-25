@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static contenido_extras %}
 
 {% block title %}
 {{ clase.titulo }} | Aula Virtual
@@ -146,7 +146,7 @@ Contenido de la clase
                     {% if contenido.tipo == "TEXTO" %}
 
                         <div class="text-content">
-                            {{ contenido.texto|linebreaks }}
+                            {{ contenido.texto|markdown_seguro }}
                         </div>
 
 

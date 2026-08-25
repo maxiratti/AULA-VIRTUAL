@@ -1242,6 +1242,8 @@ def detalle_curso_alumno(request, pk):
     ):
         raise PermissionDenied
 
+    ahora = timezone.now()
+
     clases_visibles = (
         Clase.objects
         .filter(
@@ -1250,10 +1252,23 @@ def detalle_curso_alumno(request, pk):
         .filter(
             Q(fecha_publicacion__isnull=True)
             | Q(
-                fecha_publicacion__lte=timezone.now()
+                fecha_publicacion__lte=ahora
             )
         )
         .order_by(
+            "orden",
+            "id",
+        )
+    )
+
+    clases_programadas = (
+        Clase.objects
+        .filter(
+            visible=True,
+            fecha_publicacion__gt=ahora,
+        )
+        .order_by(
+            "fecha_publicacion",
             "orden",
             "id",
         )
@@ -1270,7 +1285,12 @@ def detalle_curso_alumno(request, pk):
                 "clases",
                 queryset=clases_visibles,
                 to_attr="clases_publicadas",
-            )
+            ),
+            Prefetch(
+                "clases",
+                queryset=clases_programadas,
+                to_attr="clases_programadas",
+            ),
         )
         .order_by(
             "orden",
@@ -1279,11 +1299,23 @@ def detalle_curso_alumno(request, pk):
     )
 
     clases_publicadas = []
+    proximas_publicaciones = []
 
     for modulo in modulos:
         clases_publicadas.extend(
             modulo.clases_publicadas
         )
+
+        if modulo.clases_programadas:
+            proximas_publicaciones.append(
+                modulo.clases_programadas[0].fecha_publicacion
+            )
+
+    proxima_publicacion = (
+        min(proximas_publicaciones)
+        if proximas_publicaciones
+        else None
+    )
 
     total_clases = len(
         clases_publicadas
@@ -1334,6 +1366,7 @@ def detalle_curso_alumno(request, pk):
             "total_clases": total_clases,
             "clases_completadas": clases_completadas,
             "porcentaje_progreso": porcentaje_progreso,
+            "proxima_publicacion": proxima_publicacion,
             "avisos": (
                 AvisoCurso.objects
                 .filter(

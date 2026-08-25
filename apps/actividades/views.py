@@ -1530,17 +1530,33 @@ def resolver_cuestionario(request, pk):
 
     curso = cuestionario.clase.modulo.curso
 
-    inscripcion = Inscripcion.objects.filter(
+    inscripciones_alumno = Inscripcion.objects.filter(
         curso=curso,
         alumno=request.user,
-        estado__in=[
-            Inscripcion.ESTADO_INSCRIPTO,
-            Inscripcion.ESTADO_CURSANDO,
-        ],
-    ).first()
+    )
+
+    if curso.estado == Curso.ESTADO_FINALIZADO:
+        inscripcion = inscripciones_alumno.first()
+    else:
+        inscripcion = inscripciones_alumno.filter(
+            estado__in=[
+                Inscripcion.ESTADO_INSCRIPTO,
+                Inscripcion.ESTADO_CURSANDO,
+            ],
+        ).first()
 
     if not inscripcion:
         raise PermissionDenied
+
+    if curso.estado == Curso.ESTADO_FINALIZADO:
+        messages.info(
+            request,
+            "El curso está finalizado. El cuestionario se conserva en modo consulta.",
+        )
+        return redirect(
+            "resultado_cuestionario",
+            pk=cuestionario.pk,
+        )
 
     ahora = timezone.now()
     if cuestionario.fecha_apertura and ahora < cuestionario.fecha_apertura:

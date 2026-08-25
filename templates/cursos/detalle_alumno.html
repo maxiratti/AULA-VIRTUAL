@@ -20,7 +20,20 @@
 >
 {% endblock %}
 
+{% block extra_js %}
+<script
+    src="{% static 'js/cursos.js' %}"
+></script>
+{% endblock %}
+
 {% block content %}
+{% if proxima_publicacion %}
+<div
+    id="scheduled-class-refresh"
+    data-publish-at="{{ proxima_publicacion|date:'c' }}"
+    hidden
+></div>
+{% endif %}
 {% if curso.estado == "FINALIZADO" and inscripcion.estado == "APROBADO" %}
 <section class="certificate-callout">
     <div class="certificate-callout-icon">
@@ -306,20 +319,14 @@
                                 >
 
                                     {% if clase.completada_alumno %}
-
                                         <i class="bi bi-check-circle-fill"></i>
-
                                     {% else %}
-
                                         <i class="bi bi-file-earmark-text"></i>
-
                                     {% endif %}
 
                                 </div>
 
-
                                 <div>
-
                                     <span>
                                         Clase {{ clase.orden }}
                                     </span>
@@ -328,36 +335,64 @@
                                         {{ clase.titulo }}
                                     </strong>
 
-
                                     {% if clase.completada_alumno %}
-
                                         <small class="student-class-status completed">
                                             <i class="bi bi-check2"></i>
                                             Completada
                                         </small>
-
                                     {% else %}
-
                                         <small class="student-class-status">
                                             Pendiente
                                         </small>
-
                                     {% endif %}
-
                                 </div>
-
 
                                 <i class="bi bi-chevron-right"></i>
 
                             </a>
 
-                        {% empty %}
+                        {% endfor %}
 
-                            <div class="student-no-classes">
-                                Todavía no hay clases publicadas.
+                        {% for clase in modulo.clases_programadas %}
+
+                            <div
+                                class="student-class-item student-class-item-scheduled"
+                                aria-disabled="true"
+                            >
+                                <div class="student-class-icon">
+                                    <i class="bi bi-clock"></i>
+                                </div>
+
+                                <div>
+                                    <span>
+                                        Clase {{ clase.orden }}
+                                    </span>
+
+                                    <strong>
+                                        {{ clase.titulo }}
+                                    </strong>
+
+                                    <small class="student-class-status">
+                                        <i class="bi bi-calendar-event"></i>
+                                        Disponible el
+                                        {{ clase.fecha_publicacion|date:"d/m/Y" }}
+                                        a las
+                                        {{ clase.fecha_publicacion|date:"H:i" }}
+                                    </small>
+                                </div>
+
+                                <span class="badge text-bg-light border">
+                                    Programada
+                                </span>
                             </div>
 
                         {% endfor %}
+
+                        {% if not modulo.clases_publicadas and not modulo.clases_programadas %}
+                            <div class="student-no-classes">
+                                Todavía no hay clases disponibles.
+                            </div>
+                        {% endif %}
 
                     </div>
 

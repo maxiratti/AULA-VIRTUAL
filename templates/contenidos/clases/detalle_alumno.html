@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static contenido_extras %}
 
 {% block title %}
 {{ clase.titulo }} | Aula Virtual
@@ -106,7 +106,7 @@
                     {% if contenido.tipo == "TEXTO" %}
 
                         <div class="text-content">
-                            {{ contenido.texto|linebreaks }}
+                            {{ contenido.texto|markdown_seguro }}
                         </div>
 
 
@@ -416,6 +416,150 @@
         </div>
 
     </section>
+
+{% endif %}
+
+
+{% if cuestionarios %}
+
+<section class="student-activities student-quizzes">
+
+    <div class="student-section-header">
+        <div>
+            <span class="section-eyebrow">
+                Cuestionarios
+            </span>
+            <h2>
+                Cuestionarios de la clase
+            </h2>
+        </div>
+    </div>
+
+    <div class="student-activity-list">
+
+        {% for cuestionario in cuestionarios %}
+
+            {% if cuestionario.estado_alumno == "FINALIZADO" or cuestionario.estado_alumno == "COMPLETADO" %}
+                <a
+                    href="{% url 'resultado_cuestionario' cuestionario.pk %}"
+                    class="student-activity-card student-quiz-card"
+                >
+            {% elif cuestionario.estado_alumno == "PROXIMAMENTE" or cuestionario.estado_alumno == "VENCIDO" %}
+                <div class="student-activity-card student-quiz-card is-disabled">
+            {% else %}
+                <a
+                    href="{% url 'resolver_cuestionario' cuestionario.pk %}"
+                    class="student-activity-card student-quiz-card"
+                >
+            {% endif %}
+
+                <div class="student-activity-icon">
+                    {% if cuestionario.estado_alumno == "COMPLETADO" %}
+                        <i class="bi bi-patch-check-fill"></i>
+                    {% elif cuestionario.estado_alumno == "FINALIZADO" %}
+                        <i class="bi bi-lock"></i>
+                    {% elif cuestionario.estado_alumno == "VENCIDO" %}
+                        <i class="bi bi-exclamation-circle"></i>
+                    {% elif cuestionario.estado_alumno == "PROXIMAMENTE" %}
+                        <i class="bi bi-clock"></i>
+                    {% elif cuestionario.estado_alumno == "REINTENTO" %}
+                        <i class="bi bi-arrow-repeat"></i>
+                    {% else %}
+                        <i class="bi bi-ui-checks"></i>
+                    {% endif %}
+                </div>
+
+                <div class="student-activity-main">
+                    <strong>
+                        {{ cuestionario.titulo }}
+                    </strong>
+
+                    {% if cuestionario.descripcion %}
+                        <p class="student-quiz-description">
+                            {{ cuestionario.descripcion|truncatechars:150 }}
+                        </p>
+                    {% endif %}
+
+                    <div class="student-activity-status-line">
+
+                        {% if cuestionario.estado_alumno == "FINALIZADO" %}
+                            <span class="activity-status activity-status-corrected">
+                                <i class="bi bi-lock"></i>
+                                Solo consulta
+                            </span>
+
+                        {% elif cuestionario.estado_alumno == "COMPLETADO" %}
+                            <span class="activity-status activity-status-corrected">
+                                <i class="bi bi-patch-check-fill"></i>
+                                Completado
+                            </span>
+
+                        {% elif cuestionario.estado_alumno == "VENCIDO" %}
+                            <span class="activity-status activity-status-expired">
+                                <i class="bi bi-exclamation-circle"></i>
+                                Vencido
+                            </span>
+
+                        {% elif cuestionario.estado_alumno == "PROXIMAMENTE" %}
+                            <span class="activity-status activity-status-upcoming">
+                                <i class="bi bi-clock"></i>
+                                Próximamente
+                            </span>
+
+                        {% elif cuestionario.estado_alumno == "REINTENTO" %}
+                            <span class="activity-status activity-status-delivered">
+                                <i class="bi bi-arrow-repeat"></i>
+                                Nuevo intento disponible
+                            </span>
+
+                        {% else %}
+                            <span class="activity-status activity-status-pending">
+                                <i class="bi bi-hourglass-split"></i>
+                                Pendiente
+                            </span>
+                        {% endif %}
+
+                        {% if cuestionario.estado_alumno == "PROXIMAMENTE" %}
+                            <span class="activity-status-date">
+                                Disponible desde {{ cuestionario.fecha_apertura|date:"d/m/Y H:i" }}
+                            </span>
+                        {% elif cuestionario.estado_alumno == "VENCIDO" %}
+                            <span class="activity-status-date">
+                                Finalizó {{ cuestionario.fecha_limite|date:"d/m/Y H:i" }}
+                            </span>
+                        {% elif cuestionario.estado_alumno != "FINALIZADO" %}
+                            <span class="activity-status-date">
+                                {{ cuestionario.intentos_restantes_alumno }}
+                                intento{{ cuestionario.intentos_restantes_alumno|pluralize }} disponible{{ cuestionario.intentos_restantes_alumno|pluralize }}
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="student-activity-points">
+                    {% if cuestionario.ultimo_intento_alumno %}
+                        {{ cuestionario.ultimo_intento_alumno.puntaje_obtenido }}
+                        /
+                        {{ cuestionario.puntaje_maximo }}
+                        pts.
+                    {% else %}
+                        {{ cuestionario.puntaje_maximo }} pts.
+                    {% endif %}
+                </div>
+
+            {% if cuestionario.estado_alumno == "FINALIZADO" or cuestionario.estado_alumno == "COMPLETADO" %}
+                </a>
+            {% elif cuestionario.estado_alumno == "PROXIMAMENTE" or cuestionario.estado_alumno == "VENCIDO" %}
+                </div>
+            {% else %}
+                </a>
+            {% endif %}
+
+        {% endfor %}
+
+    </div>
+
+</section>
 
 {% endif %}
 

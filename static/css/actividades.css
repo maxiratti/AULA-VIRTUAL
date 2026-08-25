@@ -2336,3 +2336,138 @@ textarea.form-control {
 }
 
 .quiz-editor-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(300px,.7fr);gap:20px;align-items:start}.quiz-question-summary{padding:14px 0;border-bottom:1px solid #e5e7eb}.quiz-question-summary>span{display:block;margin-top:4px;color:#64748b;font-size:10px}.quiz-question-summary ul{margin:10px 0 0;padding-left:20px;color:#475569}.quiz-question-summary .bi-check-circle-fill{color:#16a34a}.quiz-student-form{max-width:850px}.quiz-question{margin-bottom:16px}.quiz-question-heading{display:flex;justify-content:space-between;gap:16px;margin-bottom:14px}.quiz-question-heading span{color:#64748b;font-size:10px;white-space:nowrap}.quiz-option{display:flex;align-items:flex-start;gap:10px;padding:11px 12px;margin:8px 0;border:1px solid #e2e8f0;border-radius:10px;cursor:pointer}.quiz-option:hover{background:#f8fafc}.quiz-result{margin-bottom:18px}.quiz-result-score{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}.quiz-result-score strong{font-size:18px;color:#1d4ed8}.quiz-result-answer{display:flex;flex-direction:column;gap:4px;padding:12px;margin:8px 0;border-left:4px solid #cbd5e1;background:#f8fafc}.quiz-result-answer.is-correct{border-left-color:#16a34a}.quiz-result-answer.is-wrong{border-left-color:#dc2626}.quiz-result-answer span,.quiz-result-answer small{color:#64748b}@media(max-width:800px){.quiz-editor-grid{grid-template-columns:1fr}}
+
+
+/* =========================================================
+   CUESTIONARIOS - EXPERIENCIA DEL ALUMNO
+   ========================================================= */
+
+.student-quiz-card.is-disabled {
+    cursor: default;
+    opacity: .82;
+}
+
+.student-quiz-description {
+    margin: .35rem 0 .5rem;
+    color: #64748b;
+    font-size: .9rem;
+}
+
+.quiz-summary-card {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.quiz-summary-card > div {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+}
+
+.quiz-summary-card span {
+    color: #64748b;
+    font-size: .78rem;
+}
+
+.quiz-summary-card strong {
+    color: #0f172a;
+}
+
+.quiz-options {
+    display: grid;
+    gap: .65rem;
+    margin-top: 1rem;
+}
+
+.quiz-option {
+    display: flex;
+    align-items: flex-start;
+    gap: .75rem;
+    padding: .85rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: .75rem;
+    cursor: pointer;
+}
+
+.quiz-option:hover {
+    border-color: #94a3b8;
+}
+
+.quiz-option input {
+    margin-top: .2rem;
+}
+
+.quiz-submit-row,
+.quiz-result-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: .75rem;
+    margin-top: 1rem;
+}
+
+.quiz-result-score {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.quiz-result-score > div {
+    display: flex;
+    flex-direction: column;
+}
+
+.quiz-result-score small {
+    color: #64748b;
+}
+
+.quiz-result-score > strong {
+    font-size: 1.35rem;
+}
+
+.quiz-result-answers {
+    display: grid;
+    gap: .75rem;
+}
+
+.quiz-result-answer {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .9rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: .75rem;
+}
+
+.quiz-result-answer > div {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+}
+
+.quiz-result-answer span {
+    color: #64748b;
+}
+
+.quiz-result-answer.is-correct small {
+    color: #047857;
+}
+
+.quiz-result-answer.is-wrong small {
+    color: #b91c1c;
+}
+
+@media (max-width: 768px) {
+    .quiz-summary-card {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .quiz-result-score,
+    .quiz-result-answer {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}

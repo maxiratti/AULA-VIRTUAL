@@ -1,8 +1,91 @@
-{% extends "base.html" %}{% load static %}
-{% block title %}{{ cuestionario.titulo }}{% endblock %}{% block page_title %}Cuestionario{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/actividades.css' %}">{% endblock %}
-{% block content %}<section class="page-header"><div><a href="{% url 'detalle_clase_alumno' cuestionario.clase.pk %}" class="back-link"><i class="bi bi-arrow-left"></i> Volver a la clase</a><h1>{{ cuestionario.titulo }}</h1><p>Intento {{ intento_numero }} de {{ cuestionario.intentos_permitidos }} · {{ cuestionario.puntaje_maximo }} puntos</p></div></section>
-<form method="post" class="quiz-student-form">{% csrf_token %}
-{% for pregunta in cuestionario.preguntas.all %}<section class="content-card quiz-question"><div class="quiz-question-heading"><strong>{{ forloop.counter }}. {{ pregunta.enunciado }}</strong><span>{{ pregunta.puntaje }} puntos</span></div>
-{% for opcion in pregunta.opciones.all %}<label class="quiz-option"><input type="radio" name="pregunta_{{ pregunta.pk }}" value="{{ opcion.pk }}" required><span>{{ opcion.texto }}</span></label>{% endfor %}</section>{% endfor %}
-<button type="submit" class="btn-primary-custom"><i class="bi bi-send-check"></i> Enviar cuestionario</button></form>{% endblock %}
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ cuestionario.titulo }} | Aula Virtual{% endblock %}
+{% block page_title %}Cuestionario{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/actividades.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+    <div>
+        <a href="{% url 'detalle_clase_alumno' cuestionario.clase.pk %}" class="back-link">
+            <i class="bi bi-arrow-left"></i>
+            Volver a la clase
+        </a>
+
+        <span class="section-eyebrow">Cuestionario autocorregible</span>
+        <h1>{{ cuestionario.titulo }}</h1>
+
+        {% if cuestionario.descripcion %}
+            <p>{{ cuestionario.descripcion }}</p>
+        {% endif %}
+    </div>
+</section>
+
+<section class="content-card quiz-summary-card">
+    <div>
+        <span>Intento</span>
+        <strong>{{ intento_numero }} de {{ cuestionario.intentos_permitidos }}</strong>
+    </div>
+    <div>
+        <span>Preguntas</span>
+        <strong>{{ cuestionario.preguntas.count }}</strong>
+    </div>
+    <div>
+        <span>Puntaje máximo</span>
+        <strong>{{ cuestionario.puntaje_maximo }} pts.</strong>
+    </div>
+    <div>
+        <span>Fecha límite</span>
+        <strong>
+            {% if cuestionario.fecha_limite %}
+                {{ cuestionario.fecha_limite|date:"d/m/Y H:i" }}
+            {% else %}
+                Sin límite
+            {% endif %}
+        </strong>
+    </div>
+</section>
+
+<form method="post" class="quiz-student-form">
+    {% csrf_token %}
+
+    {% for pregunta in cuestionario.preguntas.all %}
+        <section class="content-card quiz-question">
+            <div class="quiz-question-heading">
+                <strong>{{ forloop.counter }}. {{ pregunta.enunciado }}</strong>
+                <span>{{ pregunta.puntaje }} pts.</span>
+            </div>
+
+            <div class="quiz-options">
+                {% for opcion in pregunta.opciones.all %}
+                    <label class="quiz-option">
+                        <input
+                            type="radio"
+                            name="pregunta_{{ pregunta.pk }}"
+                            value="{{ opcion.pk }}"
+                            required
+                        >
+                        <span>{{ opcion.texto }}</span>
+                    </label>
+                {% endfor %}
+            </div>
+        </section>
+    {% endfor %}
+
+    <div class="quiz-submit-row">
+        <a href="{% url 'detalle_clase_alumno' cuestionario.clase.pk %}" class="btn btn-outline-secondary">
+            Cancelar
+        </a>
+        <button type="submit" class="btn-primary-custom">
+            <i class="bi bi-send-check"></i>
+            Enviar cuestionario
+        </button>
+    </div>
+</form>
+
+{% endblock %}

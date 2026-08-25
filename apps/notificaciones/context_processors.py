@@ -5,6 +5,12 @@ def notificaciones(request):
             "notificaciones_recientes": [],
         }
 
+    from .services import sincronizar_notificaciones_clases
+
+    sincronizar_notificaciones_clases(
+        request.user
+    )
+
     no_leidas = (
         request.user.notificaciones
         .filter(leida=False)

@@ -1132,3 +1132,73 @@ textarea.form-control {
     }
 
 }
+
+/* =========================================================
+   CONTENIDO DE TEXTO CON FORMATO MARKDOWN
+   ========================================================= */
+
+.text-content {
+    line-height: 1.7;
+}
+
+.text-content h1,
+.text-content h2,
+.text-content h3,
+.text-content h4 {
+    margin: 1.15rem 0 .65rem;
+    line-height: 1.25;
+}
+
+.text-content h1:first-child,
+.text-content h2:first-child,
+.text-content h3:first-child,
+.text-content h4:first-child {
+    margin-top: 0;
+}
+
+.text-content p {
+    margin: 0 0 .9rem;
+}
+
+.text-content ul,
+.text-content ol {
+    margin: .5rem 0 1rem;
+    padding-left: 1.5rem;
+}
+
+.text-content li {
+    margin-bottom: .35rem;
+}
+
+.text-content hr {
+    margin: 1.25rem 0;
+    border: 0;
+    border-top: 1px solid #dbe3ee;
+}
+
+.text-content code {
+    padding: .1rem .35rem;
+    border-radius: .35rem;
+    background: #f1f5f9;
+    font-size: .92em;
+}
+
+.text-content pre {
+    overflow-x: auto;
+    margin: 1rem 0;
+    padding: 1rem;
+    border-radius: .75rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.text-content pre code {
+    padding: 0;
+    background: transparent;
+}
+
+.text-content a {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
