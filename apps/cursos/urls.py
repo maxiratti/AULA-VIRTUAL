@@ -5,6 +5,11 @@ from . import views
 
 urlpatterns = [
     path(
+        "certificados/verificar/<str:codigo>/",
+        views.verificar_certificado,
+        name="verificar_certificado",
+    ),
+    path(
         "cursos/",
         views.lista_cursos,
         name="lista_cursos",

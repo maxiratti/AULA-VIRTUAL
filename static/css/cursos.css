@@ -2221,3 +2221,144 @@
         flex-direction: column;
     }
 }
+
+
+/* =========================================================
+   VERIFICACIÓN PÚBLICA DE CERTIFICADOS
+   ========================================================= */
+
+.certificate-verification-page {
+    display: flex;
+    justify-content: center;
+    padding: 28px 0;
+}
+
+.certificate-verification-card {
+    width: min(100%, 720px);
+    padding: 30px;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 12px 35px rgba(15, 23, 42, .06);
+}
+
+.certificate-verification-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 58px;
+    height: 58px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    font-size: 27px;
+}
+
+.certificate-verification-icon.is-valid {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.certificate-verification-icon.is-invalid {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.certificate-verification-heading {
+    text-align: center;
+}
+
+.certificate-verification-heading > span {
+    color: #2563eb;
+    font-size: 10px;
+    font-weight: 750;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.certificate-verification-heading h1 {
+    margin: 5px 0 8px;
+    color: #0f172a;
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.certificate-valid-message,
+.certificate-invalid-message {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.certificate-valid-message {
+    color: #047857;
+}
+
+.certificate-invalid-message {
+    color: #b91c1c;
+}
+
+.certificate-verification-data {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0;
+    margin: 25px 0 0;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.certificate-verification-data > div {
+    padding: 13px 15px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.certificate-verification-data > div:nth-child(odd) {
+    border-right: 1px solid #e5e7eb;
+}
+
+.certificate-verification-data dt {
+    margin-bottom: 3px;
+    color: #94a3b8;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.certificate-verification-data dd {
+    margin: 0;
+    color: #334155;
+    font-size: 11px;
+    font-weight: 650;
+    word-break: break-word;
+}
+
+.certificate-status-valid {
+    color: #047857;
+}
+
+.certificate-status-invalid {
+    color: #b91c1c;
+}
+
+.certificate-verification-note {
+    margin: 18px 0 0;
+    color: #94a3b8;
+    font-size: 9px;
+    line-height: 1.5;
+    text-align: center;
+}
+
+@media (max-width: 620px) {
+    .certificate-verification-card {
+        padding: 22px 16px;
+    }
+
+    .certificate-verification-data {
+        grid-template-columns: 1fr;
+    }
+
+    .certificate-verification-data > div:nth-child(odd) {
+        border-right: 0;
+    }
+}

@@ -6,6 +6,9 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Prefetch, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.http import HttpResponse
+from reportlab.graphics import renderPDF
+from reportlab.graphics.barcode import qr
+from reportlab.graphics.shapes import Drawing
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import A4, landscape
@@ -13,6 +16,7 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 from django.utils import timezone
+from django.urls import reverse
 
 from apps.actividades.models import Actividad, Entrega
 from apps.contenidos.models import (
@@ -29,7 +33,7 @@ from apps.notificaciones.services import (
 from apps.roles.utils import tiene_rol_en_institucion
 
 from .forms import CursoForm
-from .models import AvisoCurso, Curso
+from .models import AvisoCurso, Certificado, Curso
 
 
 def instituciones_coordinadas(usuario):
@@ -455,6 +459,46 @@ def eliminar_aviso_curso(request, curso_pk, aviso_pk):
     return redirect("avisos_curso", pk=curso.pk)
 
 
+def verificar_certificado(request, codigo):
+    certificado = get_object_or_404(
+        Certificado.objects.select_related(
+            "curso",
+            "curso__institucion",
+            "alumno",
+        ),
+        codigo=codigo,
+    )
+
+    alumno = certificado.alumno
+    nombre_alumno = (
+        alumno.get_full_name().strip()
+        or alumno.username
+    )
+
+    fecha_final = (
+        Inscripcion.objects
+        .filter(
+            curso=certificado.curso,
+            alumno=alumno,
+        )
+        .values_list(
+            "fecha_finalizacion",
+            flat=True,
+        )
+        .first()
+    )
+
+    return render(
+        request,
+        "cursos/verificar_certificado.html",
+        {
+            "certificado": certificado,
+            "nombre_alumno": nombre_alumno,
+            "fecha_final": fecha_final,
+        },
+    )
+
+
 @login_required
 def certificado_alumno(request, curso_pk, alumno_pk):
     curso = get_object_or_404(
@@ -498,8 +542,23 @@ def certificado_alumno(request, curso_pk, alumno_pk):
     alumno = inscripcion.alumno
     nombre_alumno = alumno.get_full_name().strip() or alumno.username
     fecha_final = inscripcion.fecha_finalizacion or curso.fecha_fin
-    fecha_codigo = fecha_final.strftime("%Y%m%d") if fecha_final else "SF"
-    codigo = f"AV-C{curso.pk:04d}-A{alumno.pk:05d}-{fecha_codigo}"
+
+    certificado, _ = Certificado.objects.get_or_create(
+        curso=curso,
+        alumno=alumno,
+    )
+
+    if certificado.estado != Certificado.ESTADO_VALIDO:
+        raise PermissionDenied
+
+    codigo = certificado.codigo
+
+    url_verificacion = request.build_absolute_uri(
+        reverse(
+            "verificar_certificado",
+            kwargs={"codigo": codigo},
+        )
+    )
 
     response = HttpResponse(content_type="application/pdf")
     response["Content-Disposition"] = (
@@ -670,17 +729,57 @@ def certificado_alumno(request, curso_pk, alumno_pk):
             "Autoridad institucional",
         )
 
+    # Pie del certificado
     pdf.setFillColor(colors.HexColor("#94a3b8"))
     pdf.setFont("Helvetica", 7.5)
     pdf.drawCentredString(
         centro,
-        24 * mm,
+        27 * mm,
         f"Código de certificado: {codigo}",
     )
     pdf.drawCentredString(
         centro,
-        19.5 * mm,
+        22.5 * mm,
         "Documento generado digitalmente por Aula Virtual",
+    )
+
+    # QR de verificación pública, dentro del marco inferior derecho
+    qr_widget = qr.QrCodeWidget(url_verificacion)
+    qr_bounds = qr_widget.getBounds()
+    qr_width = qr_bounds[2] - qr_bounds[0]
+    qr_height = qr_bounds[3] - qr_bounds[1]
+    qr_size = 18 * mm
+
+    qr_drawing = Drawing(
+        qr_size,
+        qr_size,
+        transform=[
+            qr_size / qr_width,
+            0,
+            0,
+            qr_size / qr_height,
+            0,
+            0,
+        ],
+    )
+    qr_drawing.add(qr_widget)
+
+    qr_x = ancho - margen - qr_size - 8 * mm
+    qr_y = margen + 10 * mm
+
+    renderPDF.draw(
+        qr_drawing,
+        pdf,
+        qr_x,
+        qr_y,
+    )
+
+    pdf.setFillColor(gris)
+    pdf.setFont("Helvetica-Bold", 6)
+    pdf.drawCentredString(
+        qr_x + qr_size / 2,
+        qr_y - 3 * mm,
+        "VERIFICAR",
     )
 
     pdf.showPage()

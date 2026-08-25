@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Verificar certificado{% endblock %}
+{% block page_title %}Verificación de certificado{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/cursos.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="certificate-verification-page">
+
+    <section class="certificate-verification-card">
+
+        <div class="certificate-verification-icon {% if certificado.estado == 'VALIDO' %}is-valid{% else %}is-invalid{% endif %}">
+            {% if certificado.estado == "VALIDO" %}
+                <i class="bi bi-patch-check-fill"></i>
+            {% else %}
+                <i class="bi bi-x-octagon-fill"></i>
+            {% endif %}
+        </div>
+
+        <div class="certificate-verification-heading">
+            <span>Aula Virtual</span>
+            <h1>Verificación de certificado</h1>
+
+            {% if certificado.estado == "VALIDO" %}
+                <p class="certificate-valid-message">
+                    Este certificado es válido.
+                </p>
+            {% else %}
+                <p class="certificate-invalid-message">
+                    Este certificado se encuentra anulado.
+                </p>
+            {% endif %}
+        </div>
+
+        <dl class="certificate-verification-data">
+            <div>
+                <dt>Código</dt>
+                <dd>{{ certificado.codigo }}</dd>
+            </div>
+
+            <div>
+                <dt>Alumno/a</dt>
+                <dd>{{ nombre_alumno }}</dd>
+            </div>
+
+            <div>
+                <dt>Curso</dt>
+                <dd>{{ certificado.curso.nombre }}</dd>
+            </div>
+
+            <div>
+                <dt>Institución</dt>
+                <dd>{{ certificado.curso.institucion.nombre }}</dd>
+            </div>
+
+            {% if certificado.curso.carga_horaria %}
+                <div>
+                    <dt>Carga horaria</dt>
+                    <dd>{{ certificado.curso.carga_horaria }} horas</dd>
+                </div>
+            {% endif %}
+
+            {% if fecha_final %}
+                <div>
+                    <dt>Finalización</dt>
+                    <dd>{{ fecha_final|date:"d/m/Y" }}</dd>
+                </div>
+            {% endif %}
+
+            <div>
+                <dt>Emitido</dt>
+                <dd>{{ certificado.fecha_emision|date:"d/m/Y" }}</dd>
+            </div>
+
+            <div>
+                <dt>Estado</dt>
+                <dd>
+                    {% if certificado.estado == "VALIDO" %}
+                        <span class="certificate-status-valid">Válido</span>
+                    {% else %}
+                        <span class="certificate-status-invalid">Anulado</span>
+                    {% endif %}
+                </dd>
+            </div>
+        </dl>
+
+        <p class="certificate-verification-note">
+            La información mostrada permite comprobar que el certificado
+            fue emitido por esta plataforma.
+        </p>
+
+    </section>
+
+</div>
+
+{% endblock %}

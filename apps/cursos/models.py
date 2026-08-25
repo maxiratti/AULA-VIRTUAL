@@ -1,3 +1,5 @@
+import uuid
+
 from django.conf import settings
 from django.db import models
 
@@ -111,3 +113,64 @@ class AvisoCurso(models.Model):
 
     def __str__(self):
         return f"{self.curso} - {self.titulo}"
+
+
+class Certificado(models.Model):
+
+    ESTADO_VALIDO = "VALIDO"
+    ESTADO_ANULADO = "ANULADO"
+
+    ESTADOS = [
+        (ESTADO_VALIDO, "Válido"),
+        (ESTADO_ANULADO, "Anulado"),
+    ]
+
+    curso = models.ForeignKey(
+        Curso,
+        on_delete=models.PROTECT,
+        related_name="certificados",
+    )
+
+    alumno = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="certificados",
+    )
+
+    codigo = models.CharField(
+        max_length=40,
+        unique=True,
+        editable=False,
+    )
+
+    estado = models.CharField(
+        max_length=10,
+        choices=ESTADOS,
+        default=ESTADO_VALIDO,
+    )
+
+    fecha_emision = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    class Meta:
+        ordering = ["-fecha_emision"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["curso", "alumno"],
+                name="certificado_unico_curso_alumno",
+            ),
+        ]
+        verbose_name = "certificado"
+        verbose_name_plural = "certificados"
+
+    def save(self, *args, **kwargs):
+        if not self.codigo:
+            self.codigo = (
+                "AV-"
+                + uuid.uuid4().hex[:16].upper()
+            )
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.codigo} - {self.alumno}"
