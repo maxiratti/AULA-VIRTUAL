@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Avisos | {{ curso.nombre }}{% endblock %}
+{% block page_title %}Avisos{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/cursos.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+    <div>
+        <a href="{% url 'lista_cursos' %}" class="back-link">
+            <i class="bi bi-arrow-left"></i>
+            Volver a cursos
+        </a>
+
+        <h1>Avisos del curso</h1>
+        <p>{{ curso.nombre }} · {{ curso.institucion.nombre }}</p>
+    </div>
+</section>
+
+{% if curso.estado == "FINALIZADO" %}
+<div class="course-readonly-note mb-4">
+    <i class="bi bi-lock"></i>
+    Curso finalizado: los avisos quedan disponibles solo para consulta.
+</div>
+{% else %}
+<section class="notice-editor-card">
+    <div class="notice-editor-heading">
+        <div class="notice-editor-icon">
+            <i class="bi bi-megaphone"></i>
+        </div>
+        <div>
+            <h2>Nuevo aviso</h2>
+            <p>Publicá una novedad para los alumnos del curso.</p>
+        </div>
+    </div>
+
+    <form method="post" class="notice-form">
+        {% csrf_token %}
+
+        <div class="form-field">
+            <label for="id_titulo">Título</label>
+            <input
+                type="text"
+                name="titulo"
+                id="id_titulo"
+                class="form-control"
+                maxlength="200"
+                required
+            >
+        </div>
+
+        <div class="form-field">
+            <label for="id_mensaje">Mensaje</label>
+            <textarea
+                name="mensaje"
+                id="id_mensaje"
+                class="form-control notice-textarea"
+                rows="5"
+                required
+            ></textarea>
+        </div>
+
+        <label class="notice-visible-check">
+            <input
+                type="checkbox"
+                name="visible"
+                value="1"
+                checked
+            >
+            <span>
+                Publicar ahora y notificar a los alumnos
+            </span>
+        </label>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-primary-custom">
+                <i class="bi bi-send"></i>
+                Publicar aviso
+            </button>
+        </div>
+    </form>
+</section>
+{% endif %}
+
+<section class="notice-management">
+    <div class="notice-management-heading">
+        <h2>Avisos publicados</h2>
+        <span>{{ avisos|length }} aviso{{ avisos|length|pluralize }}</span>
+    </div>
+
+    {% for aviso in avisos %}
+        <article class="notice-management-card">
+            <div class="notice-management-top">
+                <div>
+                    <div class="notice-management-meta">
+                        {{ aviso.fecha_creacion|date:"d/m/Y H:i" }}
+                        ·
+                        {{ aviso.autor.get_full_name|default:aviso.autor.username }}
+                    </div>
+
+                    <h3>{{ aviso.titulo }}</h3>
+                </div>
+
+                <span class="notice-visibility {% if aviso.visible %}is-visible{% endif %}">
+                    {% if aviso.visible %}
+                        Publicado
+                    {% else %}
+                        Oculto
+                    {% endif %}
+                </span>
+            </div>
+
+            <p>{{ aviso.mensaje|linebreaksbr }}</p>
+
+            {% if curso.estado != "FINALIZADO" %}
+                <details class="notice-edit-details">
+                    <summary>
+                        <i class="bi bi-pencil"></i>
+                        Editar
+                    </summary>
+
+                    <form
+                        method="post"
+                        action="{% url 'editar_aviso_curso' curso.pk aviso.pk %}"
+                        class="notice-form notice-edit-form"
+                    >
+                        {% csrf_token %}
+
+                        <div class="form-field">
+                            <label>Título</label>
+                            <input
+                                type="text"
+                                name="titulo"
+                                class="form-control"
+                                maxlength="200"
+                                value="{{ aviso.titulo }}"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-field">
+                            <label>Mensaje</label>
+                            <textarea
+                                name="mensaje"
+                                class="form-control notice-textarea"
+                                rows="4"
+                                required
+                            >{{ aviso.mensaje }}</textarea>
+                        </div>
+
+                        <label class="notice-visible-check">
+                            <input
+                                type="checkbox"
+                                name="visible"
+                                value="1"
+                                {% if aviso.visible %}checked{% endif %}
+                            >
+                            <span>Visible para los alumnos</span>
+                        </label>
+
+                        <div class="notice-inline-actions">
+                            <button type="submit" class="btn-primary-custom">
+                                Guardar cambios
+                            </button>
+                        </div>
+                    </form>
+                </details>
+
+                <form
+                    method="post"
+                    action="{% url 'eliminar_aviso_curso' curso.pk aviso.pk %}"
+                    class="notice-delete-form"
+                    onsubmit="return confirm('¿Eliminar este aviso?');"
+                >
+                    {% csrf_token %}
+                    <button type="submit" class="notice-delete-button">
+                        <i class="bi bi-trash"></i>
+                        Eliminar
+                    </button>
+                </form>
+            {% endif %}
+        </article>
+    {% empty %}
+        <div class="empty-state notice-empty">
+            <div class="empty-state-icon">
+                <i class="bi bi-megaphone"></i>
+            </div>
+            <h2>No hay avisos</h2>
+            <p>Todavía no se publicaron novedades para este curso.</p>
+        </div>
+    {% endfor %}
+</section>
+
+{% endblock %}

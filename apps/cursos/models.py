@@ -71,3 +71,43 @@ class Curso(models.Model):
 
     def __str__(self):
         return self.nombre
+
+class AvisoCurso(models.Model):
+
+    curso = models.ForeignKey(
+        Curso,
+        on_delete=models.CASCADE,
+        related_name="avisos",
+    )
+
+    autor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="avisos_curso_creados",
+    )
+
+    titulo = models.CharField(
+        max_length=200,
+    )
+
+    mensaje = models.TextField()
+
+    visible = models.BooleanField(
+        default=True,
+    )
+
+    fecha_creacion = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    fecha_actualizacion = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        ordering = ["-fecha_creacion"]
+        verbose_name = "aviso del curso"
+        verbose_name_plural = "avisos del curso"
+
+    def __str__(self):
+        return f"{self.curso} - {self.titulo}"

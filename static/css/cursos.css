@@ -1976,3 +1976,248 @@
         flex-direction: column;
     }
 }
+
+
+/* =========================================================
+   AVISOS DEL CURSO
+   ========================================================= */
+
+.course-notices {
+    margin-bottom: 22px;
+}
+
+.course-notices-heading,
+.notice-management-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.course-notices-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #2563eb;
+    font-size: 10px;
+    font-weight: 750;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.course-notices-heading h2,
+.notice-management-heading h2 {
+    margin: 4px 0 0;
+    color: #111827;
+    font-size: 17px;
+    font-weight: 750;
+}
+
+.course-notices-list {
+    display: grid;
+    gap: 10px;
+}
+
+.course-notice-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+    padding: 15px 17px;
+    border: 1px solid #dbeafe;
+    border-radius: 12px;
+    background: #f8fbff;
+    scroll-margin-top: 90px;
+}
+
+.course-notice-card:target {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .08);
+}
+
+.course-notice-icon,
+.notice-editor-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 auto;
+    border-radius: 10px;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 16px;
+}
+
+.course-notice-body {
+    min-width: 0;
+}
+
+.course-notice-meta,
+.notice-management-meta {
+    color: #94a3b8;
+    font-size: 9px;
+    font-weight: 600;
+}
+
+.course-notice-body h3,
+.notice-management-card h3 {
+    margin: 3px 0 5px;
+    color: #111827;
+    font-size: 13px;
+    font-weight: 750;
+}
+
+.course-notice-body p,
+.notice-management-card > p {
+    margin: 0;
+    color: #475569;
+    font-size: 11px;
+    line-height: 1.55;
+}
+
+.notice-editor-card {
+    max-width: 900px;
+    margin-bottom: 24px;
+    padding: 22px;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #ffffff;
+}
+
+.notice-editor-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.notice-editor-heading h2 {
+    margin: 0;
+    color: #111827;
+    font-size: 16px;
+    font-weight: 750;
+}
+
+.notice-editor-heading p {
+    margin: 3px 0 0;
+    color: #6b7280;
+    font-size: 11px;
+}
+
+.notice-form {
+    display: grid;
+    gap: 15px;
+}
+
+.notice-textarea {
+    min-height: 110px;
+    resize: vertical;
+}
+
+.notice-visible-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #475569;
+    cursor: pointer;
+    font-size: 11px;
+}
+
+.notice-visible-check input {
+    width: 16px;
+    height: 16px;
+    accent-color: #2563eb;
+}
+
+.notice-management {
+    max-width: 900px;
+}
+
+.notice-management-heading > span {
+    color: #94a3b8;
+    font-size: 10px;
+}
+
+.notice-management-card {
+    margin-bottom: 10px;
+    padding: 17px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.notice-management-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.notice-visibility {
+    display: inline-flex;
+    padding: 5px 8px;
+    border-radius: 999px;
+    background: #f3f4f6;
+    color: #6b7280;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.notice-visibility.is-visible {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.notice-edit-details {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.notice-edit-details summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #2563eb;
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.notice-edit-form {
+    margin-top: 14px;
+}
+
+.notice-inline-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.notice-delete-form {
+    margin-top: 10px;
+}
+
+.notice-delete-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #dc2626;
+    font-size: 10px;
+    font-weight: 650;
+}
+
+.notice-empty {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+@media (max-width: 700px) {
+    .notice-management-top {
+        flex-direction: column;
+    }
+}

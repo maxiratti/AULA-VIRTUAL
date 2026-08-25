@@ -22,11 +22,14 @@ from apps.contenidos.models import (
 )
 
 from apps.inscripciones.models import Inscripcion
-from apps.notificaciones.services import notificar_curso_finalizado
+from apps.notificaciones.services import (
+    notificar_aviso_curso,
+    notificar_curso_finalizado,
+)
 from apps.roles.utils import tiene_rol_en_institucion
 
 from .forms import CursoForm
-from .models import Curso
+from .models import AvisoCurso, Curso
 
 
 def instituciones_coordinadas(usuario):
@@ -274,6 +277,182 @@ def editar_curso(request, pk):
             ),
         },
     )
+
+
+def puede_gestionar_avisos(usuario, curso):
+    return (
+        usuario.is_superuser
+        or curso.docentes.filter(pk=usuario.pk).exists()
+        or tiene_rol_en_institucion(
+            usuario,
+            "Coordinador",
+            curso.institucion,
+        )
+        or tiene_rol_en_institucion(
+            usuario,
+            "Administrador institucional",
+            curso.institucion,
+        )
+    )
+
+
+@login_required
+def avisos_curso(request, pk):
+    curso = get_object_or_404(
+        Curso.objects.select_related("institucion"),
+        pk=pk,
+    )
+
+    if not puede_gestionar_avisos(request.user, curso):
+        raise PermissionDenied
+
+    if request.method == "POST":
+        if curso.estado == Curso.ESTADO_FINALIZADO:
+            messages.warning(
+                request,
+                "El curso está finalizado. Los avisos quedan en modo consulta.",
+            )
+            return redirect("avisos_curso", pk=curso.pk)
+
+        titulo = request.POST.get("titulo", "").strip()
+        mensaje = request.POST.get("mensaje", "").strip()
+        visible = request.POST.get("visible") == "1"
+
+        if not titulo or not mensaje:
+            messages.error(
+                request,
+                "Completá el título y el mensaje del aviso.",
+            )
+        else:
+            aviso = AvisoCurso.objects.create(
+                curso=curso,
+                autor=request.user,
+                titulo=titulo,
+                mensaje=mensaje,
+                visible=visible,
+            )
+
+            if aviso.visible:
+                notificar_aviso_curso(aviso)
+
+            messages.success(
+                request,
+                (
+                    "Aviso publicado correctamente."
+                    if aviso.visible
+                    else "Aviso guardado como oculto."
+                ),
+            )
+
+            return redirect("avisos_curso", pk=curso.pk)
+
+    avisos = (
+        AvisoCurso.objects
+        .filter(curso=curso)
+        .select_related("autor")
+    )
+
+    return render(
+        request,
+        "cursos/avisos.html",
+        {
+            "curso": curso,
+            "avisos": avisos,
+        },
+    )
+
+
+@login_required
+def editar_aviso_curso(request, curso_pk, aviso_pk):
+    curso = get_object_or_404(
+        Curso.objects.select_related("institucion"),
+        pk=curso_pk,
+    )
+    aviso = get_object_or_404(
+        AvisoCurso,
+        pk=aviso_pk,
+        curso=curso,
+    )
+
+    if not puede_gestionar_avisos(request.user, curso):
+        raise PermissionDenied
+
+    if curso.estado == Curso.ESTADO_FINALIZADO:
+        messages.warning(
+            request,
+            "El curso está finalizado. Los avisos quedan en modo consulta.",
+        )
+        return redirect("avisos_curso", pk=curso.pk)
+
+    if request.method != "POST":
+        return redirect("avisos_curso", pk=curso.pk)
+
+    titulo = request.POST.get("titulo", "").strip()
+    mensaje = request.POST.get("mensaje", "").strip()
+    visible = request.POST.get("visible") == "1"
+
+    if not titulo or not mensaje:
+        messages.error(
+            request,
+            "Completá el título y el mensaje del aviso.",
+        )
+        return redirect("avisos_curso", pk=curso.pk)
+
+    era_visible = aviso.visible
+
+    aviso.titulo = titulo
+    aviso.mensaje = mensaje
+    aviso.visible = visible
+    aviso.save(
+        update_fields=[
+            "titulo",
+            "mensaje",
+            "visible",
+            "fecha_actualizacion",
+        ]
+    )
+
+    if visible and not era_visible:
+        notificar_aviso_curso(aviso)
+
+    messages.success(
+        request,
+        "Aviso actualizado correctamente.",
+    )
+
+    return redirect("avisos_curso", pk=curso.pk)
+
+
+@login_required
+def eliminar_aviso_curso(request, curso_pk, aviso_pk):
+    curso = get_object_or_404(
+        Curso.objects.select_related("institucion"),
+        pk=curso_pk,
+    )
+    aviso = get_object_or_404(
+        AvisoCurso,
+        pk=aviso_pk,
+        curso=curso,
+    )
+
+    if not puede_gestionar_avisos(request.user, curso):
+        raise PermissionDenied
+
+    if curso.estado == Curso.ESTADO_FINALIZADO:
+        messages.warning(
+            request,
+            "El curso está finalizado. Los avisos quedan en modo consulta.",
+        )
+        return redirect("avisos_curso", pk=curso.pk)
+
+    if request.method == "POST":
+        aviso.delete()
+        messages.success(
+            request,
+            "Aviso eliminado correctamente.",
+        )
+
+    return redirect("avisos_curso", pk=curso.pk)
 
 
 @login_required
@@ -794,6 +973,14 @@ def detalle_curso_alumno(request, pk):
             "total_clases": total_clases,
             "clases_completadas": clases_completadas,
             "porcentaje_progreso": porcentaje_progreso,
+            "avisos": (
+                AvisoCurso.objects
+                .filter(
+                    curso=curso,
+                    visible=True,
+                )
+                .select_related("autor")[:5]
+            ),
         },
     )
 

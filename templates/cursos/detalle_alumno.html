@@ -82,6 +82,48 @@
 </section>
 {% endif %}
 
+
+{% if avisos %}
+<section class="course-notices" aria-labelledby="course-notices-title">
+
+    <div class="course-notices-heading">
+        <div>
+            <span class="course-notices-kicker">
+                <i class="bi bi-megaphone"></i>
+                Avisos
+            </span>
+            <h2 id="course-notices-title">
+                Novedades del curso
+            </h2>
+        </div>
+    </div>
+
+    <div class="course-notices-list">
+        {% for aviso in avisos %}
+            <article
+                class="course-notice-card"
+                id="aviso-{{ aviso.pk }}"
+            >
+                <div class="course-notice-icon">
+                    <i class="bi bi-megaphone-fill"></i>
+                </div>
+
+                <div class="course-notice-body">
+                    <div class="course-notice-meta">
+                        {{ aviso.fecha_creacion|date:"d/m/Y H:i" }}
+                    </div>
+
+                    <h3>{{ aviso.titulo }}</h3>
+
+                    <p>{{ aviso.mensaje|linebreaksbr }}</p>
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+
+</section>
+{% endif %}
+
 <!-- PROGRESO DEL CURSO -->
 
 <section class="course-progress-card">

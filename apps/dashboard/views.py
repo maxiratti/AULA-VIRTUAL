@@ -24,6 +24,8 @@ def dashboard(request):
     # MÉTRICAS DEL ALUMNO
     # =====================================================
 
+    cantidad_cursos_activos = 0
+
     cantidad_actividades = 0
     actividades_pendientes = 0
     actividades_entregadas = 0
@@ -65,6 +67,10 @@ def dashboard(request):
             )
             .distinct()
         )
+
+        cantidad_cursos_activos = cursos.filter(
+            estado=Curso.ESTADO_ACTIVO,
+        ).count()
 
         actividades_docente = (
             Actividad.objects
@@ -112,6 +118,14 @@ def dashboard(request):
             .distinct()
         )
 
+        cursos_activos_alumno = cursos_alumno.filter(
+            estado=Curso.ESTADO_ACTIVO,
+        )
+
+        cantidad_cursos_activos = (
+            cursos_activos_alumno.count()
+        )
+
         # -------------------------------------------------
         # ACTIVIDADES
         # -------------------------------------------------
@@ -119,7 +133,7 @@ def dashboard(request):
         actividades_alumno = (
             Actividad.objects
             .filter(
-                clase__modulo__curso__in=cursos_alumno,
+                clase__modulo__curso__in=cursos_activos_alumno,
                 visible=True,
                 clase__visible=True,
                 clase__modulo__visible=True,
@@ -205,7 +219,7 @@ def dashboard(request):
         clases_disponibles = (
             Clase.objects
             .filter(
-                modulo__curso__in=cursos_alumno,
+                modulo__curso__in=cursos_activos_alumno,
                 visible=True,
                 modulo__visible=True,
             )
@@ -255,7 +269,7 @@ def dashboard(request):
 
     context = {
         "cursos": cursos,
-        "cantidad_cursos": cursos.count(),
+        "cantidad_cursos": cantidad_cursos_activos,
 
         # Alumno - actividades
         "cantidad_actividades": (

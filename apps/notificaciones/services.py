@@ -168,3 +168,41 @@ def notificar_curso_finalizado(curso):
                 "url": url,
             },
         )
+
+
+def notificar_aviso_curso(aviso):
+    if not aviso.visible:
+        return
+
+    curso = aviso.curso
+
+    inscripciones = (
+        Inscripcion.objects
+        .filter(
+            curso=curso,
+            estado__in=[
+                Inscripcion.ESTADO_INSCRIPTO,
+                Inscripcion.ESTADO_CURSANDO,
+            ],
+        )
+        .select_related("alumno")
+    )
+
+    url = reverse(
+        "detalle_curso_alumno",
+        kwargs={"pk": curso.pk},
+    ) + f"#aviso-{aviso.pk}"
+
+    for inscripcion in inscripciones:
+        Notificacion.objects.get_or_create(
+            usuario=inscripcion.alumno,
+            clave=f"aviso_curso:{aviso.pk}",
+            defaults={
+                "tipo": Notificacion.TIPO_SISTEMA,
+                "titulo": "Nuevo aviso del curso",
+                "mensaje": (
+                    f"{curso.nombre}: {aviso.titulo}"
+                ),
+                "url": url,
+            },
+        )

@@ -25,6 +25,21 @@ urlpatterns = [
         name="seguimiento_curso",
     ),
     path(
+        "cursos/<int:pk>/avisos/",
+        views.avisos_curso,
+        name="avisos_curso",
+    ),
+    path(
+        "cursos/<int:curso_pk>/avisos/<int:aviso_pk>/editar/",
+        views.editar_aviso_curso,
+        name="editar_aviso_curso",
+    ),
+    path(
+        "cursos/<int:curso_pk>/avisos/<int:aviso_pk>/eliminar/",
+        views.eliminar_aviso_curso,
+        name="eliminar_aviso_curso",
+    ),
+    path(
         "cursos/<int:curso_pk>/alumnos/<int:alumno_pk>/certificado/",
         views.certificado_alumno,
         name="certificado_alumno",
