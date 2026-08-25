@@ -5,6 +5,13 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Prefetch, Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.http import HttpResponse
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib.units import mm
+from reportlab.pdfgen import canvas
 from django.utils import timezone
 
 from apps.actividades.models import Actividad, Entrega
@@ -267,6 +274,208 @@ def editar_curso(request, pk):
             ),
         },
     )
+
+
+@login_required
+def certificado_alumno(request, curso_pk, alumno_pk):
+    curso = get_object_or_404(
+        Curso.objects.select_related("institucion"),
+        pk=curso_pk,
+    )
+
+    inscripcion = get_object_or_404(
+        Inscripcion.objects.select_related(
+            "alumno",
+            "curso",
+            "curso__institucion",
+        ),
+        curso=curso,
+        alumno_id=alumno_pk,
+    )
+
+    es_el_alumno = request.user.pk == inscripcion.alumno_id
+    puede_gestionar = (
+        request.user.is_superuser
+        or curso.docentes.filter(pk=request.user.pk).exists()
+        or tiene_rol_en_institucion(
+            request.user, "Coordinador", curso.institucion
+        )
+        or tiene_rol_en_institucion(
+            request.user,
+            "Administrador institucional",
+            curso.institucion,
+        )
+    )
+
+    if not es_el_alumno and not puede_gestionar:
+        raise PermissionDenied
+
+    if (
+        curso.estado != Curso.ESTADO_FINALIZADO
+        or inscripcion.estado != Inscripcion.ESTADO_APROBADO
+    ):
+        raise PermissionDenied
+
+    alumno = inscripcion.alumno
+    nombre_alumno = alumno.get_full_name().strip() or alumno.username
+    fecha_final = inscripcion.fecha_finalizacion or curso.fecha_fin
+    fecha_codigo = fecha_final.strftime("%Y%m%d") if fecha_final else "SF"
+    codigo = f"AV-C{curso.pk:04d}-A{alumno.pk:05d}-{fecha_codigo}"
+
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = (
+        f'attachment; filename="certificado_{codigo}.pdf"'
+    )
+
+    ancho, alto = landscape(A4)
+    pdf = canvas.Canvas(response, pagesize=(ancho, alto))
+    centro = ancho / 2
+
+    azul = colors.HexColor("#2563eb")
+    azul_oscuro = colors.HexColor("#172554")
+    gris = colors.HexColor("#64748b")
+    gris_claro = colors.HexColor("#cbd5e1")
+    fondo = colors.HexColor("#f8fafc")
+
+    pdf.setFillColor(fondo)
+    pdf.rect(0, 0, ancho, alto, fill=1, stroke=0)
+
+    margen = 16 * mm
+    pdf.setFillColor(colors.white)
+    pdf.roundRect(
+        margen, margen,
+        ancho - 2 * margen, alto - 2 * margen,
+        5 * mm, fill=1, stroke=0,
+    )
+
+    pdf.setStrokeColor(azul)
+    pdf.setLineWidth(2.2)
+    pdf.roundRect(
+        margen, margen,
+        ancho - 2 * margen, alto - 2 * margen,
+        5 * mm, fill=0, stroke=1,
+    )
+
+    pdf.setStrokeColor(colors.HexColor("#dbeafe"))
+    pdf.setLineWidth(0.8)
+    pdf.roundRect(
+        margen + 5 * mm, margen + 5 * mm,
+        ancho - 2 * margen - 10 * mm,
+        alto - 2 * margen - 10 * mm,
+        3 * mm, fill=0, stroke=1,
+    )
+
+    # Sello visual de Aula Virtual
+    sello_x = centro
+    sello_y = alto - 34 * mm
+    pdf.setFillColor(colors.HexColor("#eff6ff"))
+    pdf.circle(sello_x, sello_y, 8 * mm, fill=1, stroke=0)
+    pdf.setFillColor(azul)
+    pdf.setFont("Helvetica-Bold", 13)
+    pdf.drawCentredString(sello_x, sello_y - 1.8 * mm, "AV")
+
+    pdf.setFillColor(azul_oscuro)
+    pdf.setFont("Helvetica-Bold", 13)
+    pdf.drawCentredString(
+        centro, alto - 49 * mm, curso.institucion.nombre.upper()
+    )
+
+    if curso.institucion.identificacion:
+        pdf.setFillColor(gris)
+        pdf.setFont("Helvetica", 8.5)
+        pdf.drawCentredString(
+            centro,
+            alto - 55 * mm,
+            f"Identificación institucional: {curso.institucion.identificacion}",
+        )
+
+    pdf.setFillColor(azul)
+    pdf.setFont("Helvetica-Bold", 10)
+    pdf.drawCentredString(centro, alto - 67 * mm, "AULA VIRTUAL")
+
+    pdf.setFillColor(azul_oscuro)
+    pdf.setFont("Helvetica-Bold", 27)
+    pdf.drawCentredString(
+        centro, alto - 80 * mm, "CERTIFICADO DE APROBACIÓN"
+    )
+
+    pdf.setStrokeColor(colors.HexColor("#bfdbfe"))
+    pdf.setLineWidth(1)
+    pdf.line(centro - 45 * mm, alto - 86 * mm, centro + 45 * mm, alto - 86 * mm)
+
+    pdf.setFillColor(gris)
+    pdf.setFont("Helvetica", 12)
+    pdf.drawCentredString(centro, alto - 99 * mm, "Se certifica que")
+
+    pdf.setFillColor(azul_oscuro)
+    nombre_size = 23 if len(nombre_alumno) <= 38 else 18
+    pdf.setFont("Helvetica-Bold", nombre_size)
+    pdf.drawCentredString(centro, alto - 114 * mm, nombre_alumno.upper())
+
+    pdf.setFillColor(gris)
+    pdf.setFont("Helvetica", 11.5)
+    pdf.drawCentredString(
+        centro, alto - 127 * mm, "ha aprobado satisfactoriamente el curso"
+    )
+
+    pdf.setFillColor(azul)
+    curso_size = 20 if len(curso.nombre) <= 45 else 16
+    pdf.setFont("Helvetica-Bold", curso_size)
+    pdf.drawCentredString(centro, alto - 141 * mm, curso.nombre)
+
+    detalles = []
+    if curso.carga_horaria:
+        detalles.append(f"Carga horaria: {curso.carga_horaria} horas")
+    if fecha_final:
+        detalles.append(
+            "Finalización: " + fecha_final.strftime("%d/%m/%Y")
+        )
+
+    if detalles:
+        pdf.setFillColor(gris)
+        pdf.setFont("Helvetica", 10)
+        pdf.drawCentredString(
+            centro, alto - 153 * mm, "   |   ".join(detalles)
+        )
+
+    # Firmas: espacios preparados para autoridades institucionales.
+    firma_y = 42 * mm
+    firma_ancho = 48 * mm
+    firma_izq = centro - 70 * mm
+    firma_der = centro + 70 * mm
+
+    pdf.setStrokeColor(gris_claro)
+    pdf.setLineWidth(0.7)
+    pdf.line(
+        firma_izq - firma_ancho / 2, firma_y,
+        firma_izq + firma_ancho / 2, firma_y,
+    )
+    pdf.line(
+        firma_der - firma_ancho / 2, firma_y,
+        firma_der + firma_ancho / 2, firma_y,
+    )
+
+    pdf.setFillColor(gris)
+    pdf.setFont("Helvetica", 8.5)
+    pdf.drawCentredString(firma_izq, firma_y - 5 * mm, "Docente / Responsable")
+    pdf.drawCentredString(firma_der, firma_y - 5 * mm, "Autoridad institucional")
+
+    pdf.setFillColor(colors.HexColor("#94a3b8"))
+    pdf.setFont("Helvetica", 7.5)
+    pdf.drawCentredString(
+        centro,
+        24 * mm,
+        f"Código de certificado: {codigo}",
+    )
+    pdf.drawCentredString(
+        centro,
+        19.5 * mm,
+        "Documento generado digitalmente por Aula Virtual",
+    )
+
+    pdf.showPage()
+    pdf.save()
+    return response
 
 
 @login_required

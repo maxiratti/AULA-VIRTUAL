@@ -25,6 +25,11 @@ urlpatterns = [
         name="seguimiento_curso",
     ),
     path(
+        "cursos/<int:curso_pk>/alumnos/<int:alumno_pk>/certificado/",
+        views.certificado_alumno,
+        name="certificado_alumno",
+    ),
+    path(
         "cursos/<int:pk>/finalizar/",
         views.finalizar_curso,
         name="finalizar_curso",

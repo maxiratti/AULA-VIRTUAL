@@ -14,9 +14,36 @@
     rel="stylesheet"
     href="{% static 'css/contenidos.css' %}"
 >
+<link
+    rel="stylesheet"
+    href="{% static 'css/cursos.css' %}"
+>
 {% endblock %}
 
 {% block content %}
+{% if curso.estado == "FINALIZADO" and inscripcion.estado == "APROBADO" %}
+<section class="certificate-callout">
+    <div class="certificate-callout-icon">
+        <i class="bi bi-award"></i>
+    </div>
+
+    <div class="certificate-callout-content">
+        <strong>Curso aprobado</strong>
+        <span>
+            Tu certificado de aprobación ya está disponible.
+        </span>
+    </div>
+
+    <a
+        href="{% url 'certificado_alumno' curso.pk request.user.pk %}"
+        class="btn-primary-custom"
+    >
+        <i class="bi bi-file-earmark-pdf"></i>
+        Descargar certificado
+    </a>
+</section>
+{% endif %}
+
 
 <section class="page-header">
 
@@ -93,7 +120,34 @@
     </progress>
 
 
-    {% if total_clases == 0 %}
+    {% if curso.estado == "FINALIZADO" %}
+
+        <div class="course-final-progress">
+
+            <div class="course-final-progress-main">
+
+                <span>
+                    Progreso registrado:
+                    <strong>{{ porcentaje_progreso }}%</strong>
+                </span>
+
+                <span>
+                    {{ clases_completadas }}
+                    de
+                    {{ total_clases }}
+                    clases completadas.
+                </span>
+
+            </div>
+
+            <span class="course-final-status course-final-status-{{ inscripcion.estado|lower }}">
+                Estado final:
+                {{ inscripcion.get_estado_display }}
+            </span>
+
+        </div>
+
+    {% elif total_clases == 0 %}
 
         <p class="course-progress-message">
             Todavía no hay clases disponibles

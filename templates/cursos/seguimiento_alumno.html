@@ -177,6 +177,26 @@ Seguimiento del alumno
 </section>
 
 
+
+{% if curso.estado == "FINALIZADO" and inscripcion.estado == "APROBADO" %}
+<section class="certificate-admin-bar">
+    <div>
+        <i class="bi bi-award"></i>
+        <span>
+            Este alumno aprobó el curso y tiene certificado disponible.
+        </span>
+    </div>
+
+    <a
+        href="{% url 'certificado_alumno' curso.pk alumno.pk %}"
+        class="btn-primary-custom"
+    >
+        <i class="bi bi-file-earmark-pdf"></i>
+        Descargar certificado
+    </a>
+</section>
+{% endif %}
+
 <section class="student-tracking-summary">
 
     <article class="student-metric-card">

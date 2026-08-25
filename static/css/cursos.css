@@ -1802,3 +1802,177 @@
         width: 100%;
     }
 }
+
+
+/* =========================================================
+   CERTIFICADOS
+   ========================================================= */
+
+.certificate-callout {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    margin: 0 0 20px;
+    padding: 16px 18px;
+    border: 1px solid #a7f3d0;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #ecfdf5 0%, #f8fffc 100%);
+    box-shadow: 0 4px 14px rgba(15, 118, 110, 0.06);
+}
+
+.certificate-callout-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 13px;
+    background: #d1fae5;
+    color: #047857;
+    font-size: 22px;
+}
+
+.certificate-callout-content { min-width: 0; }
+.certificate-callout-content strong {
+    display: block;
+    color: #064e3b;
+    font-size: 14px;
+    font-weight: 750;
+}
+.certificate-callout-content span {
+    display: block;
+    margin-top: 3px;
+    color: #047857;
+    font-size: 12px;
+}
+
+.certificate-callout .btn-primary-custom,
+.certificate-admin-bar .btn-primary-custom {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 40px;
+    padding: 0 15px;
+    border-radius: 10px;
+    background: #2563eb;
+    color: #fff;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.certificate-callout .btn-primary-custom:hover,
+.certificate-admin-bar .btn-primary-custom:hover {
+    background: #1d4ed8;
+    color: #fff;
+}
+
+.certificate-admin-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 20px;
+    padding: 14px 16px;
+    border: 1px solid #a7f3d0;
+    border-radius: 13px;
+    background: #ecfdf5;
+}
+.certificate-admin-bar > div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #047857;
+    font-size: 12px;
+    font-weight: 650;
+}
+.certificate-admin-bar > div i { font-size: 18px; }
+
+@media (max-width: 700px) {
+    .certificate-callout { grid-template-columns: 42px minmax(0, 1fr); }
+    .certificate-callout-icon { width: 42px; height: 42px; }
+    .certificate-callout .btn-primary-custom { grid-column: 1 / -1; width: 100%; }
+    .certificate-admin-bar { align-items: stretch; flex-direction: column; }
+    .certificate-admin-bar .btn-primary-custom { width: 100%; }
+}
+
+
+/* =========================================================
+   PROGRESO EN CURSOS FINALIZADOS
+   ========================================================= */
+
+.course-final-progress {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+
+    margin-top: 12px;
+    padding-top: 12px;
+
+    border-top: 1px solid #e5e7eb;
+}
+
+.course-final-progress-main {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+
+    color: #6b7280;
+
+    font-size: 11px;
+}
+
+.course-final-progress-main strong {
+    color: #111827;
+    font-weight: 700;
+}
+
+.course-final-status {
+    display: inline-flex;
+    align-items: center;
+
+    padding: 6px 10px;
+
+    border-radius: 999px;
+
+    font-size: 10px;
+    font-weight: 700;
+
+    white-space: nowrap;
+}
+
+.course-final-status-aprobado {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.course-final-status-desaprobado {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.course-final-status-abandono {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+.course-final-status-cursando {
+    background: #fffbeb;
+    color: #b45309;
+}
+
+.course-final-status-inscripto {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+@media (max-width: 700px) {
+    .course-final-progress {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
