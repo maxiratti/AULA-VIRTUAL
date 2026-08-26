@@ -26,7 +26,12 @@ from openpyxl.utils import get_column_letter
 from django.utils import timezone
 from django.urls import reverse
 
-from apps.actividades.models import Actividad, Entrega
+from apps.actividades.models import (
+    Actividad,
+    Cuestionario,
+    Entrega,
+    IntentoCuestionario,
+)
 from apps.contenidos.models import (
     Clase,
     Modulo,
@@ -1432,6 +1437,20 @@ def seguimiento_curso(request, pk):
 
     total_actividades = len(actividades_disponibles)
 
+    cuestionarios_disponibles = list(
+        Cuestionario.objects
+        .filter(
+            clase__in=clases_disponibles,
+            visible=True,
+        )
+        .prefetch_related("preguntas")
+        .distinct()
+    )
+
+    total_cuestionarios = len(
+        cuestionarios_disponibles
+    )
+
     inscripciones = list(
         Inscripcion.objects
         .filter(curso=curso)
@@ -1482,6 +1501,32 @@ def seguimiento_curso(request, pk):
             entrega.alumno_id,
             [],
         ).append(entrega)
+
+    intentos_cuestionarios = (
+        IntentoCuestionario.objects
+        .filter(
+            alumno_id__in=alumnos_ids,
+            cuestionario__in=cuestionarios_disponibles,
+            finalizado=True,
+        )
+        .select_related("cuestionario")
+        .order_by(
+            "alumno_id",
+            "cuestionario_id",
+            "-puntaje_obtenido",
+            "numero",
+        )
+    )
+
+    mejores_intentos = {}
+
+    for intento in intentos_cuestionarios:
+        clave = (
+            intento.alumno_id,
+            intento.cuestionario_id,
+        )
+        if clave not in mejores_intentos:
+            mejores_intentos[clave] = intento
 
     seguimiento = []
 
@@ -1544,6 +1589,32 @@ def seguimiento_curso(request, pk):
                     porcentaje
                 )
 
+        cuestionarios_resueltos = 0
+
+        for cuestionario in cuestionarios_disponibles:
+            mejor_intento = mejores_intentos.get(
+                (
+                    alumno.pk,
+                    cuestionario.pk,
+                )
+            )
+
+            if not mejor_intento:
+                continue
+
+            cuestionarios_resueltos += 1
+
+            if cuestionario.puntaje_maximo:
+                porcentajes_calificados.append(
+                    float(
+                        mejor_intento.puntaje_obtenido
+                    )
+                    / float(
+                        cuestionario.puntaje_maximo
+                    )
+                    * 100
+                )
+
         promedio = None
 
         if porcentajes_calificados:
@@ -1560,6 +1631,7 @@ def seguimiento_curso(request, pk):
                 "progreso": progreso,
                 "actividades_entregadas": cantidad_entregadas,
                 "actividades_corregidas": cantidad_corregidas,
+                "cuestionarios_resueltos": cuestionarios_resueltos,
                 "promedio": promedio,
             }
         )
@@ -1572,6 +1644,7 @@ def seguimiento_curso(request, pk):
             "seguimiento": seguimiento,
             "total_clases": total_clases,
             "total_actividades": total_actividades,
+            "total_cuestionarios": total_cuestionarios,
         },
     )
 
@@ -2397,6 +2470,89 @@ def seguimiento_alumno(request, curso_pk, alumno_pk):
         0,
     )
 
+    cuestionarios = list(
+        Cuestionario.objects
+        .filter(
+            clase__in=clases,
+            visible=True,
+        )
+        .select_related(
+            "clase",
+            "clase__modulo",
+        )
+        .prefetch_related(
+            "preguntas",
+        )
+        .order_by(
+            "clase__modulo__orden",
+            "clase__orden",
+            "id",
+        )
+        .distinct()
+    )
+
+    intentos = (
+        IntentoCuestionario.objects
+        .filter(
+            alumno=alumno,
+            cuestionario__in=cuestionarios,
+            finalizado=True,
+        )
+        .select_related("cuestionario")
+        .order_by(
+            "cuestionario_id",
+            "-puntaje_obtenido",
+            "numero",
+        )
+    )
+
+    mejores_intentos = {}
+
+    for intento in intentos:
+        if intento.cuestionario_id not in mejores_intentos:
+            mejores_intentos[
+                intento.cuestionario_id
+            ] = intento
+
+    detalle_cuestionarios = []
+
+    for cuestionario in cuestionarios:
+        mejor_intento = mejores_intentos.get(
+            cuestionario.pk
+        )
+        porcentaje_nota = None
+
+        if (
+            mejor_intento
+            and cuestionario.puntaje_maximo
+        ):
+            porcentaje_nota = round(
+                float(
+                    mejor_intento.puntaje_obtenido
+                )
+                / float(
+                    cuestionario.puntaje_maximo
+                )
+                * 100
+            )
+
+            porcentajes_calificados.append(
+                porcentaje_nota
+            )
+
+        detalle_cuestionarios.append(
+            {
+                "cuestionario": cuestionario,
+                "intento": mejor_intento,
+                "porcentaje_nota": porcentaje_nota,
+            }
+        )
+
+    total_cuestionarios = len(cuestionarios)
+    cuestionarios_resueltos = len(
+        mejores_intentos
+    )
+
     promedio = (
         round(
             sum(porcentajes_calificados)
@@ -2442,6 +2598,9 @@ def seguimiento_alumno(request, curso_pk, alumno_pk):
             "actividades_pendientes": actividades_pendientes,
             "actividades_rehacer": actividades_rehacer,
             "actividades_corregidas": actividades_corregidas,
+            "detalle_cuestionarios": detalle_cuestionarios,
+            "total_cuestionarios": total_cuestionarios,
+            "cuestionarios_resueltos": cuestionarios_resueltos,
             "promedio": promedio,
             "opciones_estado": opciones_estado,
         },

@@ -265,6 +265,23 @@ Seguimiento del alumno
     <article class="student-metric-card">
 
         <span>
+            Cuestionarios
+        </span>
+
+        <strong>
+            {{ cuestionarios_resueltos }} / {{ total_cuestionarios }}
+        </strong>
+
+        <small>
+            Autocorregidos · se considera el mejor intento
+        </small>
+
+    </article>
+
+
+    <article class="student-metric-card">
+
+        <span>
             Promedio
         </span>
 
@@ -275,7 +292,7 @@ Seguimiento del alumno
             </strong>
 
             <small>
-                Sobre actividades calificadas
+                Sobre actividades y cuestionarios calificados
             </small>
 
         {% else %}
@@ -285,7 +302,7 @@ Seguimiento del alumno
             </strong>
 
             <small>
-                Sin actividades calificadas
+                Sin evaluaciones calificadas
             </small>
 
         {% endif %}
@@ -544,6 +561,104 @@ Seguimiento del alumno
 
             <div class="tracking-detail-empty">
                 No hay actividades disponibles.
+            </div>
+
+        {% endif %}
+
+    </article>
+
+
+    <!-- CUESTIONARIOS -->
+
+    <article class="tracking-detail-card tracking-activities-card">
+
+        <div class="tracking-detail-heading">
+
+            <div>
+                <span class="tracking-detail-eyebrow">
+                    CUESTIONARIOS
+                </span>
+
+                <h2>
+                    Resultados autocorregidos
+                </h2>
+            </div>
+
+            <span class="tracking-detail-count">
+                {{ cuestionarios_resueltos }} / {{ total_cuestionarios }}
+            </span>
+
+        </div>
+
+        {% if detalle_cuestionarios %}
+
+            <div class="tracking-activity-list">
+
+                {% for item in detalle_cuestionarios %}
+
+                    <div class="tracking-activity-item">
+
+                        <div class="tracking-activity-top">
+
+                            <div>
+                                <strong>
+                                    {{ item.cuestionario.titulo }}
+                                </strong>
+
+                                <span>
+                                    {{ item.cuestionario.clase.titulo }}
+                                </span>
+                            </div>
+
+                            <div class="tracking-activity-status-area">
+
+                                {% if item.intento %}
+                                    <span class="detail-badge detail-badge-success">
+                                        Autocorregido
+                                    </span>
+                                {% else %}
+                                    <span class="detail-badge detail-badge-warning">
+                                        Pendiente
+                                    </span>
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+                        <div class="tracking-activity-meta">
+
+                            <span>
+                                <i class="bi bi-star"></i>
+                                {{ item.cuestionario.puntaje_maximo }} pts.
+                            </span>
+
+                            {% if item.intento %}
+                                <span class="activity-grade">
+                                    <i class="bi bi-award"></i>
+                                    Mejor intento:
+                                    {{ item.intento.puntaje_obtenido }}
+                                    /
+                                    {{ item.cuestionario.puntaje_maximo }}
+
+                                    {% if item.porcentaje_nota != None %}
+                                        · {{ item.porcentaje_nota }}%
+                                    {% endif %}
+                                </span>
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="tracking-detail-empty">
+                No hay cuestionarios disponibles.
             </div>
 
         {% endif %}

@@ -51,6 +51,10 @@ Seguimiento
         <div class="tracking-summary-icon"><i class="bi bi-check2-square"></i></div>
         <div><span>Actividades</span><strong>{{ total_actividades }}</strong></div>
     </article>
+    <article class="tracking-summary-card">
+        <div class="tracking-summary-icon"><i class="bi bi-ui-checks"></i></div>
+        <div><span>Cuestionarios</span><strong>{{ total_cuestionarios }}</strong></div>
+    </article>
 </section>
 
 <section class="content-card">
@@ -60,7 +64,7 @@ Seguimiento
                 <thead>
                     <tr>
                         <th>Alumno</th><th>Estado</th><th>Clases</th><th>Progreso</th>
-                        <th>Actividades</th><th>Corregidas</th><th>Promedio</th><th></th>
+                        <th>Actividades</th><th>Corregidas</th><th>Cuestionarios</th><th>Promedio</th><th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -89,6 +93,7 @@ Seguimiento
                             </td>
                             <td><strong class="tracking-number">{{ fila.actividades_entregadas }} / {{ total_actividades }}</strong></td>
                             <td><strong class="tracking-number">{{ fila.actividades_corregidas }}</strong></td>
+                            <td><strong class="tracking-number">{{ fila.cuestionarios_resueltos }} / {{ total_cuestionarios }}</strong></td>
                             <td>
                                 {% if fila.promedio != None %}<span class="tracking-grade">{{ fila.promedio }}%</span>{% else %}<span class="tracking-no-grade">Sin calificar</span>{% endif %}
                             </td>

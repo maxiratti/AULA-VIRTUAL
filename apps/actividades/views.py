@@ -829,6 +829,7 @@ def mis_calificaciones(request):
 
     cantidad_corregidas = 0
     suma_porcentajes = 0
+    cantidad_evaluaciones_calificadas = 0
 
     for actividad in actividades:
         entrega = entregas_por_actividad.get(
@@ -852,6 +853,7 @@ def mis_calificaciones(request):
                     ) * 100
 
                     suma_porcentajes += porcentaje
+                    cantidad_evaluaciones_calificadas += 1
 
             elif entrega.estado == Entrega.ESTADO_REHACER:
                 actividad.estado_alumno = "REHACER"
@@ -873,11 +875,97 @@ def mis_calificaciones(request):
         else:
             actividad.estado_alumno = "PENDIENTE"
 
+    cuestionarios = list(
+        Cuestionario.objects
+        .filter(
+            clase__modulo__curso_id__in=cursos_ids,
+            visible=True,
+            clase__visible=True,
+            clase__modulo__visible=True,
+        )
+        .select_related(
+            "clase",
+            "clase__modulo",
+            "clase__modulo__curso",
+            "clase__modulo__curso__institucion",
+        )
+        .prefetch_related(
+            "preguntas",
+        )
+        .order_by(
+            "clase__modulo__curso__nombre",
+            "clase__modulo__orden",
+            "clase__orden",
+            "id",
+        )
+        .distinct()
+    )
+
+    intentos = (
+        IntentoCuestionario.objects
+        .filter(
+            alumno=usuario,
+            cuestionario__in=cuestionarios,
+            finalizado=True,
+        )
+        .select_related(
+            "cuestionario",
+        )
+        .order_by(
+            "cuestionario_id",
+            "-puntaje_obtenido",
+            "numero",
+        )
+    )
+
+    mejores_intentos = {}
+
+    for intento in intentos:
+        if intento.cuestionario_id not in mejores_intentos:
+            mejores_intentos[
+                intento.cuestionario_id
+            ] = intento
+
+    cantidad_cuestionarios_resueltos = 0
+
+    for cuestionario in cuestionarios:
+        mejor_intento = mejores_intentos.get(
+            cuestionario.pk
+        )
+
+        cuestionario.mejor_intento_alumno = mejor_intento
+        cuestionario.porcentaje_alumno = None
+
+        if mejor_intento:
+            cuestionario.estado_alumno = "AUTOCORREGIDO"
+            cantidad_cuestionarios_resueltos += 1
+
+            if cuestionario.puntaje_maximo:
+                porcentaje = (
+                    float(
+                        mejor_intento.puntaje_obtenido
+                    )
+                    / float(
+                        cuestionario.puntaje_maximo
+                    )
+                ) * 100
+
+                cuestionario.porcentaje_alumno = round(
+                    porcentaje
+                )
+
+                suma_porcentajes += porcentaje
+                cantidad_evaluaciones_calificadas += 1
+
+        else:
+            cuestionario.estado_alumno = "PENDIENTE"
+
     promedio = 0
 
-    if cantidad_corregidas > 0:
+    if cantidad_evaluaciones_calificadas > 0:
         promedio = round(
-            suma_porcentajes / cantidad_corregidas
+            suma_porcentajes
+            / cantidad_evaluaciones_calificadas
         )
 
     return render(
@@ -885,7 +973,14 @@ def mis_calificaciones(request):
         "actividades/mis_calificaciones.html",
         {
             "actividades": actividades,
+            "cuestionarios": cuestionarios,
             "cantidad_corregidas": cantidad_corregidas,
+            "cantidad_cuestionarios_resueltos": (
+                cantidad_cuestionarios_resueltos
+            ),
+            "cantidad_evaluaciones_calificadas": (
+                cantidad_evaluaciones_calificadas
+            ),
             "promedio": promedio,
         },
     )
@@ -947,6 +1042,25 @@ def libro_calificaciones(request, curso_id):
         )
     )
 
+    cuestionarios = list(
+        Cuestionario.objects
+        .filter(
+            clase__modulo__curso=curso,
+        )
+        .select_related(
+            "clase",
+            "clase__modulo",
+        )
+        .prefetch_related(
+            "preguntas",
+        )
+        .order_by(
+            "clase__modulo__orden",
+            "clase__orden",
+            "id",
+        )
+    )
+
 
     inscripciones = Inscripcion.objects.filter(
         curso=curso,
@@ -995,6 +1109,38 @@ def libro_calificaciones(request, curso_id):
         ): entrega
         for entrega in entregas
     }
+
+    intentos_cuestionarios = (
+        IntentoCuestionario.objects
+        .filter(
+            cuestionario__in=cuestionarios,
+            alumno__in=inscripciones.values(
+                "alumno_id"
+            ),
+            finalizado=True,
+        )
+        .select_related(
+            "cuestionario",
+            "alumno",
+        )
+        .order_by(
+            "alumno_id",
+            "cuestionario_id",
+            "-puntaje_obtenido",
+            "numero",
+        )
+    )
+
+    mejor_intento_por_clave = {}
+
+    for intento in intentos_cuestionarios:
+        clave = (
+            intento.alumno_id,
+            intento.cuestionario_id,
+        )
+
+        if clave not in mejor_intento_por_clave:
+            mejor_intento_por_clave[clave] = intento
 
 
     filas = []
@@ -1055,6 +1201,46 @@ def libro_calificaciones(request, curso_id):
                 }
             )
 
+        celdas_cuestionarios = []
+
+        for cuestionario in cuestionarios:
+            mejor_intento = mejor_intento_por_clave.get(
+                (
+                    alumno.pk,
+                    cuestionario.pk,
+                )
+            )
+
+            porcentaje = None
+
+            if (
+                mejor_intento
+                and cuestionario.puntaje_maximo
+            ):
+                porcentaje = (
+                    float(
+                        mejor_intento.puntaje_obtenido
+                    )
+                    / float(
+                        cuestionario.puntaje_maximo
+                    )
+                ) * 100
+
+                suma_porcentajes += porcentaje
+                cantidad_calificadas += 1
+
+            celdas_cuestionarios.append(
+                {
+                    "cuestionario": cuestionario,
+                    "intento": mejor_intento,
+                    "porcentaje": (
+                        round(porcentaje)
+                        if porcentaje is not None
+                        else None
+                    ),
+                }
+            )
+
 
         promedio = None
 
@@ -1069,6 +1255,7 @@ def libro_calificaciones(request, curso_id):
             {
                 "alumno": alumno,
                 "celdas": celdas,
+                "celdas_cuestionarios": celdas_cuestionarios,
                 "promedio": promedio,
             }
         )
@@ -1080,6 +1267,7 @@ def libro_calificaciones(request, curso_id):
         {
             "curso": curso,
             "actividades": actividades,
+            "cuestionarios": cuestionarios,
             "filas": filas,
         },
     )

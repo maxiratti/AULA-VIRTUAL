@@ -54,7 +54,7 @@ Calificaciones
 
 <section class="content-card gradebook-card">
 
-    {% if actividades and filas %}
+    {% if filas and actividades or filas and cuestionarios %}
 
         <div class="gradebook-toolbar">
 
@@ -78,6 +78,17 @@ Calificaciones
                     <span>
                         <strong>{{ actividades|length }}</strong>
                         actividades
+                    </span>
+
+                </div>
+
+                <div class="gradebook-info-item">
+
+                    <i class="bi bi-ui-checks"></i>
+
+                    <span>
+                        <strong>{{ cuestionarios|length }}</strong>
+                        cuestionarios
                     </span>
 
                 </div>
@@ -145,6 +156,34 @@ Calificaciones
                                     <small>
                                         Máx.
                                         {{ actividad.puntaje_maximo }}
+                                        pts.
+                                    </small>
+
+                                </div>
+
+                            </th>
+
+                        {% endfor %}
+
+                        {% for cuestionario in cuestionarios %}
+
+                            <th class="gradebook-activity-column">
+
+                                <div class="gradebook-activity-header">
+
+                                    <span class="gradebook-activity-context">
+                                        {{ cuestionario.clase.modulo.titulo }}
+                                        ·
+                                        {{ cuestionario.clase.titulo }}
+                                    </span>
+
+                                    <strong title="{{ cuestionario.titulo }}">
+                                        {{ cuestionario.titulo }}
+                                    </strong>
+
+                                    <small>
+                                        Cuestionario · Máx.
+                                        {{ cuestionario.puntaje_maximo }}
                                         pts.
                                     </small>
 
@@ -272,6 +311,49 @@ Calificaciones
                             {% endfor %}
 
 
+                            <!-- CUESTIONARIOS AUTOCORREGIBLES -->
+
+                            {% for celda in fila.celdas_cuestionarios %}
+
+                                <td class="gradebook-grade-cell">
+
+                                    {% if celda.intento %}
+
+                                        <div
+                                            class="gradebook-grade-link corrected"
+                                            title="Autocorregido · Se toma el mejor intento"
+                                        >
+                                            <strong>
+                                                {{ celda.intento.puntaje_obtenido }}
+                                            </strong>
+
+                                            <span>
+                                                /
+                                                {{ celda.cuestionario.puntaje_maximo }}
+                                            </span>
+
+                                            <small>
+                                                Auto · {{ celda.porcentaje }}%
+                                            </small>
+                                        </div>
+
+                                    {% else %}
+
+                                        <span
+                                            class="gradebook-state pending"
+                                            title="El alumno todavía no resolvió el cuestionario"
+                                        >
+                                            <i class="bi bi-hourglass-split"></i>
+                                            <span>Pendiente</span>
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+                            {% endfor %}
+
+
                             <!-- PROMEDIO -->
 
                             <td class="gradebook-average-cell">
@@ -346,7 +428,7 @@ Calificaciones
         </div>
 
 
-    {% elif not actividades %}
+    {% elif not actividades and not cuestionarios %}
 
         <div class="empty-state">
 
@@ -355,11 +437,11 @@ Calificaciones
             </div>
 
             <h2>
-                Este curso todavía no tiene actividades
+                Este curso todavía no tiene evaluaciones
             </h2>
 
             <p>
-                Cuando se creen actividades,
+                Cuando se creen actividades o cuestionarios,
                 sus calificaciones aparecerán aquí.
             </p>
 

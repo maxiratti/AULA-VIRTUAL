@@ -28,7 +28,7 @@ Calificaciones
 
         <p>
             Consultá el estado y las calificaciones
-            de tus actividades.
+            de tus actividades y cuestionarios.
         </p>
 
     </div>
@@ -36,7 +36,7 @@ Calificaciones
 </section>
 
 
-{% if actividades %}
+{% if actividades or cuestionarios %}
 
     <section class="grades-summary">
 
@@ -56,11 +56,24 @@ Calificaciones
         <article class="grade-summary-card">
 
             <span>
+                Cuestionarios resueltos
+            </span>
+
+            <strong>
+                {{ cantidad_cuestionarios_resueltos }}
+            </strong>
+
+        </article>
+
+
+        <article class="grade-summary-card">
+
+            <span>
                 Rendimiento
             </span>
 
             <strong>
-                {% if cantidad_corregidas %}
+                {% if cantidad_evaluaciones_calificadas %}
                     {{ promedio }}%
                 {% else %}
                     —
@@ -81,27 +94,17 @@ Calificaciones
                 <div class="grade-card-icon">
 
                     {% if actividad.estado_alumno == "CORREGIDA" %}
-
                         <i class="bi bi-patch-check-fill"></i>
-
                     {% elif actividad.estado_alumno == "REHACER" %}
-                        <span class="grade-status pending"><i class="bi bi-arrow-repeat"></i> Rehacer</span>
+                        <i class="bi bi-arrow-repeat"></i>
                     {% elif actividad.estado_alumno == "ENTREGADA" %}
-
                         <i class="bi bi-check-circle"></i>
-
                     {% elif actividad.estado_alumno == "VENCIDA" %}
-
                         <i class="bi bi-exclamation-circle"></i>
-
                     {% elif actividad.estado_alumno == "PROXIMAMENTE" %}
-
                         <i class="bi bi-clock"></i>
-
                     {% else %}
-
                         <i class="bi bi-hourglass-split"></i>
-
                     {% endif %}
 
                 </div>
@@ -110,11 +113,10 @@ Calificaciones
                 <div class="grade-card-main">
 
                     <span class="grade-course">
-
                         {{ actividad.clase.modulo.curso.nombre }}
                         ·
                         {{ actividad.clase.titulo }}
-
+                        · Actividad
                     </span>
 
                     <h2>
@@ -132,8 +134,13 @@ Calificaciones
                             </span>
 
                         {% elif actividad.estado_alumno == "REHACER" %}
-                        <span class="grade-status pending"><i class="bi bi-arrow-repeat"></i> Rehacer</span>
-                    {% elif actividad.estado_alumno == "ENTREGADA" %}
+
+                            <span class="delivery-status pending">
+                                <i class="bi bi-arrow-repeat"></i>
+                                Rehacer
+                            </span>
+
+                        {% elif actividad.estado_alumno == "ENTREGADA" %}
 
                             <span class="delivery-status delivered">
                                 <i class="bi bi-check-circle-fill"></i>
@@ -221,6 +228,117 @@ Calificaciones
 
         {% endfor %}
 
+
+        {% for cuestionario in cuestionarios %}
+
+            <article class="grade-card">
+
+                <div class="grade-card-icon">
+
+                    {% if cuestionario.estado_alumno == "AUTOCORREGIDO" %}
+                        <i class="bi bi-patch-check-fill"></i>
+                    {% else %}
+                        <i class="bi bi-ui-checks"></i>
+                    {% endif %}
+
+                </div>
+
+
+                <div class="grade-card-main">
+
+                    <span class="grade-course">
+                        {{ cuestionario.clase.modulo.curso.nombre }}
+                        ·
+                        {{ cuestionario.clase.titulo }}
+                        · Cuestionario
+                    </span>
+
+                    <h2>
+                        {{ cuestionario.titulo }}
+                    </h2>
+
+
+                    <div class="grade-status-row">
+
+                        {% if cuestionario.estado_alumno == "AUTOCORREGIDO" %}
+
+                            <span class="delivery-status corrected">
+                                <i class="bi bi-patch-check-fill"></i>
+                                Autocorregido
+                            </span>
+
+                            {% if cuestionario.porcentaje_alumno != None %}
+                                <span class="delivery-status delivered">
+                                    Mejor intento:
+                                    {{ cuestionario.porcentaje_alumno }}%
+                                </span>
+                            {% endif %}
+
+                        {% else %}
+
+                            <span class="delivery-status pending">
+                                <i class="bi bi-hourglass-split"></i>
+                                Pendiente
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <div class="grade-result">
+
+                    {% if cuestionario.mejor_intento_alumno %}
+
+                        <strong>
+                            {{ cuestionario.mejor_intento_alumno.puntaje_obtenido }}
+                        </strong>
+
+                        <span>
+                            / {{ cuestionario.puntaje_maximo }}
+                        </span>
+
+                    {% else %}
+
+                        <strong class="grade-empty">
+                            —
+                        </strong>
+
+                    {% endif %}
+
+                </div>
+
+
+                {% if cuestionario.mejor_intento_alumno %}
+
+                    <a
+                        href="{% url 'resultado_cuestionario' cuestionario.mejor_intento_alumno.pk %}"
+                        class="grade-open"
+                        title="Ver resultado"
+                        aria-label="Ver resultado"
+                    >
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+
+                {% else %}
+
+                    <a
+                        href="{% url 'resolver_cuestionario' cuestionario.pk %}"
+                        class="grade-open"
+                        title="Resolver cuestionario"
+                        aria-label="Resolver cuestionario"
+                    >
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+
+                {% endif %}
+
+            </article>
+
+        {% endfor %}
+
     </section>
 
 
@@ -235,11 +353,11 @@ Calificaciones
             </div>
 
             <h2>
-                Todavía no hay actividades
+                Todavía no hay evaluaciones
             </h2>
 
             <p>
-                Tus actividades y calificaciones
+                Tus actividades, cuestionarios y calificaciones
                 aparecerán en esta sección.
             </p>
 
