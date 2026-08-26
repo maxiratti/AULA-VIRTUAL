@@ -20,6 +20,26 @@ urlpatterns = [
         name="nueva_pregunta_cuestionario",
     ),
     path(
+        "preguntas-cuestionario/<int:pk>/editar/",
+        views.editar_pregunta_cuestionario,
+        name="editar_pregunta_cuestionario",
+    ),
+    path(
+        "preguntas-cuestionario/<int:pk>/eliminar/",
+        views.eliminar_pregunta_cuestionario,
+        name="eliminar_pregunta_cuestionario",
+    ),
+    path(
+        "preguntas-cuestionario/<int:pk>/duplicar/",
+        views.duplicar_pregunta_cuestionario,
+        name="duplicar_pregunta_cuestionario",
+    ),
+    path(
+        "preguntas-cuestionario/<int:pk>/mover/<str:direccion>/",
+        views.mover_pregunta_cuestionario,
+        name="mover_pregunta_cuestionario",
+    ),
+    path(
         "mis-cuestionarios/<int:pk>/resolver/",
         views.resolver_cuestionario,
         name="resolver_cuestionario",

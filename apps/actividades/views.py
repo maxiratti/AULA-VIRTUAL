@@ -42,6 +42,8 @@ from apps.notificaciones.services import (
     notificar_actividad_publicada,
     notificar_entrega_corregida,
     notificar_nueva_entrega,
+    notificar_cuestionario_publicado,
+    notificar_cuestionario_realizado,
 )
 
 
@@ -1486,6 +1488,47 @@ def calendario_alumno(request):
     )
 
 
+
+def cuestionario_tiene_respuestas(cuestionario):
+    return cuestionario.intentos.filter(
+        finalizado=True,
+    ).exists()
+
+
+def normalizar_orden_preguntas(cuestionario):
+    for orden, pregunta in enumerate(
+        cuestionario.preguntas.order_by(
+            "orden",
+            "id",
+        ),
+        start=1,
+    ):
+        if pregunta.orden != orden:
+            pregunta.orden = orden
+            pregunta.save(
+                update_fields=["orden"]
+            )
+
+
+def bloquear_edicion_cuestionario_si_corresponde(
+    request,
+    cuestionario,
+):
+    if cuestionario_tiene_respuestas(
+        cuestionario
+    ):
+        messages.warning(
+            request,
+            (
+                "Este cuestionario ya tiene respuestas de alumnos. "
+                "Las preguntas, opciones, puntajes y orden quedaron "
+                "bloqueados para preservar los resultados históricos."
+            ),
+        )
+        return True
+
+    return False
+
 @login_required
 def nuevo_cuestionario(request, clase_id):
     clase = get_object_or_404(
@@ -1590,6 +1633,7 @@ def editar_cuestionario(request, pk):
             if valido:
                 cuestionario.visible = True
                 cuestionario.save(update_fields=["visible"])
+                notificar_cuestionario_publicado(cuestionario)
                 messages.success(request, "Cuestionario publicado.")
             else:
                 messages.error(
@@ -1604,13 +1648,32 @@ def editar_cuestionario(request, pk):
 
         return redirect("editar_cuestionario", pk=cuestionario.pk)
 
+    preguntas = cuestionario.preguntas.prefetch_related(
+        "opciones"
+    )
+
+    intentos_finalizados = cuestionario.intentos.filter(
+        finalizado=True,
+    )
+
+    tiene_respuestas = intentos_finalizados.exists()
+
     return render(
         request,
         "actividades/cuestionario_editar.html",
         {
             "cuestionario": cuestionario,
+            "preguntas": preguntas,
             "clase": cuestionario.clase,
             "curso": cuestionario.clase.modulo.curso,
+            "tiene_respuestas": tiene_respuestas,
+            "cantidad_intentos": intentos_finalizados.count(),
+            "cantidad_alumnos": (
+                intentos_finalizados
+                .values("alumno_id")
+                .distinct()
+                .count()
+            ),
         },
     )
 
@@ -1639,6 +1702,15 @@ def nueva_pregunta_cuestionario(request, pk):
 
     if request.method != "POST":
         return redirect("editar_cuestionario", pk=cuestionario.pk)
+
+    if bloquear_edicion_cuestionario_si_corresponde(
+        request,
+        cuestionario,
+    ):
+        return redirect(
+            "editar_cuestionario",
+            pk=cuestionario.pk,
+        )
 
     enunciado = request.POST.get("enunciado", "").strip()
     puntaje = request.POST.get("puntaje", "1").strip()
@@ -1703,6 +1775,401 @@ def nueva_pregunta_cuestionario(request, pk):
     messages.success(request, "Pregunta agregada.")
     return redirect("editar_cuestionario", pk=cuestionario.pk)
 
+
+
+@login_required
+def editar_pregunta_cuestionario(request, pk):
+    pregunta = get_object_or_404(
+        PreguntaCuestionario.objects.select_related(
+            "cuestionario",
+            "cuestionario__clase",
+            "cuestionario__clase__modulo",
+            "cuestionario__clase__modulo__curso",
+            "cuestionario__clase__modulo__curso__institucion",
+        ).prefetch_related("opciones"),
+        pk=pk,
+    )
+
+    cuestionario = pregunta.cuestionario
+
+    if not puede_gestionar_actividad(
+        request.user,
+        cuestionario.clase,
+    ):
+        raise PermissionDenied
+
+    if cuestionario.clase.modulo.curso.estado == Curso.ESTADO_FINALIZADO:
+        messages.warning(
+            request,
+            "El curso está finalizado. El cuestionario está disponible solo para consulta.",
+        )
+        return redirect(
+            "editar_cuestionario",
+            pk=cuestionario.pk,
+        )
+
+    if bloquear_edicion_cuestionario_si_corresponde(
+        request,
+        cuestionario,
+    ):
+        return redirect(
+            "editar_cuestionario",
+            pk=cuestionario.pk,
+        )
+
+    if request.method != "POST":
+        return redirect(
+            "editar_cuestionario",
+            pk=cuestionario.pk,
+        )
+
+    enunciado = request.POST.get(
+        "enunciado",
+        "",
+    ).strip()
+    puntaje = request.POST.get(
+        "puntaje",
+        "1",
+    ).strip()
+    opciones = [
+        request.POST.get(
+            f"opcion_{i}",
+            "",
+        ).strip()
+        for i in range(1, 5)
+    ]
+    correcta = request.POST.get(
+        "correcta",
+        "1",
+    )
+
+    opciones_validas = [
+        (indice, texto)
+        for indice, texto in enumerate(
+            opciones,
+            start=1,
+        )
+        if texto
+    ]
+
+    if (
+        not enunciado
+        or len(opciones_validas) < 2
+    ):
+        messages.error(
+            request,
+            "Ingresá el enunciado y al menos dos opciones.",
+        )
+        return redirect(
+            "editar_cuestionario",
+            pk=cuestionario.pk,
+        )
+
+    try:
+        from decimal import Decimal
+
+        puntaje = Decimal(puntaje)
+
+        if puntaje < 0:
+            raise ValueError
+    except Exception:
+        messages.error(
+            request,
+            "El puntaje ingresado no es válido.",
+        )
+        return redirect(
+            "editar_cuestionario",
+            pk=cuestionario.pk,
+        )
+
+    try:
+        correcta = int(correcta)
+    except ValueError:
+        correcta = 1
+
+    indices_validos = [
+        indice
+        for indice, _ in opciones_validas
+    ]
+
+    if correcta not in indices_validos:
+        messages.error(
+            request,
+            "Seleccioná como correcta una opción que tenga texto.",
+        )
+        return redirect(
+            "editar_cuestionario",
+            pk=cuestionario.pk,
+        )
+
+    pregunta.enunciado = enunciado
+    pregunta.puntaje = puntaje
+    pregunta.save(
+        update_fields=[
+            "enunciado",
+            "puntaje",
+        ]
+    )
+
+    pregunta.opciones.all().delete()
+
+    for indice, texto in opciones_validas:
+        OpcionCuestionario.objects.create(
+            pregunta=pregunta,
+            texto=texto,
+            es_correcta=(
+                indice == correcta
+            ),
+            orden=indice,
+        )
+
+    cuestionario.visible = False
+    cuestionario.save(
+        update_fields=["visible"]
+    )
+
+    messages.success(
+        request,
+        "Pregunta actualizada. El cuestionario volvió a borrador para que revises los cambios.",
+    )
+
+    return redirect(
+        "editar_cuestionario",
+        pk=cuestionario.pk,
+    )
+
+
+@login_required
+def eliminar_pregunta_cuestionario(request, pk):
+    pregunta = get_object_or_404(
+        PreguntaCuestionario.objects.select_related(
+            "cuestionario",
+            "cuestionario__clase",
+            "cuestionario__clase__modulo",
+            "cuestionario__clase__modulo__curso",
+            "cuestionario__clase__modulo__curso__institucion",
+        ),
+        pk=pk,
+    )
+
+    cuestionario = pregunta.cuestionario
+
+    if not puede_gestionar_actividad(
+        request.user,
+        cuestionario.clase,
+    ):
+        raise PermissionDenied
+
+    if request.method != "POST":
+        return redirect(
+            "editar_cuestionario",
+            pk=cuestionario.pk,
+        )
+
+    if (
+        cuestionario.clase.modulo.curso.estado
+        == Curso.ESTADO_FINALIZADO
+        or bloquear_edicion_cuestionario_si_corresponde(
+            request,
+            cuestionario,
+        )
+    ):
+        return redirect(
+            "editar_cuestionario",
+            pk=cuestionario.pk,
+        )
+
+    pregunta.delete()
+    normalizar_orden_preguntas(
+        cuestionario
+    )
+
+    cuestionario.visible = False
+    cuestionario.save(
+        update_fields=["visible"]
+    )
+
+    messages.success(
+        request,
+        "Pregunta eliminada.",
+    )
+
+    return redirect(
+        "editar_cuestionario",
+        pk=cuestionario.pk,
+    )
+
+
+@login_required
+def duplicar_pregunta_cuestionario(request, pk):
+    pregunta = get_object_or_404(
+        PreguntaCuestionario.objects.select_related(
+            "cuestionario",
+            "cuestionario__clase",
+            "cuestionario__clase__modulo",
+            "cuestionario__clase__modulo__curso",
+            "cuestionario__clase__modulo__curso__institucion",
+        ).prefetch_related("opciones"),
+        pk=pk,
+    )
+
+    cuestionario = pregunta.cuestionario
+
+    if not puede_gestionar_actividad(
+        request.user,
+        cuestionario.clase,
+    ):
+        raise PermissionDenied
+
+    if request.method != "POST":
+        return redirect(
+            "editar_cuestionario",
+            pk=cuestionario.pk,
+        )
+
+    if (
+        cuestionario.clase.modulo.curso.estado
+        == Curso.ESTADO_FINALIZADO
+        or bloquear_edicion_cuestionario_si_corresponde(
+            request,
+            cuestionario,
+        )
+    ):
+        return redirect(
+            "editar_cuestionario",
+            pk=cuestionario.pk,
+        )
+
+    nueva = PreguntaCuestionario.objects.create(
+        cuestionario=cuestionario,
+        enunciado=f"{pregunta.enunciado} (copia)",
+        puntaje=pregunta.puntaje,
+        orden=cuestionario.preguntas.count() + 1,
+    )
+
+    for opcion in pregunta.opciones.all():
+        OpcionCuestionario.objects.create(
+            pregunta=nueva,
+            texto=opcion.texto,
+            es_correcta=opcion.es_correcta,
+            orden=opcion.orden,
+        )
+
+    cuestionario.visible = False
+    cuestionario.save(
+        update_fields=["visible"]
+    )
+
+    messages.success(
+        request,
+        "Pregunta duplicada.",
+    )
+
+    return redirect(
+        "editar_cuestionario",
+        pk=cuestionario.pk,
+    )
+
+
+@login_required
+def mover_pregunta_cuestionario(request, pk, direccion):
+    pregunta = get_object_or_404(
+        PreguntaCuestionario.objects.select_related(
+            "cuestionario",
+            "cuestionario__clase",
+            "cuestionario__clase__modulo",
+            "cuestionario__clase__modulo__curso",
+            "cuestionario__clase__modulo__curso__institucion",
+        ),
+        pk=pk,
+    )
+
+    cuestionario = pregunta.cuestionario
+
+    if not puede_gestionar_actividad(
+        request.user,
+        cuestionario.clase,
+    ):
+        raise PermissionDenied
+
+    if request.method != "POST":
+        return redirect(
+            "editar_cuestionario",
+            pk=cuestionario.pk,
+        )
+
+    if (
+        cuestionario.clase.modulo.curso.estado
+        == Curso.ESTADO_FINALIZADO
+        or bloquear_edicion_cuestionario_si_corresponde(
+            request,
+            cuestionario,
+        )
+    ):
+        return redirect(
+            "editar_cuestionario",
+            pk=cuestionario.pk,
+        )
+
+    preguntas = list(
+        cuestionario.preguntas.order_by(
+            "orden",
+            "id",
+        )
+    )
+
+    indice = next(
+        (
+            i
+            for i, item in enumerate(preguntas)
+            if item.pk == pregunta.pk
+        ),
+        None,
+    )
+
+    if indice is None:
+        return redirect(
+            "editar_cuestionario",
+            pk=cuestionario.pk,
+        )
+
+    if direccion == "subir":
+        destino = indice - 1
+    elif direccion == "bajar":
+        destino = indice + 1
+    else:
+        destino = indice
+
+    if 0 <= destino < len(preguntas):
+        preguntas[indice], preguntas[destino] = (
+            preguntas[destino],
+            preguntas[indice],
+        )
+
+        for orden, item in enumerate(
+            preguntas,
+            start=1,
+        ):
+            if item.orden != orden:
+                item.orden = orden
+                item.save(
+                    update_fields=["orden"]
+                )
+
+        cuestionario.visible = False
+        cuestionario.save(
+            update_fields=["visible"]
+        )
+
+        messages.success(
+            request,
+            "Orden de preguntas actualizado.",
+        )
+
+    return redirect(
+        "editar_cuestionario",
+        pk=cuestionario.pk,
+    )
 
 @login_required
 def resolver_cuestionario(request, pk):
@@ -1806,6 +2273,8 @@ def resolver_cuestionario(request, pk):
                     "finalizado",
                 ]
             )
+
+            notificar_cuestionario_realizado(intento)
 
             inscripcion.iniciar_cursado()
 

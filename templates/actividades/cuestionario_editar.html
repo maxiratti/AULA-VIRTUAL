@@ -1,15 +1,320 @@
-{% extends "base.html" %}{% load static %}
-{% block title %}Editar cuestionario{% endblock %}{% block page_title %}Cuestionario{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/actividades.css' %}">{% endblock %}
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Editar cuestionario{% endblock %}
+{% block page_title %}Cuestionario{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/actividades.css' %}">
+{% endblock %}
+
 {% block content %}
-<section class="page-header"><div><a href="{% url 'lista_actividades' clase.pk %}" class="back-link"><i class="bi bi-arrow-left"></i> Volver a actividades</a><h1>{{ cuestionario.titulo }}</h1><p>{% if cuestionario.visible %}Publicado{% else %}Borrador{% endif %} · {{ cuestionario.puntaje_maximo }} puntos</p></div>
-<form method="post">{% csrf_token %}{% if cuestionario.visible %}<button name="accion" value="ocultar" class="btn btn-outline-secondary">Ocultar</button>{% else %}<button name="accion" value="publicar" class="btn-primary-custom">Publicar cuestionario</button>{% endif %}</form></section>
-<section class="quiz-editor-grid">
-<div class="content-card"><h2>Preguntas</h2>
-{% for pregunta in cuestionario.preguntas.all %}<article class="quiz-question-summary"><strong>{{ forloop.counter }}. {{ pregunta.enunciado }}</strong><span>{{ pregunta.puntaje }} puntos</span><ul>{% for opcion in pregunta.opciones.all %}<li>{% if opcion.es_correcta %}<i class="bi bi-check-circle-fill"></i>{% endif %} {{ opcion.texto }}</li>{% endfor %}</ul></article>{% empty %}<p>Todavía no agregaste preguntas.</p>{% endfor %}
+
+<section class="page-header quiz-editor-header">
+    <div>
+        <a href="{% url 'lista_actividades' clase.pk %}" class="back-link">
+            <i class="bi bi-arrow-left"></i>
+            Volver a actividades
+        </a>
+
+        <h1>{{ cuestionario.titulo }}</h1>
+
+        <p>
+            {% if cuestionario.visible %}Publicado{% else %}Borrador{% endif %}
+            · {{ cuestionario.puntaje_maximo }} puntos
+            · {{ preguntas|length }} pregunta{{ preguntas|length|pluralize }}
+        </p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        {% if cuestionario.visible %}
+            <button name="accion" value="ocultar" class="btn btn-outline-secondary">
+                <i class="bi bi-eye-slash"></i>
+                Ocultar
+            </button>
+        {% else %}
+            <button name="accion" value="publicar" class="btn-primary-custom">
+                <i class="bi bi-send-check"></i>
+                Publicar cuestionario
+            </button>
+        {% endif %}
+    </form>
+</section>
+
+<section class="quiz-editor-stats">
+    <article>
+        <span>Preguntas</span>
+        <strong>{{ preguntas|length }}</strong>
+    </article>
+    <article>
+        <span>Puntaje total</span>
+        <strong>{{ cuestionario.puntaje_maximo }}</strong>
+    </article>
+    <article>
+        <span>Alumnos que respondieron</span>
+        <strong>{{ cantidad_alumnos }}</strong>
+    </article>
+    <article>
+        <span>Intentos enviados</span>
+        <strong>{{ cantidad_intentos }}</strong>
+    </article>
+</section>
+
+{% if tiene_respuestas %}
+<div class="alert alert-warning quiz-history-lock">
+    <i class="bi bi-lock-fill"></i>
+    <div>
+        <strong>Edición académica bloqueada</strong>
+        <span>
+            Este cuestionario ya fue respondido. Las preguntas, opciones,
+            puntajes y orden no pueden modificarse para preservar los
+            resultados históricos de los alumnos.
+        </span>
+    </div>
 </div>
-<div class="content-card"><h2>Agregar pregunta</h2><form method="post" action="{% url 'nueva_pregunta_cuestionario' cuestionario.pk %}">{% csrf_token %}
-<div class="mb-3"><label class="form-label">Enunciado</label><textarea name="enunciado" class="form-control" rows="3" required></textarea></div>
-<div class="mb-3"><label class="form-label">Puntaje</label><input name="puntaje" type="number" min="0" step="0.01" value="1" class="form-control" required></div>
-{% for n in "1234" %}<div class="mb-2"><label class="form-label">Opción {{ n }}</label><div class="input-group"><div class="input-group-text"><input type="radio" name="correcta" value="{{ n }}" {% if forloop.first %}checked{% endif %}></div><input name="opcion_{{ n }}" class="form-control" {% if forloop.counter < 3 %}required{% endif %}></div></div>{% endfor %}
-<button class="btn-primary-custom" type="submit"><i class="bi bi-plus-lg"></i> Agregar pregunta</button></form></div></section>{% endblock %}
+{% endif %}
+
+<section class="quiz-editor-grid">
+
+    <div class="content-card">
+        <div class="quiz-editor-section-heading">
+            <div>
+                <span class="section-eyebrow">ESTRUCTURA</span>
+                <h2>Preguntas</h2>
+            </div>
+        </div>
+
+        <div class="quiz-editor-question-list">
+            {% for pregunta in preguntas %}
+                <article class="quiz-question-summary">
+                    <div class="quiz-question-summary-head">
+                        <div>
+                            <span class="quiz-question-number">
+                                Pregunta {{ forloop.counter }}
+                            </span>
+                            <strong>{{ pregunta.enunciado }}</strong>
+                            <small>{{ pregunta.puntaje }} puntos</small>
+                        </div>
+
+                        {% if not tiene_respuestas %}
+                            <div class="quiz-question-actions">
+                                <form method="post" action="{% url 'mover_pregunta_cuestionario' pregunta.pk 'subir' %}">
+                                    {% csrf_token %}
+                                    <button
+                                        class="quiz-icon-button"
+                                        title="Subir pregunta"
+                                        {% if forloop.first %}disabled{% endif %}
+                                    >
+                                        <i class="bi bi-arrow-up"></i>
+                                    </button>
+                                </form>
+
+                                <form method="post" action="{% url 'mover_pregunta_cuestionario' pregunta.pk 'bajar' %}">
+                                    {% csrf_token %}
+                                    <button
+                                        class="quiz-icon-button"
+                                        title="Bajar pregunta"
+                                        {% if forloop.last %}disabled{% endif %}
+                                    >
+                                        <i class="bi bi-arrow-down"></i>
+                                    </button>
+                                </form>
+
+                                <button
+                                    type="button"
+                                    class="quiz-icon-button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#editar-pregunta-{{ pregunta.pk }}"
+                                    title="Editar pregunta"
+                                >
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+
+                                <form method="post" action="{% url 'duplicar_pregunta_cuestionario' pregunta.pk %}">
+                                    {% csrf_token %}
+                                    <button class="quiz-icon-button" title="Duplicar pregunta">
+                                        <i class="bi bi-copy"></i>
+                                    </button>
+                                </form>
+
+                                <form
+                                    method="post"
+                                    action="{% url 'eliminar_pregunta_cuestionario' pregunta.pk %}"
+                                    onsubmit="return confirm('¿Eliminar esta pregunta?');"
+                                >
+                                    {% csrf_token %}
+                                    <button class="quiz-icon-button is-danger" title="Eliminar pregunta">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <ul class="quiz-editor-options">
+                        {% for opcion in pregunta.opciones.all %}
+                            <li class="{% if opcion.es_correcta %}is-correct{% endif %}">
+                                {% if opcion.es_correcta %}
+                                    <i class="bi bi-check-circle-fill"></i>
+                                {% else %}
+                                    <i class="bi bi-circle"></i>
+                                {% endif %}
+                                {{ opcion.texto }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+
+                    {% if not tiene_respuestas %}
+                        <div class="collapse quiz-inline-editor" id="editar-pregunta-{{ pregunta.pk }}">
+                            <form method="post" action="{% url 'editar_pregunta_cuestionario' pregunta.pk %}">
+                                {% csrf_token %}
+
+                                <div class="mb-3">
+                                    <label class="form-label">Enunciado</label>
+                                    <textarea name="enunciado" class="form-control" rows="3" required>{{ pregunta.enunciado }}</textarea>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Puntaje</label>
+                                    <input
+                                        name="puntaje"
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value="{{ pregunta.puntaje }}"
+                                        class="form-control"
+                                        required
+                                    >
+                                </div>
+
+                                {% for opcion in pregunta.opciones.all %}
+                                    <div class="mb-2">
+                                        <label class="form-label">Opción {{ forloop.counter }}</label>
+                                        <div class="input-group">
+                                            <div class="input-group-text">
+                                                <input
+                                                    type="radio"
+                                                    name="correcta"
+                                                    value="{{ forloop.counter }}"
+                                                    {% if opcion.es_correcta %}checked{% endif %}
+                                                >
+                                            </div>
+                                            <input
+                                                name="opcion_{{ forloop.counter }}"
+                                                value="{{ opcion.texto }}"
+                                                class="form-control"
+                                                {% if forloop.counter < 3 %}required{% endif %}
+                                            >
+                                        </div>
+                                    </div>
+                                {% endfor %}
+
+                                {% with cantidad=pregunta.opciones.count %}
+                                    {% if cantidad < 4 %}
+                                        {% for n in "1234" %}
+                                            {% if forloop.counter > cantidad %}
+                                                <div class="mb-2">
+                                                    <label class="form-label">Opción {{ forloop.counter }}</label>
+                                                    <div class="input-group">
+                                                        <div class="input-group-text">
+                                                            <input
+                                                                type="radio"
+                                                                name="correcta"
+                                                                value="{{ forloop.counter }}"
+                                                            >
+                                                        </div>
+                                                        <input
+                                                            name="opcion_{{ forloop.counter }}"
+                                                            class="form-control"
+                                                        >
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endwith %}
+
+                                <div class="quiz-inline-editor-actions">
+                                    <button type="submit" class="btn-primary-custom">
+                                        <i class="bi bi-check-lg"></i>
+                                        Guardar cambios
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    {% endif %}
+                </article>
+            {% empty %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="bi bi-ui-checks"></i>
+                    </div>
+                    <h3>Todavía no agregaste preguntas</h3>
+                    <p>Creá la primera pregunta desde el panel lateral.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="content-card quiz-add-question-card">
+        {% if tiene_respuestas %}
+            <div class="quiz-locked-panel">
+                <i class="bi bi-lock-fill"></i>
+                <h2>Cuestionario bloqueado</h2>
+                <p>
+                    Ya existen respuestas de alumnos. Podés consultar el
+                    cuestionario, pero no modificar su estructura.
+                </p>
+            </div>
+        {% else %}
+            <h2>Agregar pregunta</h2>
+            <p class="text-muted">
+                Podés crear hasta cuatro opciones y marcar una sola como correcta.
+            </p>
+
+            <form method="post" action="{% url 'nueva_pregunta_cuestionario' cuestionario.pk %}">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label class="form-label">Enunciado</label>
+                    <textarea name="enunciado" class="form-control" rows="3" required></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Puntaje</label>
+                    <input name="puntaje" type="number" min="0" step="0.01" value="1" class="form-control" required>
+                </div>
+
+                {% for n in "1234" %}
+                    <div class="mb-2">
+                        <label class="form-label">Opción {{ n }}</label>
+                        <div class="input-group">
+                            <div class="input-group-text">
+                                <input
+                                    type="radio"
+                                    name="correcta"
+                                    value="{{ n }}"
+                                    {% if forloop.first %}checked{% endif %}
+                                >
+                            </div>
+                            <input
+                                name="opcion_{{ n }}"
+                                class="form-control"
+                                {% if forloop.counter < 3 %}required{% endif %}
+                            >
+                        </div>
+                    </div>
+                {% endfor %}
+
+                <button class="btn-primary-custom quiz-add-button" type="submit">
+                    <i class="bi bi-plus-lg"></i>
+                    Agregar pregunta
+                </button>
+            </form>
+        {% endif %}
+    </div>
+
+</section>
+
+{% endblock %}

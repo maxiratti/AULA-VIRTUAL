@@ -1,3 +1,4 @@
+from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 
@@ -357,3 +358,132 @@ def sincronizar_notificaciones_clases(usuario):
             },
         )
 
+
+
+
+def notificar_cuestionario_publicado(cuestionario):
+    """Notifica a los alumnos cuando el cuestionario está efectivamente disponible."""
+    if not cuestionario.visible:
+        return
+
+    if not cuestionario.clase.visible or not cuestionario.clase.modulo.visible:
+        return
+
+    ahora = timezone.now()
+    if cuestionario.fecha_apertura and cuestionario.fecha_apertura > ahora:
+        return
+
+    curso = cuestionario.clase.modulo.curso
+
+    inscripciones = (
+        Inscripcion.objects
+        .filter(
+            curso=curso,
+            estado__in=[
+                Inscripcion.ESTADO_INSCRIPTO,
+                Inscripcion.ESTADO_CURSANDO,
+            ],
+        )
+        .select_related("alumno")
+    )
+
+    url = reverse(
+        "resolver_cuestionario",
+        kwargs={"pk": cuestionario.pk},
+    )
+
+    for inscripcion in inscripciones:
+        Notificacion.objects.get_or_create(
+            usuario=inscripcion.alumno,
+            clave=f"cuestionario_publicado:{cuestionario.pk}",
+            defaults={
+                "tipo": Notificacion.TIPO_SISTEMA,
+                "titulo": "Nuevo cuestionario disponible",
+                "mensaje": (
+                    f"Ya está disponible “{cuestionario.titulo}” "
+                    f"en {curso.nombre}."
+                ),
+                "url": url,
+            },
+        )
+
+
+def sincronizar_notificaciones_cuestionarios(usuario):
+    """Materializa cuestionarios programados cuando llega su fecha de apertura."""
+    from apps.actividades.models import Cuestionario
+
+    ahora = timezone.now()
+
+    cuestionarios = (
+        Cuestionario.objects
+        .filter(
+            visible=True,
+            clase__visible=True,
+            clase__modulo__visible=True,
+            clase__modulo__curso__inscripciones__alumno=usuario,
+            clase__modulo__curso__inscripciones__estado__in=[
+                Inscripcion.ESTADO_INSCRIPTO,
+                Inscripcion.ESTADO_CURSANDO,
+            ],
+        )
+        .filter(
+            models.Q(fecha_apertura__isnull=True)
+            | models.Q(fecha_apertura__lte=ahora)
+        )
+        .filter(
+            models.Q(fecha_limite__isnull=True)
+            | models.Q(fecha_limite__gte=ahora)
+        )
+        .exclude(
+            intentos__alumno=usuario,
+            intentos__finalizado=True,
+        )
+        .select_related("clase__modulo__curso")
+        .distinct()
+    )
+
+    for cuestionario in cuestionarios:
+        Notificacion.objects.get_or_create(
+            usuario=usuario,
+            clave=f"cuestionario_publicado:{cuestionario.pk}",
+            defaults={
+                "tipo": Notificacion.TIPO_SISTEMA,
+                "titulo": "Nuevo cuestionario disponible",
+                "mensaje": (
+                    f"Ya está disponible “{cuestionario.titulo}” "
+                    f"en {cuestionario.clase.modulo.curso.nombre}."
+                ),
+                "url": reverse(
+                    "resolver_cuestionario",
+                    kwargs={"pk": cuestionario.pk},
+                ),
+            },
+        )
+
+
+def notificar_cuestionario_realizado(intento):
+    """Notifica a todos los docentes del curso cuando un alumno envía un intento."""
+    cuestionario = intento.cuestionario
+    curso = cuestionario.clase.modulo.curso
+    alumno = intento.alumno
+    nombre_alumno = alumno.get_full_name() or alumno.username
+
+    url = reverse(
+        "editar_cuestionario",
+        kwargs={"pk": cuestionario.pk},
+    )
+
+    for docente in curso.docentes.all():
+        Notificacion.objects.get_or_create(
+            usuario=docente,
+            clave=f"cuestionario_realizado:{intento.pk}",
+            defaults={
+                "tipo": Notificacion.TIPO_SISTEMA,
+                "titulo": "Cuestionario realizado",
+                "mensaje": (
+                    f"{nombre_alumno} realizó “{cuestionario.titulo}” "
+                    f"en {curso.nombre} (intento {intento.numero})."
+                ),
+                "url": url,
+            },
+        )
