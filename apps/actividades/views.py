@@ -1642,9 +1642,21 @@ def editar_cuestionario(request, pk):
                 )
 
         elif accion == "ocultar":
-            cuestionario.visible = False
-            cuestionario.save(update_fields=["visible"])
-            messages.success(request, "Cuestionario ocultado.")
+            if cuestionario_tiene_respuestas(cuestionario):
+                messages.warning(
+                    request,
+                    (
+                        "El cuestionario ya tiene respuestas de alumnos "
+                        "y no puede ocultarse."
+                    ),
+                )
+            else:
+                cuestionario.visible = False
+                cuestionario.save(update_fields=["visible"])
+                messages.success(
+                    request,
+                    "Cuestionario ocultado.",
+                )
 
         return redirect("editar_cuestionario", pk=cuestionario.pk)
 

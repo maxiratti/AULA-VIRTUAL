@@ -29,15 +29,19 @@
     <form method="post">
         {% csrf_token %}
         {% if cuestionario.visible %}
-            <button name="accion" value="ocultar" class="btn btn-outline-secondary">
-                <i class="bi bi-eye-slash"></i>
-                Ocultar
-            </button>
+            {% if not tiene_respuestas %}
+                <button name="accion" value="ocultar" class="btn btn-outline-secondary">
+                    <i class="bi bi-eye-slash"></i>
+                    Ocultar
+                </button>
+            {% endif %}
         {% else %}
-            <button name="accion" value="publicar" class="btn-primary-custom">
-                <i class="bi bi-send-check"></i>
-                Publicar cuestionario
-            </button>
+            {% if not tiene_respuestas %}
+                <button name="accion" value="publicar" class="btn-primary-custom">
+                    <i class="bi bi-send-check"></i>
+                    Publicar cuestionario
+                </button>
+            {% endif %}
         {% endif %}
     </form>
 </section>
