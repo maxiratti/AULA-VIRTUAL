@@ -61,6 +61,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    "cloudinary",
+
     "apps.usuarios",
     "apps.instituciones",
     "apps.roles",
@@ -203,11 +205,23 @@ STATICFILES_DIRS = [
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
+CLOUDINARY_URL = os.environ.get(
+    "CLOUDINARY_URL"
+)
+
+if CLOUDINARY_URL:
+    DEFAULT_STORAGE_BACKEND = (
+        "config.storage.CloudinaryRawStorage"
+    )
+else:
+    DEFAULT_STORAGE_BACKEND = (
+        "django.core.files.storage.FileSystemStorage"
+    )
+
+
 STORAGES = {
     "default": {
-        "BACKEND": (
-            "django.core.files.storage.FileSystemStorage"
-        ),
+        "BACKEND": DEFAULT_STORAGE_BACKEND,
     },
     "staticfiles": {
         "BACKEND": (
@@ -221,8 +235,13 @@ STORAGES = {
 # ---------------------------------------------------------------------
 # ARCHIVOS SUBIDOS POR USUARIOS
 #
-# Por ahora continúa FileSystemStorage para desarrollo local.
-# Antes de abrir producción a usuarios configuraremos Cloudinary.
+# Local:
+#   Sin CLOUDINARY_URL, los archivos se guardan en media/.
+#
+# Producción:
+#   Con CLOUDINARY_URL, los archivos se guardan en Cloudinary.
+#
+# Los archivos estáticos continúan siendo servidos por WhiteNoise.
 # ---------------------------------------------------------------------
 
 MEDIA_URL = "/media/"
