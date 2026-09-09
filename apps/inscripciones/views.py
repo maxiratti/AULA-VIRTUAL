@@ -368,6 +368,7 @@ def carga_masiva_alumnos(request, curso_id):
 
         if form.is_valid():
             archivo = form.cleaned_data["archivo"]
+            workbook = None
 
             try:
                 workbook = load_workbook(
@@ -410,141 +411,375 @@ def carga_masiva_alumnos(request, curso_id):
                         "las columnas esperadas."
                     )
 
-                creados = 0
-                existentes = 0
-                inscriptos = 0
                 errores = []
+                registros = []
+                usernames_vistos = set()
 
-                rol_alumno = Group.objects.get(
-                    name="Alumno"
+                for numero_fila, fila in enumerate(
+                    filas[1:],
+                    start=2,
+                ):
+                    (
+                        nombre,
+                        apellido,
+                        username,
+                        email,
+                        password,
+                    ) = fila
+
+                    nombre = (
+                        str(nombre).strip()
+                        if nombre
+                        else ""
+                    )
+
+                    apellido = (
+                        str(apellido).strip()
+                        if apellido
+                        else ""
+                    )
+
+                    username = (
+                        str(username).strip()
+                        if username
+                        else ""
+                    )
+
+                    email = (
+                        str(email).strip()
+                        if email
+                        else ""
+                    )
+
+                    password = (
+                        str(password).strip()
+                        if password
+                        else ""
+                    )
+
+                    if not username:
+                        errores.append(
+                            f"Fila {numero_fila}: "
+                            "falta el usuario."
+                        )
+                        continue
+
+                    if username in usernames_vistos:
+                        errores.append(
+                            f"Fila {numero_fila}: "
+                            f"el usuario '{username}' "
+                            "está repetido en el archivo."
+                        )
+                        continue
+
+                    usernames_vistos.add(
+                        username
+                    )
+
+                    registros.append(
+                        {
+                            "numero_fila": numero_fila,
+                            "nombre": nombre,
+                            "apellido": apellido,
+                            "username": username,
+                            "email": email,
+                            "password": password,
+                        }
+                    )
+
+                usernames = [
+                    registro["username"]
+                    for registro in registros
+                ]
+
+                usuarios_existentes = {
+                    usuario.username: usuario
+                    for usuario in (
+                        Usuario.objects
+                        .filter(
+                            username__in=usernames
+                        )
+                    )
+                }
+
+                existentes = len(
+                    usuarios_existentes
                 )
 
-                with transaction.atomic():
+                registros_validos = []
+                usuarios_nuevos = []
 
-                    for numero_fila, fila in enumerate(
-                        filas[1:],
-                        start=2,
+                for registro in registros:
+                    username = registro[
+                        "username"
+                    ]
+
+                    if (
+                        username
+                        not in usuarios_existentes
+                        and not registro["password"]
                     ):
-                        (
-                            nombre,
-                            apellido,
-                            username,
-                            email,
-                            password,
-                        ) = fila
+                        errores.append(
+                            f"Fila "
+                            f"{registro['numero_fila']}: "
+                            "falta la contraseña."
+                        )
+                        continue
 
-                        nombre = (
-                            str(nombre).strip()
-                            if nombre
-                            else ""
+                    registros_validos.append(
+                        registro
+                    )
+
+                    if username in usuarios_existentes:
+                        continue
+
+                    usuario = Usuario(
+                        username=username,
+                        first_name=registro["nombre"],
+                        last_name=registro["apellido"],
+                        email=registro["email"],
+                        is_active=True,
+                        debe_cambiar_password=True,
+                    )
+
+                    usuario.set_password(
+                        registro["password"]
+                    )
+
+                    usuarios_nuevos.append(
+                        usuario
+                    )
+
+                with transaction.atomic():
+                    if usuarios_nuevos:
+                        Usuario.objects.bulk_create(
+                            usuarios_nuevos,
+                            batch_size=250,
                         )
 
-                        apellido = (
-                            str(apellido).strip()
-                            if apellido
-                            else ""
-                        )
+                    usernames_validos = [
+                        registro["username"]
+                        for registro
+                        in registros_validos
+                    ]
 
-                        username = (
-                            str(username).strip()
-                            if username
-                            else ""
-                        )
-
-                        email = (
-                            str(email).strip()
-                            if email
-                            else ""
-                        )
-
-                        password = (
-                            str(password).strip()
-                            if password
-                            else ""
-                        )
-
-                        if not username:
-                            errores.append(
-                                f"Fila {numero_fila}: "
-                                "falta el usuario."
-                            )
-                            continue
-
-                        usuario = (
+                    usuarios_por_username = {
+                        usuario.username: usuario
+                        for usuario in (
                             Usuario.objects
                             .filter(
-                                username=username
-                            )
-                            .first()
-                        )
-
-                        if usuario:
-                            existentes += 1
-
-                        else:
-                            if not password:
-                                errores.append(
-                                    f"Fila {numero_fila}: "
-                                    "falta la contraseña."
+                                username__in=(
+                                    usernames_validos
                                 )
-                                continue
-
-                            usuario = Usuario(
-                                username=username,
-                                first_name=nombre,
-                                last_name=apellido,
-                                email=email,
-                                is_active=True,
-                                debe_cambiar_password=True,
                             )
+                        )
+                    }
 
-                            usuario.set_password(
-                                password
-                            )
+                    usuarios = [
+                        usuarios_por_username[
+                            registro["username"]
+                        ]
+                        for registro
+                        in registros_validos
+                        if registro["username"]
+                        in usuarios_por_username
+                    ]
 
-                            usuario.save()
+                    usuarios_ids = [
+                        usuario.pk
+                        for usuario in usuarios
+                    ]
 
-                            creados += 1
-
-                        membresia, _ = (
+                    membresias_existentes = {
+                        membresia.usuario_id: membresia
+                        for membresia in (
                             MembresiaInstitucional.objects
-                            .get_or_create(
-                                usuario=usuario,
+                            .filter(
+                                usuario_id__in=usuarios_ids,
                                 institucion=curso.institucion,
-                                defaults={
-                                    "activa": True,
-                                },
+                            )
+                        )
+                    }
+
+                    membresias_nuevas = [
+                        MembresiaInstitucional(
+                            usuario=usuario,
+                            institucion=curso.institucion,
+                            activa=True,
+                        )
+                        for usuario in usuarios
+                        if (
+                            usuario.pk
+                            not in membresias_existentes
+                        )
+                    ]
+
+                    if membresias_nuevas:
+                        MembresiaInstitucional.objects.bulk_create(
+                            membresias_nuevas,
+                            batch_size=250,
+                            ignore_conflicts=True,
+                        )
+
+                    membresias_inactivas = [
+                        membresia
+                        for membresia
+                        in membresias_existentes.values()
+                        if not membresia.activa
+                    ]
+
+                    for membresia in membresias_inactivas:
+                        membresia.activa = True
+
+                    if membresias_inactivas:
+                        MembresiaInstitucional.objects.bulk_update(
+                            membresias_inactivas,
+                            ["activa"],
+                            batch_size=250,
+                        )
+
+                    membresias = list(
+                        MembresiaInstitucional.objects
+                        .filter(
+                            usuario_id__in=usuarios_ids,
+                            institucion=curso.institucion,
+                        )
+                    )
+
+                    rol_alumno = Group.objects.get(
+                        name="Alumno"
+                    )
+
+                    through = (
+                        MembresiaInstitucional
+                        .roles
+                        .through
+                    )
+
+                    campo_membresia = next(
+                        campo.name
+                        for campo
+                        in through._meta.fields
+                        if (
+                            getattr(
+                                campo.remote_field,
+                                "model",
+                                None,
+                            )
+                            is MembresiaInstitucional
+                        )
+                    )
+
+                    campo_grupo = next(
+                        campo.name
+                        for campo
+                        in through._meta.fields
+                        if (
+                            getattr(
+                                campo.remote_field,
+                                "model",
+                                None,
+                            )
+                            is Group
+                        )
+                    )
+
+                    membresias_ids = [
+                        membresia.pk
+                        for membresia in membresias
+                    ]
+
+                    filtro_roles = {
+                        (
+                            f"{campo_membresia}_id"
+                            "__in"
+                        ): membresias_ids,
+                        f"{campo_grupo}_id": (
+                            rol_alumno.pk
+                        ),
+                    }
+
+                    membresias_con_rol = set(
+                        through.objects
+                        .filter(
+                            **filtro_roles
+                        )
+                        .values_list(
+                            f"{campo_membresia}_id",
+                            flat=True,
+                        )
+                    )
+
+                    relaciones_roles = []
+
+                    for membresia in membresias:
+                        if (
+                            membresia.pk
+                            in membresias_con_rol
+                        ):
+                            continue
+
+                        datos_relacion = {
+                            (
+                                f"{campo_membresia}_id"
+                            ): membresia.pk,
+                            (
+                                f"{campo_grupo}_id"
+                            ): rol_alumno.pk,
+                        }
+
+                        relaciones_roles.append(
+                            through(
+                                **datos_relacion
                             )
                         )
 
-                        if not membresia.activa:
-                            membresia.activa = True
-
-                            membresia.save(
-                                update_fields=[
-                                    "activa"
-                                ]
-                            )
-
-                        membresia.roles.add(
-                            rol_alumno
+                    if relaciones_roles:
+                        through.objects.bulk_create(
+                            relaciones_roles,
+                            batch_size=250,
+                            ignore_conflicts=True,
                         )
 
-                        _, creada = (
-                            Inscripcion.objects
-                            .get_or_create(
-                                curso=curso,
-                                alumno=usuario,
-                            )
+                    inscripciones_existentes = set(
+                        Inscripcion.objects
+                        .filter(
+                            curso=curso,
+                            alumno_id__in=usuarios_ids,
                         )
+                        .values_list(
+                            "alumno_id",
+                            flat=True,
+                        )
+                    )
 
-                        if creada:
-                            inscriptos += 1
+                    inscripciones_nuevas = [
+                        Inscripcion(
+                            curso=curso,
+                            alumno=usuario,
+                        )
+                        for usuario in usuarios
+                        if (
+                            usuario.pk
+                            not in inscripciones_existentes
+                        )
+                    ]
+
+                    if inscripciones_nuevas:
+                        Inscripcion.objects.bulk_create(
+                            inscripciones_nuevas,
+                            batch_size=250,
+                            ignore_conflicts=True,
+                        )
 
                 resultado = {
-                    "creados": creados,
+                    "creados": len(
+                        usuarios_nuevos
+                    ),
                     "existentes": existentes,
-                    "inscriptos": inscriptos,
+                    "inscriptos": len(
+                        inscripciones_nuevas
+                    ),
                     "errores": errores,
                 }
 
@@ -556,6 +791,10 @@ def carga_masiva_alumnos(request, curso_id):
                         f"el archivo: {error}"
                     ),
                 )
+
+            finally:
+                if workbook is not None:
+                    workbook.close()
 
     else:
         form = CargaMasivaAlumnosForm()
