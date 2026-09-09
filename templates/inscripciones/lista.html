@@ -42,6 +42,8 @@ Inscripciones
 
         <p>
             {{ curso.institucion.nombre }}
+            ·
+            {{ total_inscriptos }} alumno{{ total_inscriptos|pluralize:"s" }} inscripto{{ total_inscriptos|pluralize:"s" }}
         </p>
 
     </div>
@@ -87,6 +89,7 @@ Inscripciones
                 <thead>
 
                     <tr>
+                        <th>N.º</th>
                         <th>Alumno</th>
                         <th>Fecha</th>
                         <th>Estado</th>
@@ -102,6 +105,10 @@ Inscripciones
                     {% for inscripcion in inscripciones %}
 
                         <tr>
+
+                            <td>
+                                {{ forloop.counter }}
+                            </td>
 
                             <td>
 

@@ -77,6 +77,7 @@ def lista_inscripciones(request, curso_id):
         {
             "curso": curso,
             "inscripciones": inscripciones,
+            "total_inscriptos": inscripciones.count(),
         },
     )
 
@@ -782,6 +783,30 @@ def carga_masiva_alumnos(request, curso_id):
                     ),
                     "errores": errores,
                 }
+
+                messages.success(
+                    request,
+                    (
+                        "Carga masiva completada: "
+                        f"{resultado['creados']} usuarios creados, "
+                        f"{resultado['existentes']} usuarios existentes y "
+                        f"{resultado['inscriptos']} nuevas inscripciones."
+                    ),
+                )
+
+                if errores:
+                    messages.warning(
+                        request,
+                        (
+                            f"{len(errores)} fila(s) no pudieron procesarse. "
+                            "Revisá la planilla antes de volver a cargarlas."
+                        ),
+                    )
+
+                return redirect(
+                    "lista_inscripciones",
+                    curso_id=curso.pk,
+                )
 
             except Exception as error:
                 messages.error(
