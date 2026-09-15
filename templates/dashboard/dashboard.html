@@ -57,6 +57,97 @@ Inicio
 </section>
 
 
+{% if usuario_es_superusuario %}
+
+<section class="dashboard-grid dashboard-grid-admin">
+
+    <article class="dashboard-card">
+        <div class="dashboard-card-icon">
+            <i class="bi bi-building"></i>
+        </div>
+        <div>
+            <span class="dashboard-card-label">Instituciones</span>
+            <strong class="dashboard-card-value">{{ cantidad_instituciones }}</strong>
+            <span class="dashboard-card-detail">Instituciones activas</span>
+        </div>
+    </article>
+
+    <article class="dashboard-card">
+        <div class="dashboard-card-icon">
+            <i class="bi bi-journal-bookmark"></i>
+        </div>
+        <div>
+            <span class="dashboard-card-label">Cursos</span>
+            <strong class="dashboard-card-value">{{ cantidad_cursos_total }}</strong>
+            <span class="dashboard-card-detail">Cursos registrados</span>
+        </div>
+    </article>
+
+    <article class="dashboard-card">
+        <div class="dashboard-card-icon">
+            <i class="bi bi-people"></i>
+        </div>
+        <div>
+            <span class="dashboard-card-label">Usuarios</span>
+            <strong class="dashboard-card-value">{{ cantidad_usuarios }}</strong>
+            <span class="dashboard-card-detail">Usuarios activos</span>
+        </div>
+    </article>
+
+    <article class="dashboard-card">
+        <div class="dashboard-card-icon">
+            <i class="bi bi-mortarboard"></i>
+        </div>
+        <div>
+            <span class="dashboard-card-label">Alumnos</span>
+            <strong class="dashboard-card-value">{{ cantidad_alumnos }}</strong>
+            <span class="dashboard-card-detail">Alumnos registrados</span>
+        </div>
+    </article>
+
+</section>
+
+<section class="dashboard-section">
+
+    <div class="section-heading">
+        <div>
+            <h2>Administración</h2>
+            <p>Accesos principales para gestionar la plataforma.</p>
+        </div>
+    </div>
+
+    <div class="courses-grid dashboard-admin-links">
+
+        <a href="{% url 'lista_instituciones' %}" class="course-card course-card-link">
+            <div class="course-card-icon"><i class="bi bi-building"></i></div>
+            <div class="course-card-content">
+                <h3>Instituciones</h3>
+                <p>Gestionar instituciones de la plataforma.</p>
+            </div>
+        </a>
+
+        <a href="{% url 'lista_cursos' %}" class="course-card course-card-link">
+            <div class="course-card-icon"><i class="bi bi-journal-bookmark"></i></div>
+            <div class="course-card-content">
+                <h3>Cursos</h3>
+                <p>Crear, editar y administrar cursos.</p>
+            </div>
+        </a>
+
+        <a href="{% url 'lista_usuarios' %}" class="course-card course-card-link">
+            <div class="course-card-icon"><i class="bi bi-people"></i></div>
+            <div class="course-card-content">
+                <h3>Usuarios</h3>
+                <p>Gestionar usuarios, roles y membresías.</p>
+            </div>
+        </a>
+
+    </div>
+
+</section>
+
+{% else %}
+
 <section class="dashboard-grid {% if es_docente %}dashboard-grid-teacher{% endif %}">
 
     <article class="dashboard-card">
@@ -498,5 +589,8 @@ Inicio
     {% endif %}
 
 </section>
+
+
+{% endif %}
 
 {% endblock %}

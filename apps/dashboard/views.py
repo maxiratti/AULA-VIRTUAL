@@ -6,6 +6,8 @@ from django.utils import timezone
 from apps.actividades.models import Actividad, Entrega
 from apps.contenidos.models import Clase, ProgresoClase
 from apps.cursos.models import Curso
+from apps.instituciones.models import Institucion
+from apps.usuarios.models import Usuario
 from apps.roles.utils import es_alumno, es_docente
 
 
@@ -35,6 +37,39 @@ def dashboard(request):
     total_clases = 0
     clases_completadas = 0
     progreso = 0
+
+    # =====================================================
+    # SUPERUSUARIO / ADMINISTRACIÓN GENERAL
+    # =====================================================
+
+    usuario_es_superusuario = usuario.is_superuser
+
+    cantidad_instituciones = 0
+    cantidad_usuarios = 0
+    cantidad_alumnos = 0
+    cantidad_cursos_total = 0
+
+    if usuario_es_superusuario:
+        cantidad_instituciones = Institucion.objects.filter(
+            activa=True,
+        ).count()
+
+        cantidad_usuarios = Usuario.objects.filter(
+            is_active=True,
+        ).count()
+
+        cantidad_alumnos = (
+            Usuario.objects
+            .filter(
+                is_active=True,
+                membresias__activa=True,
+                membresias__roles__name="Alumno",
+            )
+            .distinct()
+            .count()
+        )
+
+        cantidad_cursos_total = Curso.objects.count()
 
     # =====================================================
     # MÉTRICAS DEL DOCENTE
@@ -269,6 +304,13 @@ def dashboard(request):
 
     context = {
         "cursos": cursos,
+
+        # Superusuario
+        "usuario_es_superusuario": usuario_es_superusuario,
+        "cantidad_instituciones": cantidad_instituciones,
+        "cantidad_usuarios": cantidad_usuarios,
+        "cantidad_alumnos": cantidad_alumnos,
+        "cantidad_cursos_total": cantidad_cursos_total,
         "cantidad_cursos": cantidad_cursos_activos,
 
         # Alumno - actividades
