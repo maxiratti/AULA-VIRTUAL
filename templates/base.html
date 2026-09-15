@@ -42,7 +42,7 @@
 
     <div class="app-layout">
 
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
 
             <div class="sidebar-brand">
 
@@ -283,11 +283,26 @@
 
             <header class="topbar">
 
-                <div class="topbar-title">
+                <div class="topbar-start">
+
+                    <button
+                        type="button"
+                        class="sidebar-toggle"
+                        id="sidebarToggle"
+                        aria-label="Abrir menú"
+                        aria-controls="sidebar"
+                        aria-expanded="false"
+                    >
+                        <i class="bi bi-list"></i>
+                    </button>
+
+                    <div class="topbar-title">
 
                     {% block page_title %}
                     Aula Virtual
                     {% endblock %}
+
+                    </div>
 
                 </div>
 
@@ -507,10 +522,18 @@
 
     </div>
 
+    <div
+        class="sidebar-overlay"
+        id="sidebarOverlay"
+        aria-hidden="true"
+    ></div>
+
 
     <script
         src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
     ></script>
+
+    <script src="{% static 'js/base.js' %}"></script>
 
     {% block extra_js %}
     {% endblock %}

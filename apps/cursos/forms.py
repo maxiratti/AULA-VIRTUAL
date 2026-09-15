@@ -91,25 +91,28 @@ class CursoForm(forms.ModelForm):
         elif self.instance.pk:
             institucion_id = self.instance.institucion_id
 
-        if institucion_id:
-            docentes = (
-                Usuario.objects
-                .filter(
-                    is_active=True,
-                    membresias__institucion_id=institucion_id,
-                    membresias__activa=True,
-                    membresias__roles__name="Docente",
-                )
-                .order_by(
-                    "last_name",
-                    "first_name",
-                    "username",
-                )
-                .distinct()
+        docentes = (
+            Usuario.objects
+            .filter(
+                is_active=True,
+                membresias__activa=True,
+                membresias__institucion__activa=True,
+                membresias__roles__name="Docente",
             )
+            .order_by(
+                "last_name",
+                "first_name",
+                "username",
+            )
+            .distinct()
+        )
 
-        else:
-            docentes = Usuario.objects.none()
+        if institucion_id:
+            docentes = docentes.filter(
+                membresias__institucion_id=institucion_id,
+                membresias__activa=True,
+                membresias__roles__name="Docente",
+            ).distinct()
 
         self.fields["docentes"].queryset = docentes
 
