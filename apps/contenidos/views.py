@@ -194,11 +194,7 @@ def editar_modulo(request, pk):
         )
 
         if form.is_valid():
-            clase = form.save()
-
-            notificar_clase_publicada(
-                clase
-            )
+            form.save()
 
             messages.success(
                 request,
