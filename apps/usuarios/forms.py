@@ -190,6 +190,8 @@ class MembresiaInstitucionalForm(forms.ModelForm):
                     "Coordinador",
                     "Docente",
                     "Alumno",
+                    "Preceptor",
+                    "Observador institucional",
                 ]
             )
             .order_by("name")

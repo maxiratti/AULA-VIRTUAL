@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ curso.nombre }} | Supervisión{% endblock %}
+{% block page_title %}Supervisión{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/supervision.css' %}">{% endblock %}
+{% block content %}
+<section class="page-header"><div><a class="back-link" href="{% url 'supervision_cursos' %}"><i class="bi bi-arrow-left"></i> Cursos supervisados</a><h1>{{ curso.nombre }}</h1><p>{{ curso.institucion.nombre }} · Modo solo lectura</p></div></section>
+<div class="summary-grid"><div class="summary-card"><strong>{{ alumnos|length }}</strong><span>Alumnos</span></div><div class="summary-card"><strong>{{ total_clases }}</strong><span>Clases</span></div><div class="summary-card"><strong>{{ actividades|length }}</strong><span>Actividades</span></div><div class="summary-card"><strong>{{ cuestionarios|length }}</strong><span>Cuestionarios</span></div></div>
+
+<details class="supervision-section" open>
+<summary>Alumnos, progreso y calificaciones</summary>
+
+<div class="student-supervision-list">
+{% for item in alumnos %}
+    <a
+        class="student-supervision-row"
+        href="{% url 'supervision_alumno' curso.pk item.alumno.pk %}"
+        aria-label="Ver seguimiento de {{ item.alumno.get_full_name|default:item.alumno.username }}"
+    >
+        <div class="student-supervision-main">
+            <strong>{{ item.alumno.get_full_name|default:item.alumno.username }}</strong>
+            <small>{{ item.alumno.username }}</small>
+        </div>
+
+        <div class="student-supervision-stat">
+            <span>Estado</span>
+            <strong>{{ item.inscripcion.get_estado_display }}</strong>
+        </div>
+
+        <div class="student-supervision-stat">
+            <span>Progreso</span>
+            <strong>{{ item.clases_completadas }}/{{ total_clases }} · {{ item.progreso }}%</strong>
+        </div>
+
+        <div class="student-supervision-stat">
+            <span>Entregas</span>
+            <strong>{{ item.entregas|length }}</strong>
+        </div>
+
+        <div class="student-supervision-stat">
+            <span>Cuestionarios</span>
+            <strong>{{ item.cuestionarios_resueltos }}/{{ cuestionarios|length }}</strong>
+        </div>
+
+        <div class="student-supervision-arrow">
+            <i class="bi bi-chevron-right"></i>
+        </div>
+    </a>
+{% empty %}
+    <p>No hay alumnos inscriptos.</p>
+{% endfor %}
+</div>
+</details>
+
+<details class="supervision-section" open><summary>Contenido del curso</summary>
+{% for modulo in modulos %}<div class="module-block"><h3>Módulo {{ modulo.orden }} · {{ modulo.titulo }} {% if not modulo.visible %}<span class="muted">(oculto)</span>{% endif %}</h3><p>{{ modulo.descripcion|default:"" }}</p>{% for clase in modulo.clases.all %}<div class="class-block"><h4>Clase {{ clase.orden }} · {{ clase.titulo }}</h4><p>{{ clase.descripcion|default:"" }}</p>{% for contenido in clase.contenidos.all %}<div class="content-record"><strong>{{ contenido.titulo|default:contenido.get_tipo_display }}</strong> · {{ contenido.get_tipo_display }}{% if contenido.archivo %} · <a href="{{ contenido.archivo.url }}" target="_blank" rel="noopener">Abrir archivo</a>{% elif contenido.url %} · <a href="{{ contenido.url }}" target="_blank" rel="noopener">Abrir enlace</a>{% endif %}{% if contenido.texto %}<div>{{ contenido.texto|truncatechars:300 }}</div>{% endif %}</div>{% empty %}<span class="muted">Sin contenidos.</span>{% endfor %}</div>{% empty %}<p class="muted">Sin clases.</p>{% endfor %}</div>{% empty %}<p>No hay módulos cargados.</p>{% endfor %}
+</details>
+
+<details class="supervision-section"><summary>Actividades y entregas</summary>
+{% for actividad in actividades %}<div class="activity-block"><h3>{{ actividad.titulo }}</h3><p><strong>{{ actividad.clase.modulo.titulo }} · {{ actividad.clase.titulo }}</strong></p><p>{{ actividad.consigna }}</p>{% if actividad.archivo_adjunto %}<p><a href="{{ actividad.archivo_adjunto.url }}" target="_blank" rel="noopener"><i class="bi bi-paperclip"></i> Archivo de la actividad</a></p>{% endif %}<div class="table-responsive"><table class="table-custom"><thead><tr><th>Alumno</th><th>Estado</th><th>Nota</th><th>Entrega</th></tr></thead><tbody>{% for entrega in entregas %}{% if entrega.actividad_id == actividad.id %}<tr><td>{{ entrega.alumno.get_full_name|default:entrega.alumno.username }}</td><td>{{ entrega.get_estado_display }}</td><td>{{ entrega.calificacion|default:"—" }}</td><td>{% if entrega.archivo %}<a href="{{ entrega.archivo.url }}" target="_blank" rel="noopener">Ver archivo</a>{% endif %}{% if entrega.texto %}<div>{{ entrega.texto|truncatechars:220 }}</div>{% endif %}</td></tr>{% endif %}{% empty %}<tr><td colspan="4">Sin entregas.</td></tr>{% endfor %}</tbody></table></div></div>{% empty %}<p>No hay actividades.</p>{% endfor %}
+</details>
+{% endblock %}

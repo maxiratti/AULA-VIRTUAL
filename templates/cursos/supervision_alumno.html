@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ alumno.get_full_name|default:alumno.username }} | Supervisión{% endblock %}
+{% block page_title %}Supervisión{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/supervision.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <a class="back-link" href="{% url 'supervision_curso' curso.pk %}">
+            <i class="bi bi-arrow-left"></i>
+            Volver a {{ curso.nombre }}
+        </a>
+        <h1>{{ alumno.get_full_name|default:alumno.username }}</h1>
+        <p>
+            {{ curso.nombre }} · {{ curso.institucion.nombre }} ·
+            Seguimiento en modo solo lectura
+        </p>
+    </div>
+</section>
+
+<div class="summary-grid">
+    <div class="summary-card">
+        <strong>{{ inscripcion.get_estado_display }}</strong>
+        <span>Estado</span>
+    </div>
+    <div class="summary-card">
+        <strong>{{ progreso }}%</strong>
+        <span>Progreso de clases</span>
+    </div>
+    <div class="summary-card">
+        <strong>{{ entregas_realizadas }}/{{ total_actividades }}</strong>
+        <span>Actividades con entrega</span>
+    </div>
+    <div class="summary-card">
+        <strong>{{ cuestionarios_resueltos }}/{{ total_cuestionarios }}</strong>
+        <span>Cuestionarios resueltos</span>
+    </div>
+</div>
+
+<details class="supervision-section" open>
+    <summary>Actividades y entregas</summary>
+
+    <div class="supervision-record-list">
+    {% for item in detalle_actividades %}
+        <article class="supervision-record-card">
+            <div class="record-heading">
+                <div>
+                    <span class="record-context">
+                        {{ item.actividad.clase.modulo.titulo }} · {{ item.actividad.clase.titulo }}
+                    </span>
+                    <h3>{{ item.actividad.titulo }}</h3>
+                </div>
+
+                {% if item.entrega %}
+                    <span class="status-badge">{{ item.entrega.get_estado_display }}</span>
+                {% else %}
+                    <span class="status-badge">Sin entrega</span>
+                {% endif %}
+            </div>
+
+            {% if item.entrega %}
+                <div class="record-detail-grid">
+                    <div>
+                        <span>Nota</span>
+                        <strong>
+                            {% if item.entrega.calificacion is not None %}
+                                {{ item.entrega.calificacion }}/{{ item.actividad.puntaje_maximo }}
+                            {% else %}
+                                Sin calificar
+                            {% endif %}
+                        </strong>
+                    </div>
+                    <div>
+                        <span>Fecha de entrega</span>
+                        <strong>{{ item.entrega.fecha_entrega|date:"d/m/Y H:i" }}</strong>
+                    </div>
+                </div>
+
+                {% if item.entrega.texto %}
+                    <div class="record-content">
+                        <strong>Respuesta del alumno</strong>
+                        <p>{{ item.entrega.texto|linebreaksbr }}</p>
+                    </div>
+                {% endif %}
+
+                {% if item.entrega.archivo %}
+                    <p>
+                        <a href="{{ item.entrega.archivo.url }}" target="_blank" rel="noopener">
+                            <i class="bi bi-paperclip"></i>
+                            Abrir archivo entregado
+                        </a>
+                    </p>
+                {% endif %}
+
+                {% if item.entrega.devolucion %}
+                    <div class="record-feedback">
+                        <strong>Devolución docente</strong>
+                        <p>{{ item.entrega.devolucion|linebreaksbr }}</p>
+                    </div>
+                {% endif %}
+            {% else %}
+                <p class="muted">El alumno todavía no realizó una entrega para esta actividad.</p>
+            {% endif %}
+        </article>
+    {% empty %}
+        <p>No hay actividades cargadas en el curso.</p>
+    {% endfor %}
+    </div>
+</details>
+
+<details class="supervision-section" open>
+    <summary>Cuestionarios y calificaciones</summary>
+
+    <div class="supervision-record-list">
+    {% for item in detalle_cuestionarios %}
+        <article class="supervision-record-card">
+            <div class="record-heading">
+                <div>
+                    <span class="record-context">
+                        {{ item.cuestionario.clase.modulo.titulo }} · {{ item.cuestionario.clase.titulo }}
+                    </span>
+                    <h3>{{ item.cuestionario.titulo }}</h3>
+                </div>
+
+                {% if item.intento %}
+                    <span class="status-badge">Resuelto</span>
+                {% else %}
+                    <span class="status-badge">Sin resolver</span>
+                {% endif %}
+            </div>
+
+            {% if item.intento %}
+                <div class="record-detail-grid">
+                    <div>
+                        <span>Mejor puntaje</span>
+                        <strong>{{ item.intento.puntaje_obtenido }}/{{ item.cuestionario.puntaje_maximo }}</strong>
+                    </div>
+                    <div>
+                        <span>Porcentaje</span>
+                        <strong>
+                            {% if item.porcentaje is not None %}
+                                {{ item.porcentaje }}%
+                            {% else %}
+                                —
+                            {% endif %}
+                        </strong>
+                    </div>
+                    <div>
+                        <span>Intento</span>
+                        <strong>N.º {{ item.intento.numero }}</strong>
+                    </div>
+                    <div>
+                        <span>Enviado</span>
+                        <strong>{{ item.intento.fecha_envio|date:"d/m/Y H:i" }}</strong>
+                    </div>
+                </div>
+            {% endif %}
+        </article>
+    {% empty %}
+        <p>No hay cuestionarios cargados en el curso.</p>
+    {% endfor %}
+    </div>
+</details>
+
+<details class="supervision-section">
+    <summary>Progreso por clase</summary>
+
+    <div class="class-progress-list">
+    {% for item in detalle_clases %}
+        <div class="class-progress-row">
+            <div>
+                <strong>{{ item.clase.modulo.titulo }}</strong>
+                <span>{{ item.clase.titulo }}</span>
+            </div>
+
+            {% if item.completada %}
+                <span class="class-progress-status completed">
+                    <i class="bi bi-check-circle"></i> Completada
+                </span>
+            {% else %}
+                <span class="class-progress-status">
+                    <i class="bi bi-circle"></i> Pendiente
+                </span>
+            {% endif %}
+        </div>
+    {% empty %}
+        <p>No hay clases cargadas.</p>
+    {% endfor %}
+    </div>
+</details>
+{% endblock %}

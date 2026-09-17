@@ -57,3 +57,28 @@ def es_alumno(usuario):
         usuario,
         "Alumno",
     )
+
+def es_preceptor(usuario):
+    return tiene_rol(usuario, "Preceptor")
+
+
+def es_observador_institucional(usuario):
+    return tiene_rol(usuario, "Observador institucional")
+
+
+def puede_supervisar_curso(usuario, curso):
+    if not usuario.is_authenticated:
+        return False
+
+    if usuario.is_superuser:
+        return True
+
+    if tiene_rol_en_institucion(
+        usuario, "Observador institucional", curso.institucion
+    ):
+        return True
+
+    return (
+        tiene_rol_en_institucion(usuario, "Preceptor", curso.institucion)
+        and curso.preceptores.filter(pk=usuario.pk).exists()
+    )

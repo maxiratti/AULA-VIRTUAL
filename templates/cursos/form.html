@@ -135,6 +135,20 @@ Cursos
 
             </div>
 
+            <div class="form-field form-field-full">
+                <label>Preceptores</label>
+                {% if form.preceptores.field.queryset %}
+                    <div class="teachers-selector">{{ form.preceptores }}</div>
+                    <small class="field-help">Solo podrán supervisar los cursos que tengan asignados.</small>
+                {% else %}
+                    <div class="teachers-empty">
+                        <i class="bi bi-person-badge"></i>
+                        <div><strong>Sin preceptores disponibles</strong><span>Primero asigná el rol Preceptor a un usuario de la institución.</span></div>
+                    </div>
+                {% endif %}
+                {{ form.preceptores.errors }}
+            </div>
+
             <div class="form-field">
 
                 <label for="{{ form.fecha_inicio.id_for_label }}">

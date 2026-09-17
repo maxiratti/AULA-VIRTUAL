@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Supervisión | Aula Virtual{% endblock %}
+{% block page_title %}Supervisión{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/supervision.css' %}">
+{% endblock %}
+{% block content %}
+<section class="page-header">
+    <div>
+        <h1>Cursos supervisados</h1>
+        <p>Consulta académica en modo solo lectura.</p>
+    </div>
+</section>
+
+<div class="supervision-grid">
+{% for curso in cursos %}
+<a
+    class="supervision-card supervision-card-link"
+    href="{% url 'supervision_curso' curso.pk %}"
+    aria-label="Ver supervisión del curso {{ curso.nombre }}"
+>
+    <div>
+        <span class="supervision-institution">{{ curso.institucion.nombre }}</span>
+        <h2>{{ curso.nombre }}</h2>
+        <p>{{ curso.descripcion|default:"Sin descripción."|truncatechars:130 }}</p>
+    </div>
+
+    <div class="supervision-meta">
+        <span>
+            <i class="bi bi-person-video3"></i>
+            {% for d in curso.docentes.all %}
+                {{ d.get_full_name|default:d.username }}{% if not forloop.last %}, {% endif %}
+            {% empty %}
+                Sin docente asignado
+            {% endfor %}
+        </span>
+        <span class="status-badge">{{ curso.get_estado_display }}</span>
+    </div>
+
+    <span class="supervision-enter">
+        <i class="bi bi-eye"></i>
+        Ver curso
+        <i class="bi bi-arrow-right"></i>
+    </span>
+</a>
+{% empty %}
+<div class="content-card">
+    <p>No tenés cursos asignados para supervisar.</p>
+</div>
+{% endfor %}
+</div>
+{% endblock %}

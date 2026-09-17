@@ -185,6 +185,20 @@
                     {% endif %}
 
 
+                    {% if es_preceptor or es_observador_institucional %}
+
+                        <div class="nav-section-title">
+                            Supervisión
+                        </div>
+
+                        <a href="{% url 'supervision_cursos' %}" class="nav-link-custom">
+                            <i class="bi bi-eye"></i>
+                            <span>Cursos supervisados</span>
+                        </a>
+
+                    {% endif %}
+
+
                     {% if es_alumno %}
 
                         <div class="nav-section-title">

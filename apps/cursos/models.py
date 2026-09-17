@@ -36,6 +36,12 @@ class Curso(models.Model):
         blank=True,
     )
 
+    preceptores = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name="cursos_como_preceptor",
+        blank=True,
+    )
+
     fecha_inicio = models.DateField(
         null=True,
         blank=True,

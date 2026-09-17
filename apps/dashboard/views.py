@@ -8,7 +8,12 @@ from apps.contenidos.models import Clase, ProgresoClase
 from apps.cursos.models import Curso
 from apps.instituciones.models import Institucion
 from apps.usuarios.models import Usuario
-from apps.roles.utils import es_alumno, es_docente
+from apps.roles.utils import (
+    es_alumno,
+    es_docente,
+    es_observador_institucional,
+    es_preceptor,
+)
 
 
 @login_required
@@ -86,6 +91,85 @@ def dashboard(request):
     usuario_es_alumno = es_alumno(
         usuario
     )
+
+    usuario_es_preceptor = es_preceptor(usuario)
+    usuario_es_observador = es_observador_institucional(usuario)
+    usuario_es_supervisor = (
+        usuario_es_preceptor
+        or usuario_es_observador
+    )
+
+    cantidad_alumnos_supervision = 0
+    cantidad_actividades_supervision = 0
+    cantidad_entregas_supervision = 0
+
+    if usuario_es_supervisor and not usuario_es_superusuario:
+        filtros_supervision = Q()
+
+        if usuario_es_observador:
+            instituciones_observadas = (
+                usuario.membresias
+                .filter(
+                    activa=True,
+                    institucion__activa=True,
+                    roles__name="Observador institucional",
+                )
+                .values_list("institucion_id", flat=True)
+            )
+            filtros_supervision |= Q(
+                institucion_id__in=instituciones_observadas
+            )
+
+        if usuario_es_preceptor:
+            filtros_supervision |= Q(
+                preceptores=usuario,
+                institucion__membresias__usuario=usuario,
+                institucion__membresias__activa=True,
+                institucion__membresias__roles__name="Preceptor",
+            )
+
+        cursos = (
+            Curso.objects
+            .filter(filtros_supervision)
+            .select_related("institucion")
+            .prefetch_related("docentes")
+            .distinct()
+            .order_by("institucion__nombre", "nombre")
+        )
+
+        cantidad_cursos_activos = cursos.filter(
+            estado=Curso.ESTADO_ACTIVO,
+        ).count()
+
+        cantidad_alumnos_supervision = (
+            Usuario.objects
+            .filter(
+                inscripciones__curso__in=cursos,
+                is_active=True,
+            )
+            .distinct()
+            .count()
+        )
+
+        actividades_supervision = (
+            Actividad.objects
+            .filter(
+                clase__modulo__curso__in=cursos,
+            )
+            .distinct()
+        )
+
+        cantidad_actividades_supervision = (
+            actividades_supervision.count()
+        )
+
+        cantidad_entregas_supervision = (
+            Entrega.objects
+            .filter(
+                actividad__in=actividades_supervision,
+            )
+            .count()
+        )
 
     # =====================================================
     # DOCENTE
@@ -312,6 +396,14 @@ def dashboard(request):
         "cantidad_alumnos": cantidad_alumnos,
         "cantidad_cursos_total": cantidad_cursos_total,
         "cantidad_cursos": cantidad_cursos_activos,
+
+        # Supervisión institucional
+        "usuario_es_supervisor": usuario_es_supervisor,
+        "usuario_es_preceptor": usuario_es_preceptor,
+        "usuario_es_observador": usuario_es_observador,
+        "cantidad_alumnos_supervision": cantidad_alumnos_supervision,
+        "cantidad_actividades_supervision": cantidad_actividades_supervision,
+        "cantidad_entregas_supervision": cantidad_entregas_supervision,
 
         # Alumno - actividades
         "cantidad_actividades": (

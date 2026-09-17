@@ -5,6 +5,21 @@ from . import views
 
 urlpatterns = [
     path(
+        "supervision/",
+        views.supervision_cursos,
+        name="supervision_cursos",
+    ),
+    path(
+        "supervision/cursos/<int:pk>/",
+        views.supervision_curso,
+        name="supervision_curso",
+    ),
+    path(
+        "supervision/cursos/<int:curso_pk>/alumnos/<int:alumno_pk>/",
+        views.supervision_alumno,
+        name="supervision_alumno",
+    ),
+    path(
         "certificados/verificar/<str:codigo>/",
         views.verificar_certificado,
         name="verificar_certificado",

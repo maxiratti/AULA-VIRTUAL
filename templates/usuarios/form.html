@@ -134,7 +134,7 @@ Usuarios
                 class="btn-primary-custom"
             >
                 <i class="bi bi-check-lg"></i>
-                Guardar
+                {% if usuario_editado %}Guardar cambios{% else %}Guardar{% endif %}
             </button>
 
         </div>

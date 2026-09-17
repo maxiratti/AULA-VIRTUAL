@@ -2605,3 +2605,307 @@ def seguimiento_alumno(request, curso_pk, alumno_pk):
             "opciones_estado": opciones_estado,
         },
     )
+
+@login_required
+def supervision_cursos(request):
+    from apps.roles.utils import es_observador_institucional, es_preceptor
+
+    usuario = request.user
+
+    if usuario.is_superuser:
+        cursos = Curso.objects.all()
+    else:
+        filtros = Q()
+        tiene_acceso = False
+
+        if es_observador_institucional(usuario):
+            instituciones = usuario.membresias.filter(
+                activa=True,
+                institucion__activa=True,
+                roles__name="Observador institucional",
+            ).values_list("institucion_id", flat=True)
+            filtros |= Q(institucion_id__in=instituciones)
+            tiene_acceso = True
+
+        if es_preceptor(usuario):
+            filtros |= Q(
+                preceptores=usuario,
+                institucion__membresias__usuario=usuario,
+                institucion__membresias__activa=True,
+                institucion__membresias__roles__name="Preceptor",
+            )
+            tiene_acceso = True
+
+        if not tiene_acceso:
+            raise PermissionDenied
+
+        cursos = Curso.objects.filter(filtros)
+
+    cursos = cursos.select_related("institucion").prefetch_related(
+        "docentes", "preceptores"
+    ).distinct().order_by("institucion__nombre", "nombre")
+
+    return render(request, "cursos/supervision_lista.html", {"cursos": cursos})
+
+
+@login_required
+def supervision_curso(request, pk):
+    from apps.roles.utils import puede_supervisar_curso
+
+    curso = get_object_or_404(
+        Curso.objects.select_related("institucion").prefetch_related(
+            "docentes", "preceptores"
+        ),
+        pk=pk,
+    )
+
+    if not puede_supervisar_curso(request.user, curso):
+        raise PermissionDenied
+
+    inscripciones = list(
+        Inscripcion.objects.filter(curso=curso)
+        .select_related("alumno")
+        .order_by("alumno__last_name", "alumno__first_name", "alumno__username")
+    )
+
+    modulos = list(
+        Modulo.objects.filter(curso=curso)
+        .prefetch_related("clases__contenidos", "clases__actividades", "clases__cuestionarios")
+        .order_by("orden", "id")
+    )
+
+    clases = list(Clase.objects.filter(modulo__curso=curso))
+    total_clases = len(clases)
+    alumnos_ids = [i.alumno_id for i in inscripciones]
+
+    progreso = ProgresoClase.objects.filter(
+        alumno_id__in=alumnos_ids,
+        clase__in=clases,
+        completada=True,
+    ).values("alumno_id")
+    completadas = {}
+    for item in progreso:
+        aid = item["alumno_id"]
+        completadas[aid] = completadas.get(aid, 0) + 1
+
+    actividades = list(
+        Actividad.objects.filter(clase__modulo__curso=curso)
+        .select_related("clase", "clase__modulo")
+        .order_by("clase__modulo__orden", "clase__orden", "id")
+    )
+
+    entregas = list(
+        Entrega.objects.filter(actividad__in=actividades)
+        .select_related("actividad", "alumno", "corregido_por")
+        .order_by("-fecha_entrega")
+    )
+
+    cuestionarios = list(
+        Cuestionario.objects.filter(clase__modulo__curso=curso)
+        .select_related("clase", "clase__modulo")
+        .prefetch_related("preguntas")
+        .order_by("clase__modulo__orden", "clase__orden", "id")
+    )
+
+    intentos = list(
+        IntentoCuestionario.objects.filter(
+            cuestionario__in=cuestionarios,
+            finalizado=True,
+        ).select_related("cuestionario", "alumno")
+        .order_by("alumno_id", "cuestionario_id", "-numero")
+    )
+
+    mejores_intentos = {}
+    for intento in intentos:
+        key = (intento.alumno_id, intento.cuestionario_id)
+        actual = mejores_intentos.get(key)
+        if actual is None or intento.puntaje_obtenido > actual.puntaje_obtenido:
+            mejores_intentos[key] = intento
+
+    alumnos = []
+    for inscripcion in inscripciones:
+        alumno = inscripcion.alumno
+        hechas = completadas.get(alumno.id, 0)
+        alumnos.append({
+            "inscripcion": inscripcion,
+            "alumno": alumno,
+            "clases_completadas": hechas,
+            "progreso": round((hechas / total_clases) * 100) if total_clases else 0,
+            "entregas": [e for e in entregas if e.alumno_id == alumno.id],
+            "cuestionarios": [
+                {"cuestionario": q, "intento": mejores_intentos.get((alumno.id, q.id))}
+                for q in cuestionarios
+            ],
+            "cuestionarios_resueltos": sum(
+                1
+                for q in cuestionarios
+                if mejores_intentos.get((alumno.id, q.id)) is not None
+            ),
+        })
+
+    return render(
+        request,
+        "cursos/supervision_detalle.html",
+        {
+            "curso": curso,
+            "alumnos": alumnos,
+            "modulos": modulos,
+            "actividades": actividades,
+            "entregas": entregas,
+            "cuestionarios": cuestionarios,
+            "total_clases": total_clases,
+        },
+    )
+
+@login_required
+def supervision_alumno(request, curso_pk, alumno_pk):
+    from apps.roles.utils import puede_supervisar_curso
+
+    curso = get_object_or_404(
+        Curso.objects.select_related("institucion"),
+        pk=curso_pk,
+    )
+
+    if not puede_supervisar_curso(request.user, curso):
+        raise PermissionDenied
+
+    inscripcion = get_object_or_404(
+        Inscripcion.objects.select_related("alumno"),
+        curso=curso,
+        alumno_id=alumno_pk,
+    )
+    alumno = inscripcion.alumno
+
+    clases = list(
+        Clase.objects
+        .filter(modulo__curso=curso)
+        .select_related("modulo")
+        .order_by("modulo__orden", "orden", "id")
+    )
+    total_clases = len(clases)
+
+    progresos_ids = set(
+        ProgresoClase.objects
+        .filter(
+            alumno=alumno,
+            clase__in=clases,
+            completada=True,
+        )
+        .values_list("clase_id", flat=True)
+    )
+
+    detalle_clases = [
+        {
+            "clase": clase,
+            "completada": clase.id in progresos_ids,
+        }
+        for clase in clases
+    ]
+
+    actividades = list(
+        Actividad.objects
+        .filter(clase__modulo__curso=curso)
+        .select_related("clase", "clase__modulo")
+        .order_by("clase__modulo__orden", "clase__orden", "id")
+    )
+
+    entregas_por_actividad = {
+        entrega.actividad_id: entrega
+        for entrega in (
+            Entrega.objects
+            .filter(
+                alumno=alumno,
+                actividad__in=actividades,
+            )
+            .select_related("actividad", "corregido_por")
+        )
+    }
+
+    detalle_actividades = [
+        {
+            "actividad": actividad,
+            "entrega": entregas_por_actividad.get(actividad.id),
+        }
+        for actividad in actividades
+    ]
+
+    cuestionarios = list(
+        Cuestionario.objects
+        .filter(clase__modulo__curso=curso)
+        .select_related("clase", "clase__modulo")
+        .prefetch_related("preguntas")
+        .order_by("clase__modulo__orden", "clase__orden", "id")
+    )
+
+    intentos = (
+        IntentoCuestionario.objects
+        .filter(
+            alumno=alumno,
+            cuestionario__in=cuestionarios,
+            finalizado=True,
+        )
+        .select_related("cuestionario")
+        .order_by("cuestionario_id", "-numero")
+    )
+
+    mejores_intentos = {}
+    for intento in intentos:
+        actual = mejores_intentos.get(intento.cuestionario_id)
+        if (
+            actual is None
+            or intento.puntaje_obtenido > actual.puntaje_obtenido
+        ):
+            mejores_intentos[intento.cuestionario_id] = intento
+
+    detalle_cuestionarios = []
+    for cuestionario in cuestionarios:
+        intento = mejores_intentos.get(cuestionario.id)
+        porcentaje = None
+
+        if intento is not None and cuestionario.puntaje_maximo:
+            porcentaje = round(
+                (intento.puntaje_obtenido / cuestionario.puntaje_maximo) * 100
+            )
+
+        detalle_cuestionarios.append(
+            {
+                "cuestionario": cuestionario,
+                "intento": intento,
+                "porcentaje": porcentaje,
+            }
+        )
+
+    clases_completadas = len(progresos_ids)
+    progreso = (
+        round((clases_completadas / total_clases) * 100)
+        if total_clases
+        else 0
+    )
+
+    entregas_realizadas = len(entregas_por_actividad)
+    cuestionarios_resueltos = sum(
+        1
+        for item in detalle_cuestionarios
+        if item["intento"] is not None
+    )
+
+    return render(
+        request,
+        "cursos/supervision_alumno.html",
+        {
+            "curso": curso,
+            "inscripcion": inscripcion,
+            "alumno": alumno,
+            "detalle_clases": detalle_clases,
+            "total_clases": total_clases,
+            "clases_completadas": clases_completadas,
+            "progreso": progreso,
+            "detalle_actividades": detalle_actividades,
+            "total_actividades": len(actividades),
+            "entregas_realizadas": entregas_realizadas,
+            "detalle_cuestionarios": detalle_cuestionarios,
+            "total_cuestionarios": len(cuestionarios),
+            "cuestionarios_resueltos": cuestionarios_resueltos,
+        },
+    )
+

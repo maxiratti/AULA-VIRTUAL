@@ -14,6 +14,13 @@ class CursoForm(forms.ModelForm):
         widget=forms.CheckboxSelectMultiple(),
     )
 
+    preceptores = forms.ModelMultipleChoiceField(
+        queryset=Usuario.objects.none(),
+        required=False,
+        label="Preceptores",
+        widget=forms.CheckboxSelectMultiple(),
+    )
+
     class Meta:
         model = Curso
 
@@ -22,6 +29,7 @@ class CursoForm(forms.ModelForm):
             "nombre",
             "descripcion",
             "docentes",
+            "preceptores",
             "fecha_inicio",
             "fecha_fin",
             "carga_horaria",
@@ -116,11 +124,33 @@ class CursoForm(forms.ModelForm):
 
         self.fields["docentes"].queryset = docentes
 
+        preceptores = (
+            Usuario.objects
+            .filter(
+                is_active=True,
+                membresias__activa=True,
+                membresias__institucion__activa=True,
+                membresias__roles__name="Preceptor",
+            )
+            .order_by("last_name", "first_name", "username")
+            .distinct()
+        )
+
+        if institucion_id:
+            preceptores = preceptores.filter(
+                membresias__institucion_id=institucion_id,
+                membresias__activa=True,
+                membresias__roles__name="Preceptor",
+            ).distinct()
+
+        self.fields["preceptores"].queryset = preceptores
+
     def clean(self):
         cleaned_data = super().clean()
 
         institucion = cleaned_data.get("institucion")
         docentes = cleaned_data.get("docentes")
+        preceptores = cleaned_data.get("preceptores")
         fecha_inicio = cleaned_data.get("fecha_inicio")
         fecha_fin = cleaned_data.get("fecha_fin")
 

@@ -31,7 +31,14 @@ Inicio
             {{ request.user.first_name|default:request.user.username }}
         </h1>
 
-        {% if es_docente %}
+        {% if usuario_es_supervisor %}
+
+            <p>
+                Consultá los cursos, alumnos y actividad académica
+                que tenés habilitados para supervisar.
+            </p>
+
+        {% elif es_docente %}
 
             <p>
                 Accedé a tus cursos, actividades y entregas
@@ -144,6 +151,103 @@ Inicio
 
     </div>
 
+</section>
+
+{% elif usuario_es_supervisor %}
+
+<section class="dashboard-grid dashboard-grid-admin">
+
+    <article class="dashboard-card">
+        <div class="dashboard-card-icon"><i class="bi bi-journal-bookmark"></i></div>
+        <div>
+            <span class="dashboard-card-label">Cursos supervisados</span>
+            <strong class="dashboard-card-value">{{ cantidad_cursos }}</strong>
+            <span class="dashboard-card-detail">Cursos activos</span>
+        </div>
+    </article>
+
+    <article class="dashboard-card">
+        <div class="dashboard-card-icon"><i class="bi bi-people"></i></div>
+        <div>
+            <span class="dashboard-card-label">Alumnos</span>
+            <strong class="dashboard-card-value">{{ cantidad_alumnos_supervision }}</strong>
+            <span class="dashboard-card-detail">Alumnos en los cursos</span>
+        </div>
+    </article>
+
+    <article class="dashboard-card">
+        <div class="dashboard-card-icon"><i class="bi bi-check2-square"></i></div>
+        <div>
+            <span class="dashboard-card-label">Actividades</span>
+            <strong class="dashboard-card-value">{{ cantidad_actividades_supervision }}</strong>
+            <span class="dashboard-card-detail">Actividades registradas</span>
+        </div>
+    </article>
+
+    <article class="dashboard-card">
+        <div class="dashboard-card-icon"><i class="bi bi-inbox"></i></div>
+        <div>
+            <span class="dashboard-card-label">Entregas</span>
+            <strong class="dashboard-card-value">{{ cantidad_entregas_supervision }}</strong>
+            <span class="dashboard-card-detail">Entregas recibidas</span>
+        </div>
+    </article>
+
+</section>
+
+<section class="dashboard-section">
+    <div class="section-heading">
+        <div>
+            <h2>Cursos supervisados</h2>
+            <p>Acceso académico en modo solo lectura.</p>
+        </div>
+        <a href="{% url 'supervision_cursos' %}" class="btn-secondary-custom">
+            Ver todos
+        </a>
+    </div>
+
+    {% if cursos %}
+        <div class="courses-grid">
+            {% for curso in cursos %}
+                <a
+                    href="{% url 'supervision_curso' curso.pk %}"
+                    class="course-card course-card-link"
+                    aria-label="Supervisar {{ curso.nombre }}"
+                >
+                    <div class="course-card-icon">
+                        <i class="bi bi-eye"></i>
+                    </div>
+                    <div class="course-card-content">
+                        <span class="course-institution">{{ curso.institucion.nombre }}</span>
+                        <h3>{{ curso.nombre }}</h3>
+                        {% if curso.descripcion %}
+                            <p>{{ curso.descripcion|truncatechars:120 }}</p>
+                        {% endif %}
+                        <div class="course-card-footer">
+                            <span>
+                                <i class="bi bi-person-video3"></i>
+                                {% for docente in curso.docentes.all %}
+                                    {{ docente.get_full_name|default:docente.username }}{% if not forloop.last %}, {% endif %}
+                                {% empty %}
+                                    Sin docente
+                                {% endfor %}
+                            </span>
+                            <span class="course-status">{{ curso.get_estado_display }}</span>
+                        </div>
+                        <div class="course-card-action">
+                            <span class="course-enter-link">
+                                Ver supervisión <i class="bi bi-arrow-right"></i>
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <h3>Todavía no tenés cursos para supervisar</h3>
+        </div>
+    {% endif %}
 </section>
 
 {% else %}

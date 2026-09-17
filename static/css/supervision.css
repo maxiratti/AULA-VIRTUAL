@@ -1,0 +1,322 @@
+.supervision-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.supervision-card,
+.supervision-section,
+.summary-card {
+    background: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 14px;
+    padding: 1.1rem;
+}
+
+.supervision-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.supervision-card-link {
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    transition: border-color .18s ease, transform .18s ease;
+}
+
+.supervision-card-link:hover,
+.supervision-card-link:focus-visible {
+    color: inherit;
+    border-color: var(--bs-primary);
+    transform: translateY(-2px);
+}
+
+.supervision-card-link:focus-visible,
+.student-supervision-row:focus-visible {
+    outline: 3px solid rgba(var(--bs-primary-rgb), .2);
+    outline-offset: 2px;
+}
+
+.supervision-card h2 {
+    font-size: 1.15rem;
+    margin: .35rem 0;
+}
+
+.supervision-institution,
+.muted,
+.record-context {
+    color: var(--bs-secondary-color);
+    font-size: .88rem;
+}
+
+.supervision-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: .75rem;
+    flex-wrap: wrap;
+}
+
+.supervision-enter {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    color: var(--bs-primary);
+    font-weight: 600;
+    margin-top: auto;
+}
+
+.supervision-enter .bi-arrow-right {
+    margin-left: auto;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: .8rem;
+    margin-bottom: 1rem;
+}
+
+.summary-card strong {
+    display: block;
+    font-size: 1.45rem;
+}
+
+.summary-card span {
+    color: var(--bs-secondary-color);
+}
+
+.supervision-section {
+    margin-bottom: 1rem;
+}
+
+.supervision-section summary {
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 1.05rem;
+    padding: .2rem 0;
+}
+
+.module-block,
+.activity-block {
+    border-top: 1px solid var(--bs-border-color);
+    padding: 1rem 0;
+}
+
+.class-block {
+    margin: .7rem 0;
+    padding: .8rem;
+    border-left: 3px solid var(--bs-border-color);
+}
+
+.content-record,
+.record {
+    padding: .4rem 0;
+}
+
+.submission-text {
+    margin-top: .3rem;
+    white-space: pre-wrap;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: .5rem;
+    text-decoration: none;
+}
+
+/* Alumnos del curso */
+.student-supervision-list {
+    display: grid;
+    gap: .65rem;
+    margin-top: 1rem;
+}
+
+.student-supervision-row {
+    display: grid;
+    grid-template-columns: minmax(190px, 1.5fr) repeat(4, minmax(105px, .7fr)) 28px;
+    gap: .9rem;
+    align-items: center;
+    padding: .9rem 1rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 12px;
+    color: inherit;
+    text-decoration: none;
+}
+
+.student-supervision-row:hover {
+    color: inherit;
+    border-color: var(--bs-primary);
+    background: rgba(var(--bs-primary-rgb), .025);
+}
+
+.student-supervision-main {
+    min-width: 0;
+}
+
+.student-supervision-main strong,
+.student-supervision-main small {
+    display: block;
+}
+
+.student-supervision-main small,
+.student-supervision-stat span {
+    color: var(--bs-secondary-color);
+    font-size: .8rem;
+}
+
+.student-supervision-stat strong {
+    display: block;
+    margin-top: .15rem;
+    font-size: .92rem;
+}
+
+.student-supervision-arrow {
+    text-align: right;
+    color: var(--bs-primary);
+}
+
+/* Detalle individual */
+.supervision-record-list {
+    display: grid;
+    gap: .85rem;
+    margin-top: 1rem;
+}
+
+.supervision-record-card {
+    border: 1px solid var(--bs-border-color);
+    border-radius: 12px;
+    padding: 1rem;
+}
+
+.record-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.record-heading h3 {
+    margin: .2rem 0 0;
+    font-size: 1rem;
+}
+
+.record-detail-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-top: .9rem;
+}
+
+.record-detail-grid > div {
+    min-width: 140px;
+}
+
+.record-detail-grid span,
+.record-detail-grid strong {
+    display: block;
+}
+
+.record-detail-grid span {
+    color: var(--bs-secondary-color);
+    font-size: .8rem;
+}
+
+.record-content,
+.record-feedback {
+    margin-top: .9rem;
+    padding: .8rem;
+    border-radius: 10px;
+    background: var(--bs-tertiary-bg);
+}
+
+.record-content p,
+.record-feedback p {
+    margin: .35rem 0 0;
+}
+
+.class-progress-list {
+    display: grid;
+    gap: .55rem;
+    margin-top: 1rem;
+}
+
+.class-progress-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+    padding: .75rem .9rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 10px;
+}
+
+.class-progress-row strong,
+.class-progress-row span {
+    display: block;
+}
+
+.class-progress-row > div span {
+    color: var(--bs-secondary-color);
+    font-size: .85rem;
+}
+
+.class-progress-status {
+    white-space: nowrap;
+    color: var(--bs-secondary-color);
+}
+
+.class-progress-status.completed {
+    color: var(--bs-success);
+}
+
+@media (max-width: 900px) {
+    .student-supervision-row {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .student-supervision-main {
+        grid-column: 1 / -1;
+    }
+
+    .student-supervision-arrow {
+        display: none;
+    }
+}
+
+@media (max-width: 800px) {
+    .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .supervision-section {
+        padding: .8rem;
+    }
+}
+
+@media (max-width: 560px) {
+    .student-supervision-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .student-supervision-stat {
+        min-width: 0;
+    }
+
+    .record-heading,
+    .class-progress-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .summary-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .supervision-grid {
+        grid-template-columns: 1fr;
+    }
+}
